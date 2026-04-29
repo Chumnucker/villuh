@@ -32,7 +32,17 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Drizzle migrations run against a Postgres instance and the `villuh_app` non-owner role is enforced — an integration test confirms that cross-tenant data is invisible to a different landlord's session
   3. The audit log pattern (`audit_log` table + triggers) is in place and records changes on at least one table
   4. Codebase is clean: Toaster is mounted, one icon library is in use, and `.vscode/github-accounts.json` is removed from version control
-**Plans**: 6 plans
+**Plans**: 6 plans (01-01 through 01-06)
+
+**Wave dependency notes:**
+- **Wave 1** — 01-01: Monorepo scaffold (unblocks everything)
+- **Wave 2** *(blocked on Wave 1 completion)* — 01-02: Hono server + RPC, 01-03: @villuh/db package, 01-06: Icon consolidation + Toaster (run in parallel)
+- **Wave 3** *(blocked on Wave 2 completion, specifically 01-03)* — 01-04: Postgres provision + migrations (checkpoint required)
+- **Wave 4** *(blocked on Wave 3 completion)* — 01-05: RLS + audit log integration tests
+
+**Cross-cutting constraints:**
+- `villuh_app` non-owner role must exist in Postgres before any migration runs (all waves)
+- `DATABASE_APP_URL` must point to `villuh_app` credentials; `DATABASE_URL` must point to owner credentials (all waves)
 Plans:
 - [ ] 01-01-PLAN.md — pnpm workspace monorepo scaffold + root config + file relocation
 - [ ] 01-02-PLAN.md — Hono API server + withTenant wrapper + Next.js RPC client
@@ -137,7 +147,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Infrastructure Foundation | 0/6 | In progress | - |
+| 1. Infrastructure Foundation | 0/6 | Ready to execute | - |
 | 2. Auth & Billing | 0/TBD | Not started | - |
 | 3. Properties & Units | 0/TBD | Not started | - |
 | 4. Tenants, Leases & Documents | 0/TBD | Not started | - |
