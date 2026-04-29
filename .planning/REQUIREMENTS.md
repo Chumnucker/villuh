@@ -150,86 +150,96 @@
 
 ## Traceability
 
-*Populated during roadmap creation.*
+*Updated during roadmap creation — 2026-04-29.*
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | — | Pending |
-| AUTH-02 | — | Pending |
-| AUTH-03 | — | Pending |
-| AUTH-04 | — | Pending |
-| AUTH-05 | — | Pending |
-| AUTH-06 | — | Pending |
-| AUTH-07 | — | Pending |
-| AUTH-08 | — | Pending |
-| AUTH-09 | — | Pending |
-| PROP-01 | — | Pending |
-| PROP-02 | — | Pending |
-| PROP-03 | — | Pending |
-| PROP-04 | — | Pending |
-| PROP-05 | — | Pending |
-| UNIT-01 | — | Pending |
-| UNIT-02 | — | Pending |
-| UNIT-03 | — | Pending |
-| UNIT-04 | — | Pending |
-| UNIT-05 | — | Pending |
-| TENT-01 | — | Pending |
-| TENT-02 | — | Pending |
-| TENT-03 | — | Pending |
-| TENT-04 | — | Pending |
-| TENT-05 | — | Pending |
-| TENT-06 | — | Pending |
-| LEASE-01 | — | Pending |
-| LEASE-02 | — | Pending |
-| LEASE-03 | — | Pending |
-| LEASE-04 | — | Pending |
-| LEASE-05 | — | Pending |
-| LEASE-06 | — | Pending |
-| LEASE-07 | — | Pending |
-| LEASE-08 | — | Pending |
-| LEASE-09 | — | Pending |
-| LEASE-10 | — | Pending |
-| LEASE-11 | — | Pending |
-| LEASE-12 | — | Pending |
-| LEASE-13 | — | Pending |
-| FLOW-01 | — | Pending |
-| FLOW-02 | — | Pending |
-| FLOW-03 | — | Pending |
-| FLOW-04 | — | Pending |
-| FLOW-05 | — | Pending |
-| FLOW-06 | — | Pending |
-| FLOW-07 | — | Pending |
-| FLOW-08 | — | Pending |
-| FLOW-09 | — | Pending |
-| FLOW-10 | — | Pending |
-| LEDG-01 | — | Pending |
-| LEDG-02 | — | Pending |
-| LEDG-03 | — | Pending |
-| LEDG-04 | — | Pending |
-| LEDG-05 | — | Pending |
-| LEDG-06 | — | Pending |
-| LEDG-07 | — | Pending |
-| COMM-01 | — | Pending |
-| COMM-02 | — | Pending |
-| COMM-03 | — | Pending |
-| COMM-04 | — | Pending |
-| COMM-05 | — | Pending |
-| COMM-06 | — | Pending |
-| COMM-07 | — | Pending |
-| COMM-08 | — | Pending |
-| COMM-09 | — | Pending |
-| REPT-01 | — | Pending |
-| SRCH-01 | — | Pending |
-| ADMN-01 | — | Pending |
-| ADMN-02 | — | Pending |
-| SETT-01 | — | Pending |
-| SETT-02 | — | Pending |
+| AUTH-01 | Phase 2 | Pending |
+| AUTH-02 | Phase 2 | Pending |
+| AUTH-03 | Phase 2 | Pending |
+| AUTH-04 | Phase 2 | Pending |
+| AUTH-05 | Phase 2 | Pending |
+| AUTH-06 | Phase 2 | Pending |
+| AUTH-07 | Phase 2 | Pending |
+| AUTH-08 | Phase 2 | Pending |
+| AUTH-09 | Phase 2 | Pending |
+| PROP-01 | Phase 3 | Pending |
+| PROP-02 | Phase 3 | Pending |
+| PROP-03 | Phase 3 | Pending |
+| PROP-04 | Phase 3 | Pending |
+| PROP-05 | Phase 3 | Pending |
+| UNIT-01 | Phase 3 | Pending |
+| UNIT-02 | Phase 3 | Pending |
+| UNIT-03 | Phase 3 | Pending |
+| UNIT-04 | Phase 3 | Pending |
+| UNIT-05 | Phase 3 | Pending |
+| TENT-01 | Phase 4 | Pending |
+| TENT-02 | Phase 4 | Pending |
+| TENT-03 | Phase 4 | Pending |
+| TENT-04 | Phase 4 | Pending |
+| TENT-05 | Phase 4 | Pending |
+| TENT-06 | Phase 4 | Pending |
+| LEASE-01 | Phase 4 | Pending |
+| LEASE-02 | Phase 4 | Pending |
+| LEASE-03 | Phase 4 | Pending |
+| LEASE-04 | Phase 4 | Pending |
+| LEASE-05 | Phase 4 | Pending |
+| LEASE-06 | Phase 4 | Pending |
+| LEASE-07 | Phase 4 | Pending |
+| LEASE-08 | Phase 4 | Pending |
+| LEASE-09 | Phase 4 | Pending |
+| LEASE-10 | Phase 4 | Pending |
+| LEASE-11 | Phase 4 | Pending |
+| LEASE-12 | Phase 4 | Pending |
+| LEASE-13 | Phase 4 | Pending |
+| FLOW-01 | Phase 5 | Pending |
+| FLOW-02 | Phase 5 | Pending |
+| FLOW-03 | Phase 5 | Pending |
+| FLOW-04 | Phase 5 | Pending |
+| FLOW-05 | Phase 5 | Pending |
+| FLOW-06 | Phase 5 | Pending |
+| FLOW-07 | Phase 5 | Pending |
+| FLOW-08 | Phase 5 | Pending |
+| FLOW-09 | Phase 5 | Pending |
+| FLOW-10 | Phase 5 | Pending |
+| LEDG-01 | Phase 6 | Pending |
+| LEDG-02 | Phase 6 | Pending |
+| LEDG-03 | Phase 6 | Pending |
+| LEDG-04 | Phase 6 | Pending |
+| LEDG-05 | Phase 6 | Pending |
+| LEDG-06 | Phase 6 | Pending |
+| LEDG-07 | Phase 6 | Pending |
+| COMM-01 | Phase 7 | Pending |
+| COMM-02 | Phase 7 | Pending |
+| COMM-03 | Phase 7 | Pending |
+| COMM-04 | Phase 7 | Pending |
+| COMM-05 | Phase 7 | Pending |
+| COMM-06 | Phase 7 | Pending |
+| COMM-07 | Phase 7 | Pending |
+| COMM-08 | Phase 7 | Pending |
+| COMM-09 | Phase 7 | Pending |
+| REPT-01 | Phase 8 | Pending |
+| SRCH-01 | Phase 8 | Pending |
+| ADMN-01 | Phase 8 | Pending |
+| ADMN-02 | Phase 8 | Pending |
+| SETT-01 | Phase 2 | Pending |
+| SETT-02 | Phase 2 | Pending |
 
 **Coverage:**
 - v1 requirements: 70 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 70 ⚠️
+- Mapped to phases: 70 (roadmap complete)
+- Unmapped: 0 ✓
+
+**Phase distribution:**
+- Phase 1 (Infrastructure Foundation): 0 functional requirements (foundational scaffolding)
+- Phase 2 (Auth & Billing): 11 requirements — AUTH-01–09, SETT-01, SETT-02
+- Phase 3 (Properties & Units): 10 requirements — PROP-01–05, UNIT-01–05
+- Phase 4 (Tenants, Leases & Documents): 19 requirements — TENT-01–06, LEASE-01–13
+- Phase 5 (Onboarding Flow Engine): 10 requirements — FLOW-01–10
+- Phase 6 (Rent Ledger): 7 requirements — LEDG-01–07
+- Phase 7 (Communications): 9 requirements — COMM-01–09
+- Phase 8 (Reporting, Search & Admin): 4 requirements — REPT-01, SRCH-01, ADMN-01–02
 
 ---
 *Requirements defined: 2026-04-29*
-*Last updated: 2026-04-29 after initial definition*
+*Last updated: 2026-04-29 after roadmap creation (traceability populated)*
