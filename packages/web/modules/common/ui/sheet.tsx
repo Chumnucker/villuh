@@ -5,7 +5,7 @@ import { Dialog as SheetPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/modules/common/ui/button"
-import { XIcon } from "lucide-react"
+import { PlatformIcon } from "@/modules/common/ui/icon"
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />
@@ -75,8 +75,7 @@ function SheetContent({
               className="absolute top-4 right-4 bg-secondary"
               size="icon-sm"
             >
-              <XIcon
-              />
+              <PlatformIcon icon="IconCrossLarge" size={16} />
               <span className="sr-only">Close</span>
             </Button>
           </SheetPrimitive.Close>

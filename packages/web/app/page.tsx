@@ -1,19 +1,45 @@
-import { Button } from "@/components/ui/button"
+import { NavigationBreadcrumbs } from "@/modules/app/components/navigation/breadcrumbs"
+import { Button, LinkButton } from "@/modules/common/ui/button"
+import { PlatformIcon } from "@/modules/common/ui/icon"
+import { SearchInput } from "@/modules/common/ui/input"
 
 export default function Page() {
   return (
-    <div className="flex min-h-svh p-6">
-      <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
-        <div>
-          <h1 className="font-medium">Project ready!</h1>
-          <p>You may now add components and start building.</p>
-          <p>We&apos;ve already added the button component for you.</p>
-          <Button className="mt-2">Button</Button>
+    <div className="flex min-h-svh">
+      <nav className="flex w-64 flex-col border-r bg-card">
+        <div className="flex h-navbar items-center justify-between border-b px-page">
+          <h5 className="font-mono text-2xl font-medium">Villuh</h5>
+
+          <Button variant={"ghost-muted"} size={"icon"}>
+            <PlatformIcon
+              icon="IconBell2"
+              className="size-4.5"
+              size={20}
+              strokeWidth={2}
+            />
+          </Button>
         </div>
-        <div className="font-mono text-xs text-muted-foreground">
-          (Press <kbd>d</kbd> to toggle dark mode)
+
+        <div className="flex flex-col gap-1 p-page">
+          <LinkButton
+            href={"/"}
+            variant={"ghost-muted"}
+            className="justify-start gap-2"
+          >
+            <PlatformIcon icon="IconHomeDoor" size={20} strokeWidth={2} />
+            Home
+          </LinkButton>
         </div>
-      </div>
+      </nav>
+      <section className="flex flex-1">
+        <nav className="flex h-navbar w-full items-center border-b bg-card px-page">
+          <NavigationBreadcrumbs />
+          <SearchInput
+            placeholder="Search features or items"
+            className="w-56"
+          />
+        </nav>
+      </section>
     </div>
   )
 }

@@ -2,7 +2,7 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/modules/common/ui/button"
-import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from "lucide-react"
+import { PlatformIcon } from "@/modules/common/ui/icon"
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
   return (
@@ -73,7 +73,7 @@ function PaginationPrevious({
       className={cn("pl-2!", className)}
       {...props}
     >
-      <ChevronLeftIcon data-icon="inline-start" />
+      <PlatformIcon icon="IconChevronLeft" data-icon="inline-start" size={16} />
       <span className="hidden sm:block">{text}</span>
     </PaginationLink>
   )
@@ -92,7 +92,7 @@ function PaginationNext({
       {...props}
     >
       <span className="hidden sm:block">{text}</span>
-      <ChevronRightIcon data-icon="inline-end" />
+      <PlatformIcon icon="IconChevronRight" data-icon="inline-end" size={16} />
     </PaginationLink>
   )
 }
@@ -111,8 +111,7 @@ function PaginationEllipsis({
       )}
       {...props}
     >
-      <MoreHorizontalIcon
-      />
+      <PlatformIcon icon="IconDotGrid1x3Horizontal" size={16} />
       <span className="sr-only">More pages</span>
     </span>
   )
