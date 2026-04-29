@@ -44,7 +44,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - `villuh_app` non-owner role must exist in Postgres before any migration runs (all waves)
 - `DATABASE_APP_URL` must point to `villuh_app` credentials; `DATABASE_URL` must point to owner credentials (all waves)
 Plans:
-- [ ] 01-01-PLAN.md — pnpm workspace monorepo scaffold + root config + file relocation
+- [x] 01-01-PLAN.md — pnpm workspace monorepo scaffold + root config + file relocation (2026-04-29)
 - [ ] 01-02-PLAN.md — Hono API server + withTenant wrapper + Next.js RPC client
 - [ ] 01-03-PLAN.md — @villuh/db package: Drizzle schema, RLS policy, db clients, bootstrap SQL
 - [ ] 01-04-PLAN.md — [BLOCKING] Postgres provision + drizzle-kit generate + audit log SQL injection + migrate
@@ -147,7 +147,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Infrastructure Foundation | 0/6 | Ready to execute | - |
+| 1. Infrastructure Foundation | 1/6 | Executing | 01-01 done 2026-04-29 |
 | 2. Auth & Billing | 0/TBD | Not started | - |
 | 3. Properties & Units | 0/TBD | Not started | - |
 | 4. Tenants, Leases & Documents | 0/TBD | Not started | - |
