@@ -5,7 +5,7 @@ milestone_name: milestone
 status: executing
 stopped_at: ""
 last_updated: "2026-04-29T15:00:00.000Z"
-last_activity: 2026-04-29 — Phase 1 plan 01-01 complete; monorepo scaffold done
+last_activity: 2026-04-29 — Phase 1 plan 01-02 complete; Hono server + RPC client done
 progress:
   total_phases: 8
   completed_phases: 0
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 ## Current Position
 
 Phase: 1 of 8 (Infrastructure Foundation)
-Plan: 1 of 6 in current phase
-Status: Executing (Wave 1 complete — Wave 2 ready)
-Last activity: 2026-04-29 — Phase 1 plan 01-01 complete; monorepo scaffold done
+Plan: 2 of 6 in current phase
+Status: Executing (Wave 2 in progress — 01-02 complete)
+Last activity: 2026-04-29 — Phase 1 plan 01-02 complete; Hono server + RPC client done
 
-Progress: [█░░░░░░░░░] 17% (1/6 plans in Phase 1)
+Progress: [██░░░░░░░░] 33% (2/6 plans in Phase 1)
 
 ## Performance Metrics
 
@@ -82,7 +82,7 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-29T15:00:00.000Z
-Stopped at: Completed 01-01-PLAN.md — Wave 1 done; Wave 2 (01-02, 01-03, 01-06) ready to execute
+Stopped at: Completed 01-02-PLAN.md — Wave 2 in progress; 01-03 and 01-06 still pending
 Resume file: None
 
 IMPORTANT before Wave 3 (plan 01-04): No local Postgres found on this machine. Must provision PostgreSQL 17 (Windows installer or Docker Desktop) before migrations can run.
