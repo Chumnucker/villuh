@@ -14,7 +14,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@villuh/db": "workspace:*"
+    "@villuh/db": "workspace:*",
+    "hono": "4.12.15",
+    "@hono/node-server": "2.0.0",
+    "@hono/zod-validator": "0.7.6",
+    "drizzle-orm": "0.45.2",
+    "pino": "10.3.1",
+    "pino-http": "^10.0.0",
+    "zod": "4.3.6"
   },
   "devDependencies": {
     "tsx": "4.21.0",
