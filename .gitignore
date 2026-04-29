@@ -34,3 +34,15 @@ pnpm-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# VSCode sensitive files
+.vscode/github-accounts.json
+
+# Package build artifacts
+packages/*/dist/
+packages/*/.next/
+
+# Environment files
+.env
+.env.local
+.env*.local
