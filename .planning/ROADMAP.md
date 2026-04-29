@@ -49,7 +49,7 @@ Plans:
 - [x] 01-03-PLAN.md — @villuh/db package: Drizzle schema, RLS policy, db clients, bootstrap SQL (2026-04-29)
 - [ ] 01-04-PLAN.md — [BLOCKING] Postgres provision + drizzle-kit generate + audit log SQL injection + migrate
 - [ ] 01-05-PLAN.md — RLS cross-tenant isolation + audit log integration tests (vitest)
-- [ ] 01-06-PLAN.md — Icon consolidation (lucide-react → PlatformIcon) + Toaster mount
+- [x] 01-06-PLAN.md — Icon consolidation (lucide-react → PlatformIcon) + Toaster mount (2026-04-29)
 
 ### Phase 2: Auth & Billing
 **Goal**: Landlords can create accounts, invite team members, and are on a billing plan with enforced limits — the full auth and subscription lifecycle works end to end
