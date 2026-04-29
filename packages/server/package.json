@@ -1,0 +1,23 @@
+{
+  "name": "@villuh/server",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "src/app.ts",
+  "exports": {
+    ".": "./src/app.ts",
+    "./app": "./src/app.ts"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node --import tsx/esm src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@villuh/db": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
