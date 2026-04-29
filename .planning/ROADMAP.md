@@ -32,7 +32,14 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Drizzle migrations run against a Postgres instance and the `villuh_app` non-owner role is enforced — an integration test confirms that cross-tenant data is invisible to a different landlord's session
   3. The audit log pattern (`audit_log` table + triggers) is in place and records changes on at least one table
   4. Codebase is clean: Toaster is mounted, one icon library is in use, and `.vscode/github-accounts.json` is removed from version control
-**Plans**: TBD
+**Plans**: 6 plans
+Plans:
+- [ ] 01-01-PLAN.md — pnpm workspace monorepo scaffold + root config + file relocation
+- [ ] 01-02-PLAN.md — Hono API server + withTenant wrapper + Next.js RPC client
+- [ ] 01-03-PLAN.md — @villuh/db package: Drizzle schema, RLS policy, db clients, bootstrap SQL
+- [ ] 01-04-PLAN.md — [BLOCKING] Postgres provision + drizzle-kit generate + audit log SQL injection + migrate
+- [ ] 01-05-PLAN.md — RLS cross-tenant isolation + audit log integration tests (vitest)
+- [ ] 01-06-PLAN.md — Icon consolidation (lucide-react → PlatformIcon) + Toaster mount
 
 ### Phase 2: Auth & Billing
 **Goal**: Landlords can create accounts, invite team members, and are on a billing plan with enforced limits — the full auth and subscription lifecycle works end to end
@@ -130,7 +137,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Infrastructure Foundation | 0/TBD | Not started | - |
+| 1. Infrastructure Foundation | 0/6 | In progress | - |
 | 2. Auth & Billing | 0/TBD | Not started | - |
 | 3. Properties & Units | 0/TBD | Not started | - |
 | 4. Tenants, Leases & Documents | 0/TBD | Not started | - |
