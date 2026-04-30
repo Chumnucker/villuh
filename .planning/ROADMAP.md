@@ -47,8 +47,8 @@ Plans:
 - [x] 01-01-PLAN.md — pnpm workspace monorepo scaffold + root config + file relocation (2026-04-29)
 - [x] 01-02-PLAN.md — Hono API server + withTenant wrapper + Next.js RPC client (2026-04-29)
 - [x] 01-03-PLAN.md — @villuh/db package: Drizzle schema, RLS policy, db clients, bootstrap SQL (2026-04-29)
-- [ ] 01-04-PLAN.md — [BLOCKING] Postgres provision + drizzle-kit generate + audit log SQL injection + migrate
-- [ ] 01-05-PLAN.md — RLS cross-tenant isolation + audit log integration tests (vitest)
+- [x] 01-04-PLAN.md — [BLOCKING] Postgres provision + drizzle-kit generate + audit log SQL injection + migrate (2026-04-30)
+- [x] 01-05-PLAN.md — RLS cross-tenant isolation + audit log integration tests (vitest) (2026-04-30)
 - [x] 01-06-PLAN.md — Icon consolidation (lucide-react → PlatformIcon) + Toaster mount (2026-04-29)
 
 ### Phase 2: Auth & Billing
@@ -147,7 +147,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Infrastructure Foundation | 3/6 | Executing | 01-01, 01-02, 01-03 done 2026-04-29 |
+| 1. Infrastructure Foundation | 6/6 | Complete | All plans done 2026-04-29–30 |
 | 2. Auth & Billing | 0/TBD | Not started | - |
 | 3. Properties & Units | 0/TBD | Not started | - |
 | 4. Tenants, Leases & Documents | 0/TBD | Not started | - |
