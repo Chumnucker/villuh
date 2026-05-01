@@ -52,9 +52,9 @@ Custom spacing tokens already in globals.css:
 - `--spacing-page: var(--page-padding)` (`px-page`) — default `1rem`
 
 Exceptions:
-- Minimum touch target for icon-only buttons: 36px (`size-9` — established by button.tsx). No 44px override needed for this phase; all auth/wizard CTAs use labeled buttons.
+- Minimum touch target for icon-only buttons: 40px (`size-10`). All auth/wizard CTAs use labeled buttons so this applies only to icon-only action buttons (e.g. team table remove, dialog close).
 - Auth pages use a centered column at `max-w-sm` (384px) — not a custom token, applied via class.
-- Wizard progress bar: `h-1.5` (6px) — thinner than standard Progress component default of `h-3`.
+- Wizard progress bar: `h-2` (8px) — thinner than standard Progress component default of `h-3`.
 
 Source: `packages/web/app/globals.css`, `packages/web/modules/common/ui/button.tsx`
 
@@ -69,12 +69,13 @@ The codebase uses `--font-heading: var(--font-sans)` — Inter serves as both he
 | Body | 14px (`text-sm`) | 400 (regular) | 1.5 | Form labels, field descriptions, table cells, toast copy |
 | Label | 14px (`text-sm`) | 500 (medium) | 1.4 | Field labels, nav items, button text, card description labels |
 | Heading | 16px (`text-base`) | 500 (medium) | 1.2 | Card titles, dialog titles, wizard step headings, settings section headings |
-| Display | 24px (`text-2xl`) | 600 (semibold) | 1.1 | Auth page headline ("Create your account", "Welcome back"), wizard step number display |
+| Display | 24px (`text-2xl`) | 500 (medium) | 1.1 | Auth page headline ("Create your account", "Welcome back"), wizard step number display |
 
 Notes:
 - `font-heading` class applies `--font-heading` (which maps to Inter). Use `font-heading font-medium` for card and dialog titles — matches established `CardTitle` and `DialogTitle` patterns.
+- Auth page headlines use `text-2xl font-medium` — do NOT use `font-semibold` for Display role.
 - `font-mono` is reserved for the `<h5 className="font-mono text-2xl font-medium">Villuh</h5>` wordmark in the sidebar. Do not use in auth/onboarding layouts.
-- Two weights only: 400 (regular, `font-normal`) and 500/600 (medium/semibold). Established by existing button and card components.
+- Two weights only: 400 (`font-normal`) and 500 (`font-medium`). Established by existing button and card components.
 
 Source: `packages/web/app/layout.tsx`, `packages/web/modules/common/ui/card.tsx`, `packages/web/modules/common/ui/dialog.tsx`, CONVENTIONS.md
 
@@ -188,7 +189,7 @@ Source: `packages/web/app/globals.css`
 
 **Layout:** Full-screen, own layout group `app/(onboarding)/layout.tsx`. No sidebar, no navbar. Background: `bg-background`. Centered content column, max-w-md. Villuh wordmark top-left.
 
-**Progress indicator:** Text label "Step {N} of 4" (`text-sm text-muted-foreground`) + `Progress` component (thin variant: `h-1.5`, full width) immediately below the wordmark row.
+**Progress indicator:** Text label "Step {N} of 4" (`text-sm text-muted-foreground`) + `Progress` component (thin variant: `h-2`, full width) immediately below the wordmark row.
 
 **Step container:** Single `Card` (default, `rounded-4xl`, `shadow-md`) centered vertically. Card uses existing `CardHeader` / `CardContent` / `CardFooter` pattern.
 
@@ -292,7 +293,7 @@ Shown when a 402 `PLAN_LIMIT` response is received from any Hono route. D-46.
 - `DialogTitle`: "You've reached your {resource} limit"
 - `DialogDescription`: current tier limits vs next tier limits in a side-by-side comparison layout (2 columns, `Card size="sm"` for each tier)
 - Pricing shown per tier
-- `DialogFooter`: "View billing plans" → `LinkButton` → `/settings/billing` (navigates and closes modal). "Cancel" → `Button variant="outline"` → closes modal.
+- `DialogFooter`: "View billing plans" → `LinkButton` → `/settings/billing` (navigates and closes modal). "Maybe later" → `Button variant="outline"` → closes modal.
 
 ---
 
@@ -314,6 +315,7 @@ Shown when a 402 `PLAN_LIMIT` response is received from any Hono route. D-46.
 | Stripe Connect CTA | "Connect Stripe Account" |
 | DocuSign CTA | "Connect DocuSign" |
 | Upgrade modal primary | "View billing plans" |
+| Upgrade modal dismiss | "Maybe later" |
 | Email verification heading | "Check your email" |
 | Email verification body | "We sent a verification link to {email}. Click it to activate your account." |
 | Password reset sent heading | "Reset link sent" |
@@ -336,12 +338,15 @@ Shown when a 402 `PLAN_LIMIT` response is received from any Hono route. D-46.
 | Remove team member confirm title | "Remove {name} from your account?" |
 | Remove team member confirm body | "They will immediately lose access. This cannot be undone." |
 | Remove team member confirm CTA | "Remove member" |
+| Remove team member cancel | "Keep member" |
 | Disconnect integration title (Stripe) | "Disconnect Stripe?" |
 | Disconnect integration body (Stripe) | "Tenant deposit payments will stop working. Disconnect only if you are switching accounts." |
 | Disconnect integration CTA (Stripe) | "Disconnect" |
+| Disconnect integration cancel (Stripe) | "Keep connected" |
 | Disconnect integration title (DocuSign) | "Disconnect DocuSign?" |
 | Disconnect integration body (DocuSign) | "You will not be able to send documents for e-signature until you reconnect." |
 | Disconnect integration CTA (DocuSign) | "Disconnect" |
+| Disconnect integration cancel (DocuSign) | "Stay connected" |
 
 ---
 
@@ -349,9 +354,9 @@ Shown when a 402 `PLAN_LIMIT` response is received from any Hono route. D-46.
 
 | Action | Trigger | Confirmation Pattern |
 |--------|---------|----------------------|
-| Remove team member | "Remove" button in team table | `Dialog` — title + body + "Remove member" (`Button destructive`) + "Cancel" (`Button outline`) |
-| Disconnect Stripe Connect | "Disconnect" button on integration card | `Dialog` — title + body warning about payment impact + "Disconnect" (`Button destructive`) + "Cancel" (`Button outline`) |
-| Disconnect DocuSign | "Disconnect" button on integration card | `Dialog` — title + body warning about signing impact + "Disconnect" (`Button destructive`) + "Cancel" (`Button outline`) |
+| Remove team member | "Remove" button in team table | `Dialog` — title + body + "Remove member" (`Button destructive`) + "Keep member" (`Button outline`) |
+| Disconnect Stripe Connect | "Disconnect" button on integration card | `Dialog` — title + body warning about payment impact + "Disconnect" (`Button destructive`) + "Keep connected" (`Button outline`) |
+| Disconnect DocuSign | "Disconnect" button on integration card | `Dialog` — title + body warning about signing impact + "Disconnect" (`Button destructive`) + "Stay connected" (`Button outline`) |
 
 No destructive actions have a text-entry confirmation (e.g. type org name). Single-click confirm in Dialog is sufficient for these actions.
 
@@ -480,3 +485,6 @@ No third-party shadcn registry blocks are used in Phase 2. `@stripe/react-stripe
 | Stripe Elements in-page (no Checkout redirect) | CONTEXT.md §D-26, D-27, D-28 |
 | Sonner Toaster already mounted in root layout | `packages/web/app/layout.tsx` |
 | PlatformIcon as sole icon wrapper | STATE.md, `.planning/codebase/CONVENTIONS.md` |
+| BLOCK 1 fix: context-specific cancel labels | gsd-ui-checker revision 2026-04-30 |
+| BLOCK 2 fix: Display weight collapsed to 500 (medium) | gsd-ui-checker revision 2026-04-30 |
+| BLOCK 3 fix: touch target 40px (size-10), progress bar 8px (h-2) | gsd-ui-checker revision 2026-04-30 |
