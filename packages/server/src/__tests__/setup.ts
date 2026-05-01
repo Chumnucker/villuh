@@ -102,3 +102,94 @@ export async function clearTestUsers() {
     await owner.end()
   }
 }
+
+// ─── Plan 02-04 helpers ──────────────────────────────────────────────────────
+
+/**
+ * Fetch against the Hono app directly (no HTTP server needed).
+ * Useful for integration tests hitting /api/* routes.
+ */
+export async function fetchApi(path: string, init: RequestInit = {}): Promise<Response> {
+  // Lazy import to allow vi.mock to intercept email.ts before app loads
+  const { default: app } = await import('../app.js')
+  const url = `http://localhost${path}`
+  const req = new Request(url, init)
+  return app.fetch(req)
+}
+
+/**
+ * Look up a user's id by email (owner DB connection — bypasses RLS).
+ */
+export async function getCurrentUserId(email: string): Promise<string> {
+  const owner = createOwnerClient()
+  try {
+    const rows = (await owner.db.execute(
+      sql`SELECT id FROM "user" WHERE email = ${email}`,
+    )) as unknown as { id: string }[]
+    return rows[0]?.id ?? ''
+  } finally {
+    await owner.end()
+  }
+}
+
+/**
+ * Look up the organization ID for a given user (owner DB connection).
+ */
+export async function getOrgIdForUser(userId: string): Promise<string> {
+  const owner = createOwnerClient()
+  try {
+    const rows = (await owner.db.execute(
+      sql`SELECT organization_id FROM "member" WHERE user_id = ${userId} LIMIT 1`,
+    )) as unknown as { organization_id: string }[]
+    return rows[0]?.organization_id ?? ''
+  } finally {
+    await owner.end()
+  }
+}
+
+/**
+ * Sign in and activate the user's organization in the session.
+ * Better Auth session.activeOrganizationId is null until setActiveOrganization is called.
+ * This is required for requireTenant() to work in integration tests.
+ * Returns the session cookie with the active org set.
+ */
+export async function signInAndActivateOrg(email: string, password: string): Promise<{ cookie: string }> {
+  const auth = await getAuth()
+
+  // Step 1: sign in to get session token
+  const signInResponse = await auth.api.signInEmail({
+    body: { email, password },
+    asResponse: true,
+  })
+  const signInCookie = signInResponse.headers.get('set-cookie') ?? ''
+
+  // Step 2: look up user + org from DB
+  const owner = createOwnerClient()
+  let orgId = ''
+  try {
+    const userRows = (await owner.db.execute(
+      sql`SELECT id FROM "user" WHERE email = ${email}`,
+    )) as unknown as { id: string }[]
+    const userId = userRows[0]?.id ?? ''
+    if (userId) {
+      const memberRows = (await owner.db.execute(
+        sql`SELECT organization_id FROM "member" WHERE user_id = ${userId} LIMIT 1`,
+      )) as unknown as { organization_id: string }[]
+      orgId = memberRows[0]?.organization_id ?? ''
+    }
+  } finally {
+    await owner.end()
+  }
+
+  if (!orgId) return { cookie: signInCookie }
+
+  // Step 3: call setActiveOrganization to set activeOrganizationId on the session
+  const activateResponse = await auth.api.setActiveOrganization({
+    body: { organizationId: orgId },
+    headers: { cookie: signInCookie },
+    asResponse: true,
+  })
+  // The response sets a new cookie with the updated session
+  const activateCookie = activateResponse.headers.get('set-cookie') ?? signInCookie
+  return { cookie: activateCookie }
+}
