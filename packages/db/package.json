@@ -6,7 +6,8 @@
   "main": "src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./schema/index": "./src/schema/index.ts"
+    "./schema/index": "./src/schema/index.ts",
+    "./schema/auth": "./src/schema/auth.ts"
   },
   "scripts": {
     "migrate": "tsx src/migrate.ts",

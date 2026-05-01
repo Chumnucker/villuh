@@ -3,7 +3,17 @@ import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import * as schema from '@villuh/db/schema/index'
 import { sql } from 'drizzle-orm'
-import { afterAll, beforeAll } from 'vitest'
+// afterAll and beforeAll are re-exported from vitest for use in test files
+export { afterAll, beforeAll } from 'vitest'
+
+// auth is imported lazily inside helpers to support vi.mock('../lib/email.js') in tests:
+// vi.mock is hoisted but setupFiles run first, so top-level auth import would capture
+// real email functions before the mock can intercept. Lazy import ensures the mock
+// is applied before auth's first use.
+async function getAuth() {
+  const { auth } = await import('../auth.js')
+  return auth
+}
 
 // Owner client for seeding + assertions (bypasses RLS)
 export function createOwnerClient() {
@@ -33,6 +43,47 @@ export async function withTestTenant<T>(
     await tx.execute(sql`SELECT set_config('app.current_user_id', ${actorId}, TRUE)`)
     return fn(tx)
   })
+}
+
+/**
+ * Sign up a test user via Better Auth API (auto-creates org via databaseHooks).
+ * Returns the created user + their auth session cookie header.
+ * Caller must clearTestUsers() in afterAll.
+ */
+export async function signUpTestUser(email: string, password: string, name: string) {
+  const auth = await getAuth()
+  const response = await auth.api.signUpEmail({
+    body: { email, password, name },
+    asResponse: true,
+  })
+  const cookie = response.headers.get('set-cookie') ?? ''
+  const json = await response.json() as { user: { id: string; email: string; emailVerified: boolean } }
+  return { user: json.user, cookie }
+}
+
+/**
+ * Bypass email verification in tests — flip emailVerified=true via owner DB connection.
+ */
+export async function markUserEmailVerified(userId: string) {
+  const owner = createOwnerClient()
+  try {
+    await owner.db.execute(sql`UPDATE "user" SET email_verified = TRUE WHERE id = ${userId}`)
+  } finally {
+    await owner.end()
+  }
+}
+
+/**
+ * Sign in an existing (verified) user. Returns the session cookie.
+ */
+export async function signInTestUser(email: string, password: string) {
+  const auth = await getAuth()
+  const response = await auth.api.signInEmail({
+    body: { email, password },
+    asResponse: true,
+  })
+  const cookie = response.headers.get('set-cookie') ?? ''
+  return { cookie }
 }
 
 // Test data cleanup helpers — Plan 02+ will populate these as auth tables exist
