@@ -1,14 +1,16 @@
 import { createMiddleware } from 'hono/factory'
+import { auth } from '../auth.js'
 
-// Phase 1 stub — full Better Auth implementation deferred to Phase 2.
-// These type definitions are the permanent shape; Phase 2 populates the values.
-type Variables = {
-  user: { id: string; landlordId: string } | null
-  session: { id: string } | null
+type Session = typeof auth.$Infer.Session
+
+export type AuthVariables = {
+  user: Session['user'] | null
+  session: Session['session'] | null
 }
 
-export const authMiddleware = createMiddleware<{ Variables: Variables }>(async (c, next) => {
-  c.set('user', null)
-  c.set('session', null)
+export const authMiddleware = createMiddleware<{ Variables: AuthVariables }>(async (c, next) => {
+  const session = await auth.api.getSession({ headers: c.req.raw.headers })
+  c.set('user', session?.user ?? null)
+  c.set('session', session?.session ?? null)
   await next()
 })
