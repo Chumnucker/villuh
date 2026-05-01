@@ -6,6 +6,49 @@ import { sql } from 'drizzle-orm'
 // afterAll and beforeAll are re-exported from vitest for use in test files
 export { afterAll, beforeAll } from 'vitest'
 
+// Lazy app import to avoid circular dependency issues
+async function getApp() {
+  const { default: app } = await import('../app.js')
+  return app
+}
+
+/**
+ * Thin wrapper around the Hono app's fetch() — no real HTTP, all in-process.
+ * Callers pass a relative path (e.g. '/api/audit-log?page=2&limit=1') and standard RequestInit.
+ */
+export async function fetchApi(path: string, init: RequestInit = {}): Promise<Response> {
+  const url = `http://localhost${path}`
+  const req = new Request(url, init)
+  const app = await getApp()
+  return app.fetch(req)
+}
+
+/** Look up a user's ID by email from the owner DB (bypasses RLS). */
+export async function getCurrentUserId(email: string): Promise<string> {
+  const owner = createOwnerClient()
+  try {
+    const rows = await owner.db.execute(
+      sql`SELECT id FROM "user" WHERE email = ${email}`
+    ) as unknown as { id: string }[]
+    return rows[0]?.id ?? ''
+  } finally {
+    await owner.end()
+  }
+}
+
+/** Look up the org ID for a given user (first membership row). */
+export async function getOrgIdForUser(userId: string): Promise<string> {
+  const owner = createOwnerClient()
+  try {
+    const rows = await owner.db.execute(
+      sql`SELECT organization_id FROM "member" WHERE user_id = ${userId} LIMIT 1`
+    ) as unknown as { organization_id: string }[]
+    return rows[0]?.organization_id ?? ''
+  } finally {
+    await owner.end()
+  }
+}
+
 // auth is imported lazily inside helpers to support vi.mock('../lib/email.js') in tests:
 // vi.mock is hoisted but setupFiles run first, so top-level auth import would capture
 // real email functions before the mock can intercept. Lazy import ensures the mock

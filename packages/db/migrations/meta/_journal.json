@@ -36,6 +36,13 @@
       "when": 1777606033244,
       "tag": "0004_plan_limits",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1777692433000,
+      "tag": "0005_audit_triggers",
+      "breakpoints": true
     }
   ]
 }
