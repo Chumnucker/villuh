@@ -106,7 +106,7 @@ function DropdownMenuCheckboxItem({
         data-slot="dropdown-menu-checkbox-item-indicator"
       >
         <DropdownMenuPrimitive.ItemIndicator>
-          <PlatformIcon icon="IconCheck" size={16} />
+          <PlatformIcon icon="IconCheckmark1" size={16} />
         </DropdownMenuPrimitive.ItemIndicator>
       </span>
       {children}
@@ -148,7 +148,7 @@ function DropdownMenuRadioItem({
         data-slot="dropdown-menu-radio-item-indicator"
       >
         <DropdownMenuPrimitive.ItemIndicator>
-          <PlatformIcon icon="IconCheck" size={16} />
+          <PlatformIcon icon="IconCheckmark1" size={16} />
         </DropdownMenuPrimitive.ItemIndicator>
       </span>
       {children}

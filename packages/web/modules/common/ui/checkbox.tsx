@@ -23,7 +23,7 @@ function Checkbox({
         data-slot="checkbox-indicator"
         className="grid place-content-center text-current transition-none [&>svg]:size-3.5"
       >
-        <PlatformIcon icon="IconCheck" size={14} />
+        <PlatformIcon icon="IconCheckmark1" size={14} />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   )

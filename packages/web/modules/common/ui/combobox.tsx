@@ -153,7 +153,7 @@ function ComboboxItem({
           <span className="pointer-events-none absolute right-2 flex size-4 items-center justify-center" />
         }
       >
-        <PlatformIcon icon="IconCheck" className="pointer-events-none" size={16} />
+        <PlatformIcon icon="IconCheckmark1" className="pointer-events-none" size={16} />
       </ComboboxPrimitive.ItemIndicator>
     </ComboboxPrimitive.Item>
   )
