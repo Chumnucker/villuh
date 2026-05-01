@@ -1,6 +1,36 @@
-import { organization } from '@villuh/db/schema/auth'
+import { organization, subscription } from '@villuh/db/schema/auth'
 import { eq } from 'drizzle-orm'
 import { withTenant } from './tenant.js'
+
+/**
+ * Stripe subscription record for an org, looked up from Better Auth's `subscription` table.
+ * Returns null if no subscription row exists yet (e.g. org is in trial_pending state).
+ */
+export interface OrgSubscription {
+  stripe_customer_id: string | null
+  stripe_subscription_id: string | null
+  stripe_subscription_item_id: string | null
+  status: string | null
+  plan: string | null
+}
+
+export async function getOrgSubscription(orgId: string): Promise<OrgSubscription | null> {
+  return withTenant(orgId, 'system', async (tx) => {
+    const rows = await tx
+      .select({
+        stripe_customer_id: subscription.stripeCustomerId,
+        stripe_subscription_id: subscription.stripeSubscriptionId,
+        stripe_subscription_item_id: subscription.stripeSubscriptionItemId,
+        status: subscription.status,
+        plan: subscription.plan,
+      })
+      .from(subscription)
+      .where(eq(subscription.referenceId, orgId))
+      .orderBy(subscription.periodEnd)
+      .limit(1)
+    return rows[0] ?? null
+  })
+}
 
 /**
  * Sync subscription_tier + subscription_status on the org row.
