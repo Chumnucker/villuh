@@ -4,7 +4,8 @@ import { villuhApp } from './landlords.js'
 
 export const rolePermissions = pgTable('role_permissions', {
   id: uuid('id').primaryKey().defaultRandom(),
-  landlordId: uuid('landlord_id').notNull(),
+  // landlord_id is text (not uuid) — Better Auth generates alphanumeric org IDs, not UUIDs
+  landlordId: text('landlord_id').notNull(),
   role: text('role').notNull(),       // 'owner' | 'manager' | 'viewer'
   action: text('action').notNull(),   // 'write' | 'financial' | 'communications' | 'admin'
   allowed: boolean('allowed').notNull().default(false),
@@ -16,7 +17,7 @@ export const rolePermissions = pgTable('role_permissions', {
     as: 'permissive',
     for: 'all',
     to: villuhApp,
-    using: sql`landlord_id = current_setting('app.current_landlord_id', true)::uuid`,
-    withCheck: sql`landlord_id = current_setting('app.current_landlord_id', true)::uuid`,
+    using: sql`landlord_id = current_setting('app.current_landlord_id', true)`,
+    withCheck: sql`landlord_id = current_setting('app.current_landlord_id', true)`,
   }),
 ]).enableRLS()

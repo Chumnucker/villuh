@@ -43,6 +43,20 @@
       "when": 1777606033245,
       "tag": "0005_subscription_item_id",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1777606033246,
+      "tag": "0006_fix_role_permissions_landlord_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1777606033247,
+      "tag": "0007_fix_audit_trigger_text_landlord_id",
+      "breakpoints": true
     }
   ]
 }

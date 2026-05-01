@@ -34,27 +34,13 @@ export const me = new Hono<{ Variables: AuthVariables }>().get(
       )) as unknown as { c: number }[]
       const member_count = memberCountRows[0]?.c ?? 0
 
-      // Phase 2 unit + property counts derived from onboarding_state (Plan 02-06 creates this table).
+      // Phase 2 unit + property counts — onboarding_state table ships in Plan 02-06.
+      // TODO(Plan 02-06): replace with real query against onboarding_state once the table exists.
+      // NOTE: Querying a non-existent table inside a Postgres transaction aborts the entire
+      // transaction ("current transaction is aborted"), so we skip the query for now.
       // TODO(Phase 3): replace with real COUNT(*) from properties + units tables.
       let property_count = 0
       let unit_count = 0
-      try {
-        const onboardingRows = (await tx.execute(sql`
-          SELECT property_data IS NOT NULL AS has_property,
-                 unit_data IS NOT NULL AS has_unit
-          FROM onboarding_state
-          WHERE landlord_id = ${landlordId}
-          LIMIT 1
-        `)) as unknown as { has_property: boolean; has_unit: boolean }[]
-        if (onboardingRows[0]) {
-          property_count = onboardingRows[0].has_property ? 1 : 0
-          unit_count = onboardingRows[0].has_unit ? 1 : 0
-        }
-      } catch {
-        // onboarding_state may not exist if Plan 02-06 hasn't shipped yet — fall back to 0.
-        property_count = 0
-        unit_count = 0
-      }
 
       // Lookup limits from plan_limits — tier 'trial' uses 'pro' limits per D-19 (full Pro access)
       const lookupTier = tier === 'trial' ? 'pro' : tier
