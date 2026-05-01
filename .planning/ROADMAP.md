@@ -61,7 +61,30 @@ Plans:
   3. New landlord is guided through a property → unit → tenant setup wizard on first login before reaching the main app
   4. Landlord is on a subscription tier; creating properties beyond the plan limit is hard-blocked with a prompt to upgrade
   5. Landlord can view invoices, change plan, and manage connected accounts (Stripe Connect, DocuSign) from the Settings page; a personal audit log of account activity is visible in settings
-**Plans**: TBD
+**Plans**: 8 plans (02-01 through 02-08)
+
+**Wave dependency notes:**
+- **Wave 1** — 02-01: Test infrastructure + Better Auth/role_permissions/plan_limits schema + [BLOCKING] schema push (unblocks everything)
+- **Wave 2** *(blocked on 02-01)* — 02-02: Better Auth server config + Resend email + auth middleware + /api/auth/* mount
+- **Wave 3** *(blocked on 02-02)* — 02-03: Auth pages (login/register/forgot/reset), 02-04: Org auto-create + role permissions + team API + /api/me, 02-05: Stripe billing routes (trial-start, setup-intent, subscribe, upgrade, invoices, sync-units) — all parallel
+- **Wave 4** *(blocked on 02-03, 02-04, 02-05)* — 02-06: checkPlanLimit + subscriptionExpiredGate + Next.js middleware + 4-step wizard
+- **Wave 5** *(blocked on 02-06)* — 02-07: Settings layout + Account + Team + Audit Log pages, 02-08: Settings Billing page + Integrations page (Stripe Connect OAuth + DocuSign stub) + Usage Warning Banner + Upgrade Modal — parallel
+
+**Cross-cutting constraints:**
+- BETTER_AUTH_SECRET, GOOGLE_CLIENT_ID/SECRET, RESEND_API_KEY, STRIPE_SECRET_KEY/WEBHOOK_SECRET/STARTER/GROWTH/PRO_PRICE_ID, STRIPE_CLIENT_ID env vars must be configured before Plan 02 ships
+- Better Auth Drizzle adapter MUST point at DATABASE_APP_URL (villuh_app role) — never DATABASE_URL (Pitfall 1)
+- No global JSON body parser in Hono — Stripe webhook needs raw body (Pitfall 4)
+- Stripe trial subscription created via direct stripeClient.subscriptions.create (NOT authClient.subscription.upgrade — Pitfall 5)
+- session.activeOrganizationId is the landlord_id for RLS — never user.id (Pitfall 7)
+Plans:
+- [ ] 02-01-PLAN.md — Test infrastructure + Better Auth/role_permissions/plan_limits schema + migrations + [BLOCKING] schema push
+- [ ] 02-02-PLAN.md — Better Auth server config + Resend email senders + authMiddleware + /api/auth/* mount
+- [ ] 02-03-PLAN.md — Auth client + 4 auth pages (login, register, forgot-password, reset-password) per UI-SPEC Screens 1-4
+- [ ] 02-04-PLAN.md — Org auto-create hook + configurable role_permissions middleware + team management API + /api/me
+- [ ] 02-05-PLAN.md — Stripe billing routes (trial-start, setup-intent, subscribe, upgrade, invoices, payment-method, sync-units)
+- [ ] 02-06-PLAN.md — checkPlanLimit + subscriptionExpiredGate + Next.js routing middleware + 4-step setup wizard
+- [ ] 02-07-PLAN.md — Settings layout + Account + Team + Audit Log sub-pages
+- [ ] 02-08-PLAN.md — Settings Billing page (Stripe Elements) + Integrations page (Stripe Connect OAuth + DocuSign stub) + Usage Warning Banner + Upgrade Modal + accept-invitation page
 **UI hint**: yes
 
 ### Phase 3: Properties & Units
