@@ -18,6 +18,12 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO villuh_ap
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
   GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO villuh_app;
 
+-- Phase 2 tables (user, session, account, verification, organization, member, invitation, subscription, role_permissions, plan_limits) inherit privileges via ALTER DEFAULT PRIVILEGES from Phase 1 bootstrap.
+
+-- Re-grant for any tables created since Phase 1 bootstrap
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO villuh_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO villuh_app;
+
 -- After running this script, set environment variables:
 --   DATABASE_URL=postgres://owner_user:password@localhost:5432/villuh
 --   DATABASE_APP_URL=postgres://villuh_app:villuh_app_password_changeme@localhost:5432/villuh
