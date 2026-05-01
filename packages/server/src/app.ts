@@ -5,6 +5,8 @@ import { auth } from './auth.js'
 import { me } from './routes/me.js'
 import { team } from './routes/team.js'
 import { rolePerms } from './routes/role-permissions.js'
+import { account } from './routes/account.js'
+import { auditLog } from './routes/audit-log.js'
 import { trialStart } from './routes/billing/trial-start.js'
 import { setupIntent } from './routes/billing/setup-intent.js'
 import { subscribe } from './routes/billing/subscribe.js'
@@ -26,11 +28,15 @@ app.use('/api/*', cors({
 // /api/auth/* catch-all so it wins the route match.
 // Better Auth's internal /api/auth/stripe/webhook also works; the alias here ensures
 // the Stripe Dashboard webhook config matches CLAUDE.md exactly.
+//
+// Route ordering: specific routes BEFORE auth.handler catch-all at /api/auth/*.
 const routes = app
   .route('/api', health)
   .route('/api/me', me)
   .route('/api/team', team)
   .route('/api/role-permissions', rolePerms)
+  .route('/api/account', account)
+  .route('/api/audit-log', auditLog)
   .route('/api/billing/trial-start', trialStart)
   .route('/api/billing/setup-intent', setupIntent)
   .route('/api/billing/subscribe', subscribe)

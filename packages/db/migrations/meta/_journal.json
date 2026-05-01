@@ -57,6 +57,20 @@
       "when": 1777606033247,
       "tag": "0007_fix_audit_trigger_text_landlord_id",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1777692433003,
+      "tag": "0008_fix_audit_trigger_landlord_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1777692433004,
+      "tag": "0009_fix_audit_log_landlord_id_to_text",
+      "breakpoints": true
     }
   ]
 }
