@@ -2,6 +2,9 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { health } from './routes/health.js'
 import { auth } from './auth.js'
+import { me } from './routes/me.js'
+import { team } from './routes/team.js'
+import { rolePerms } from './routes/role-permissions.js'
 
 const app = new Hono()
 
@@ -18,6 +21,9 @@ app.use('/api/*', cors({
 // the Stripe Dashboard webhook config matches CLAUDE.md exactly.
 const routes = app
   .route('/api', health)
+  .route('/api/me', me)
+  .route('/api/team', team)
+  .route('/api/role-permissions', rolePerms)
   .on('POST', '/webhooks/stripe/subscriptions', (c) => auth.handler(c.req.raw))
   .on(['POST', 'GET'], '/api/auth/*', (c) => auth.handler(c.req.raw))
 
