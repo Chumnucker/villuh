@@ -15,6 +15,7 @@ import {
   setOrgSubscriptionStatus,
   handlePaymentFailed,
 } from './lib/billing.js'
+import { seedDefaultPermissions } from './lib/permissions.js'
 
 export const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2026-04-22.dahlia',
@@ -97,6 +98,11 @@ export const auth = betterAuth({
           data.organization.name,
           data.role
         )
+      },
+      organizationHooks: {
+        afterCreateOrganization: async ({ organization }) => {
+          await seedDefaultPermissions(organization.id)
+        },
       },
     }),
     stripe({
