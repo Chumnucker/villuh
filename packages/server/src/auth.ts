@@ -20,11 +20,22 @@ export const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2026-04-22.dahlia',
 })
 
-export const auth = betterAuth({
+// Configure Better Auth to use UUID v4 IDs so all generated IDs are compatible with
+// Postgres UUID-typed columns (audit_log.landlord_id, etc.) and RLS ::uuid casts.
+// The advanced.generateId option is supported at runtime in Better Auth 1.6.9 but not
+// yet in the TypeScript types — we use a type-safe wrapper object to pass it through.
+const betterAuthConfig = {
   baseURL: process.env.BETTER_AUTH_URL!,
   secret: process.env.BETTER_AUTH_SECRET!,
   database: drizzleAdapter(db, { provider: 'pg', schema: authSchema }),
   trustedOrigins: [process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'],
+  advanced: {} as Record<string, unknown>,
+}
+// Inject generateId at runtime (type-safe: betterAuthConfig.advanced is Record<string,unknown>)
+betterAuthConfig.advanced.generateId = () => crypto.randomUUID()
+
+export const auth = betterAuth({
+  ...betterAuthConfig,
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
