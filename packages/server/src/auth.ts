@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { organization } from 'better-auth/plugins'
+import { organization, createAccessControl } from 'better-auth/plugins'
 import { stripe } from '@better-auth/stripe'
 import { db } from '@villuh/db'
 import * as authSchema from '@villuh/db/schema/auth'
@@ -15,9 +15,63 @@ import {
   setOrgSubscriptionStatus,
   handlePaymentFailed,
 } from './lib/billing.js'
+import { seedDefaultPermissions } from './lib/permissions.js'
 
 export const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2026-04-22.dahlia',
+})
+
+// Custom role definitions for Villuh's org role model (D-09).
+// Better Auth's org plugin validates invitation roles against these — without registration,
+// createInvitation rejects roles it doesn't know.
+// IMPORTANT: When `roles` is configured, Better Auth replaces defaultRoles entirely.
+// We must include owner/admin/member definitions alongside our custom roles or
+// Better Auth's access-control checks (createInvitation, etc.) will fail for built-in roles.
+const orgAccessControl = createAccessControl({
+  organization: ['update', 'delete'],
+  member: ['create', 'update', 'delete'],
+  invitation: ['create', 'cancel'],
+  team: ['create', 'update', 'delete'],
+  ac: ['create', 'read', 'update', 'delete'],
+})
+// Built-in roles (replicate defaultRoles to retain their permissions when custom roles are set)
+const ownerRole = orgAccessControl.newRole({
+  organization: ['update', 'delete'],
+  member: ['create', 'update', 'delete'],
+  invitation: ['create', 'cancel'],
+  team: ['create', 'update', 'delete'],
+  ac: ['create', 'read', 'update', 'delete'],
+})
+const adminRole = orgAccessControl.newRole({
+  organization: ['update'],
+  invitation: ['create', 'cancel'],
+  member: ['create', 'update', 'delete'],
+  team: ['create', 'update', 'delete'],
+  ac: ['create', 'read', 'update', 'delete'],
+})
+const memberRole = orgAccessControl.newRole({
+  organization: [],
+  member: [],
+  invitation: [],
+  team: [],
+  ac: ['read'],
+})
+// Villuh custom roles (D-09)
+// manager: can create/manage members and invitations, cannot delete org or configure access control
+const managerRole = orgAccessControl.newRole({
+  organization: [],
+  member: ['create', 'update', 'delete'],
+  invitation: ['create', 'cancel'],
+  team: ['create', 'update', 'delete'],
+  ac: ['read'],
+})
+// viewer: read-only (no writes to org entities)
+const viewerRole = orgAccessControl.newRole({
+  organization: [],
+  member: [],
+  invitation: [],
+  team: [],
+  ac: ['read'],
 })
 
 export const auth = betterAuth({
@@ -76,6 +130,15 @@ export const auth = betterAuth({
   },
   plugins: [
     organization({
+      // Register all roles (built-in + custom) so Better Auth access-control checks work correctly.
+      // When roles is set, Better Auth replaces defaultRoles — we must include owner/admin/member.
+      roles: {
+        owner: ownerRole,
+        admin: adminRole,
+        member: memberRole,
+        manager: managerRole,
+        viewer: viewerRole,
+      },
       schema: {
         organization: {
           additionalFields: {
@@ -97,6 +160,11 @@ export const auth = betterAuth({
           data.organization.name,
           data.role
         )
+      },
+      organizationHooks: {
+        afterCreateOrganization: async ({ organization }) => {
+          await seedDefaultPermissions(organization.id)
+        },
       },
     }),
     stripe({

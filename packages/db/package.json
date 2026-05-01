@@ -7,7 +7,9 @@
   "exports": {
     ".": "./src/index.ts",
     "./schema/index": "./src/schema/index.ts",
-    "./schema/auth": "./src/schema/auth.ts"
+    "./schema/auth": "./src/schema/auth.ts",
+    "./schema/role-permissions": "./src/schema/role-permissions.ts",
+    "./schema/plan-limits": "./src/schema/plan-limits.ts"
   },
   "scripts": {
     "migrate": "tsx src/migrate.ts",
