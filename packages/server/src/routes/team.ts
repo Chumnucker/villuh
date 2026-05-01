@@ -93,11 +93,12 @@ export const team = new Hono<{ Variables: AuthVariables }>()
       })
 
       // Better Auth invitation creation — fires sendInvitationEmail callback (Plan 02 wired Resend)
-      // Villuh roles (manager, viewer) are custom labels stored on member.role; Better Auth org plugin
-      // accepts "owner" | "member" | "admin" at the API level but stores whatever string we pass.
-      // Cast to satisfy Better Auth's overloaded type definition.
-      const invitation = await auth.api.createInvitation({
-        body: { email, role: role as 'member' | 'admin' | 'owner', organizationId: landlordId },
+      // owner is a built-in role; manager + viewer are registered custom roles in auth.ts.
+      // TypeScript narrows the union to custom-roles-only when custom roles are configured;
+      // cast via unknown to satisfy the overloaded type signature at call site.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const invitation = await (auth.api.createInvitation as any)({
+        body: { email, role, organizationId: landlordId },
         headers: c.req.raw.headers,
       })
       return c.json({ invitation })
