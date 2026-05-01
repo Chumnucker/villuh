@@ -41,6 +41,7 @@ next-env.d.ts
 # Package build artifacts
 packages/*/dist/
 packages/*/.next/
+packages/*/node_modules/
 
 # Environment files
 .env

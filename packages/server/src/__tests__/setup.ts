@@ -170,50 +170,6 @@ export async function clearTestUsers() {
   }
 }
 
-// ─── Plan 02-04 helpers ──────────────────────────────────────────────────────
-
-/**
- * Fetch against the Hono app directly (no HTTP server needed).
- * Useful for integration tests hitting /api/* routes.
- */
-export async function fetchApi(path: string, init: RequestInit = {}): Promise<Response> {
-  // Lazy import to allow vi.mock to intercept email.ts before app loads
-  const { default: app } = await import('../app.js')
-  const url = `http://localhost${path}`
-  const req = new Request(url, init)
-  return app.fetch(req)
-}
-
-/**
- * Look up a user's id by email (owner DB connection — bypasses RLS).
- */
-export async function getCurrentUserId(email: string): Promise<string> {
-  const owner = createOwnerClient()
-  try {
-    const rows = (await owner.db.execute(
-      sql`SELECT id FROM "user" WHERE email = ${email}`,
-    )) as unknown as { id: string }[]
-    return rows[0]?.id ?? ''
-  } finally {
-    await owner.end()
-  }
-}
-
-/**
- * Look up the organization ID for a given user (owner DB connection).
- */
-export async function getOrgIdForUser(userId: string): Promise<string> {
-  const owner = createOwnerClient()
-  try {
-    const rows = (await owner.db.execute(
-      sql`SELECT organization_id FROM "member" WHERE user_id = ${userId} LIMIT 1`,
-    )) as unknown as { organization_id: string }[]
-    return rows[0]?.organization_id ?? ''
-  } finally {
-    await owner.end()
-  }
-}
-
 /**
  * Sign in and activate the user's organization in the session.
  * Better Auth session.activeOrganizationId is null until setActiveOrganization is called.
