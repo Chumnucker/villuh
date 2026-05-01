@@ -1,7 +1,8 @@
 ---
 phase: 2
 slug: auth-billing
-status: draft
+status: approved
+reviewed_at: 2026-04-30
 shadcn_initialized: true
 preset: "radix-luma / zinc / cssVariables"
 created: 2026-04-30
