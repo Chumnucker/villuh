@@ -902,22 +902,22 @@ app.get("/api/billing/stripe-connect/callback", authMiddleware, async (c) => {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Organization creation timing after signup**
    - What we know: Better Auth creates user on signup. Org must be created separately. Better Auth invites are org-scoped (org must exist first).
    - What's unclear: Should org be auto-created server-side in a `afterCreateUser` hook, or client-side after first login? If server-side, what is the initial org name?
-   - Recommendation: Auto-create org server-side in `afterCreateUser` hook using user's name as org name. Set as active immediately. This ensures org.id = landlord_id is available before the wizard.
+   - **RESOLVED:** Auto-create org server-side in `databaseHooks.user.create.after` hook using user's name as org name. Implemented in Plan 02-02 Task 2 (Step 2.2). The org.id = landlord_id is available immediately after signup; `setActive` is called client-side after sign-in (Plan 02-03/02-04).
 
 2. **`setup_completed` in Next.js middleware — performance vs correctness**
    - What we know: The field lives on the org record (Better Auth `additionalFields`). Middleware needs it for routing guard.
    - What's unclear: Best mechanism to read it without adding 50ms to every request. Could encode in a signed cookie after setup completion.
-   - Recommendation: For Phase 2, do the DB call. Add a signed cookie optimization in Phase 3 if latency is measurable.
+   - **RESOLVED:** For Phase 2, do the DB call via `auth.api.getOrganization()` in middleware (Plan 02-06). Cookie/claim optimization deferred to a later phase if latency is measurable. Acceptable trade-off documented in Pitfall 7.
 
 3. **Stripe Webhook endpoint — Better Auth's route vs separate `/webhooks/stripe/subscriptions`**
    - What we know: Better Auth Stripe plugin registers at `/api/auth/stripe/webhook`. CLAUDE.md specifies `/webhooks/stripe/subscriptions`.
    - What's unclear: Whether to use Better Auth's default path or configure it to match CLAUDE.md's spec.
-   - Recommendation: Configure Better Auth's webhook to be at `/webhooks/stripe/subscriptions` using the `schema` or path override option, OR update CLAUDE.md's convention to use Better Auth's default path. The Stripe Connect webhook stays separate at `/webhooks/stripe/connect`. Research the Better Auth Stripe plugin path configuration option before committing to either.
+   - **RESOLVED:** Follow CLAUDE.md convention. Configure Hono alias at `/webhooks/stripe/subscriptions` → `auth.handler`. Better Auth's internal `/api/auth/stripe/webhook` endpoint also works but the canonical operator URL is `/webhooks/stripe/subscriptions` per CLAUDE.md. Implemented in Plan 02-02 Task 3 (Step 3.1) by adding an explicit `app.on('POST', '/webhooks/stripe/subscriptions', (c) => auth.handler(c.req.raw))` route BEFORE the catch-all `/api/auth/*` mount. The Stripe Connect webhook stays separate at `/webhooks/stripe/connect` (Phase 5).
 
 ---
 

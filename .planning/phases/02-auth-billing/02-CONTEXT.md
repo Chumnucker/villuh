@@ -171,6 +171,7 @@ Landlords can create accounts, invite team members, and are on a billing plan wi
 - Operator admin panel for viewing/editing plan_limits table — Phase 8 scope.
 - Stripe Customer Portal (landlord invoice/card management via Stripe) — decided against; using fully custom UI instead.
 - Grace period for payment failure (N-day window before write block) — deferred. Phase 2 hard-blocks writes on subscription expired.
+- Notification preferences (/settings/notifications) — included in REQUIREMENTS.md SETT-01. Deferred to Phase 7 alongside COMM-09 (communications infrastructure). Phase 2 Settings sidebar ships without a Notifications sub-route.
 
 </deferred>
 

@@ -61,14 +61,15 @@ Plans:
   3. New landlord is guided through a property → unit → tenant setup wizard on first login before reaching the main app
   4. Landlord is on a subscription tier; creating properties beyond the plan limit is hard-blocked with a prompt to upgrade
   5. Landlord can view invoices, change plan, and manage connected accounts (Stripe Connect, DocuSign) from the Settings page; a personal audit log of account activity is visible in settings
-**Plans**: 8 plans (02-01 through 02-08)
+**Plans**: 12 plans (02-01 through 02-12)
 
 **Wave dependency notes:**
 - **Wave 1** — 02-01: Test infrastructure + Better Auth/role_permissions/plan_limits schema + [BLOCKING] schema push (unblocks everything)
 - **Wave 2** *(blocked on 02-01)* — 02-02: Better Auth server config + Resend email + auth middleware + /api/auth/* mount
-- **Wave 3** *(blocked on 02-02)* — 02-03: Auth pages (login/register/forgot/reset), 02-04: Org auto-create + role permissions + team API + /api/me, 02-05: Stripe billing routes (trial-start, setup-intent, subscribe, upgrade, invoices, sync-units) — all parallel
-- **Wave 4** *(blocked on 02-03, 02-04, 02-05)* — 02-06: checkPlanLimit + subscriptionExpiredGate + Next.js middleware + 4-step wizard
-- **Wave 5** *(blocked on 02-06)* — 02-07: Settings layout + Account + Team + Audit Log pages, 02-08: Settings Billing page + Integrations page (Stripe Connect OAuth + DocuSign stub) + Usage Warning Banner + Upgrade Modal — parallel
+- **Wave 3** *(blocked on 02-02)* — 02-03: Auth pages (login/register/forgot/reset), 02-04: Org auto-create + role permissions + team API + /api/me, 02-05: Stripe billing routes (trial-start, setup-intent, subscribe, upgrade, invoices, sync-units), 02-07: server account + audit-log routes + tests — all parallel
+- **Wave 4** *(blocked on Wave 3)* — 02-06 *(blocked on Wave 3)*: plan limits + wizard (checkPlanLimit + subscriptionExpiredGate + Next.js middleware + 4-step wizard), 02-08 *(blocked on 02-04, 02-05)*: server Stripe Connect + DocuSign routes (Stripe Connect OAuth callback + DocuSign Connect stub routes + AUTH-06 tests)
+- **Wave 5** *(blocked on 02-06 + 02-07 + 02-08)* — 02-09: settings layout + Account + Audit Log pages, 02-10: Team page (UI), 02-11: Billing settings page (Stripe Elements) — 3 parallel
+- **Wave 6** *(blocked on 02-09)* — 02-12: persistent UI (banner + upgrade modal) + (app) layout edit + accept-invitation + Integrations page (must follow 02-09 because both touch (app)/layout.tsx)
 
 **Cross-cutting constraints:**
 - BETTER_AUTH_SECRET, GOOGLE_CLIENT_ID/SECRET, RESEND_API_KEY, STRIPE_SECRET_KEY/WEBHOOK_SECRET/STARTER/GROWTH/PRO_PRICE_ID, STRIPE_CLIENT_ID env vars must be configured before Plan 02 ships
@@ -83,8 +84,12 @@ Plans:
 - [ ] 02-04-PLAN.md — Org auto-create hook + configurable role_permissions middleware + team management API + /api/me
 - [ ] 02-05-PLAN.md — Stripe billing routes (trial-start, setup-intent, subscribe, upgrade, invoices, payment-method, sync-units)
 - [ ] 02-06-PLAN.md — checkPlanLimit + subscriptionExpiredGate + Next.js routing middleware + 4-step setup wizard
-- [ ] 02-07-PLAN.md — Settings layout + Account + Team + Audit Log sub-pages
-- [ ] 02-08-PLAN.md — Settings Billing page (Stripe Elements) + Integrations page (Stripe Connect OAuth + DocuSign stub) + Usage Warning Banner + Upgrade Modal + accept-invitation page
+- [ ] 02-07-PLAN.md — Server: /api/account (profile + password) + /api/audit-log routes + audit.test.ts SETT-02 tests
+- [ ] 02-08-PLAN.md — Server: Stripe Connect OAuth callback + DocuSign Connect stub routes + AUTH-06 tests
+- [ ] 02-09-PLAN.md — Web: (app) layout shell + Settings layout + sidebar + Account page + Audit Log page
+- [ ] 02-10-PLAN.md — Web: Team settings page (member list + invite form + role permissions editor + remove dialog)
+- [ ] 02-11-PLAN.md — Web: Billing settings page (usage summary + plan selector + Stripe Elements payment method + invoice list)
+- [ ] 02-12-PLAN.md — Web: Usage Warning Banner + Upgrade Modal + (app) layout edit + accept-invitation page + Integrations page (Stripe Connect + DocuSign cards)
 **UI hint**: yes
 
 ### Phase 3: Properties & Units
@@ -171,7 +176,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Infrastructure Foundation | 6/6 | Complete | All plans done 2026-04-29–30 |
-| 2. Auth & Billing | 0/TBD | Not started | - |
+| 2. Auth & Billing | 0/12 | Not started | - |
 | 3. Properties & Units | 0/TBD | Not started | - |
 | 4. Tenants, Leases & Documents | 0/TBD | Not started | - |
 | 5. Onboarding Flow Engine | 0/TBD | Not started | - |
