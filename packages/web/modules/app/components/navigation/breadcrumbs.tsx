@@ -5,6 +5,7 @@ import { PlatformIcon } from "@/modules/common/ui/icon"
 import { Skeleton } from "@/modules/common/ui/skeleton"
 import clsx from "clsx"
 import Link from "next/link"
+import type { Route } from "next"
 import { usePathname } from "next/navigation"
 import { useMemo } from "react"
 import { useLayout } from "../../providers/layout-provider"
@@ -103,7 +104,7 @@ export function NavigationBreadcrumbs({
               <Skeleton className="h-4 w-32" />
             ) : (
               <Link
-                href={crumb.href}
+                href={crumb.href as Route}
                 className={clsx(
                   "max-w-32 truncate duration-200 hover:opacity-50",
                   {

@@ -1,7 +1,9 @@
+import { sql } from 'drizzle-orm'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { organization, createAccessControl } from 'better-auth/plugins'
 import { stripe } from '@better-auth/stripe'
+import { dash } from '@better-auth/infra'
 import { db } from '@villuh/db'
 import * as authSchema from '@villuh/db/schema/auth'
 import Stripe from 'stripe'
@@ -78,7 +80,11 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL!,
   secret: process.env.BETTER_AUTH_SECRET!,
   database: drizzleAdapter(db, { provider: 'pg', schema: authSchema }),
-  trustedOrigins: [process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'],
+  trustedOrigins: (
+    process.env.CORS_ALLOWED_ORIGINS ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    'http://localhost:3000,http://localhost:3002'
+  ).split(',').map(s => s.trim()).filter(Boolean),
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
@@ -99,6 +105,28 @@ export const auth = betterAuth({
     },
   },
   databaseHooks: {
+    session: {
+      create: {
+        after: async (session) => {
+          // Auto-activate the user's first org on every new session so /api/me works immediately.
+          // Better Auth doesn't set activeOrganizationId on sign-in — we do it here.
+          if ((session as { activeOrganizationId?: string }).activeOrganizationId) return
+          try {
+            const rows = await db.execute(
+              sql`SELECT organization_id FROM "member" WHERE user_id = ${session.userId} LIMIT 1`
+            ) as unknown as { organization_id: string }[]
+            const orgId = rows[0]?.organization_id
+            if (orgId) {
+              await db.execute(
+                sql`UPDATE "session" SET active_organization_id = ${orgId} WHERE id = ${session.id}`
+              )
+            }
+          } catch (err) {
+            console.error('[auth] Failed to auto-set active org on session', session.id, err)
+          }
+        },
+      },
+    },
     user: {
       create: {
         after: async (user) => {
@@ -129,6 +157,7 @@ export const auth = betterAuth({
     },
   },
   plugins: [
+    dash(),
     organization({
       // Register all roles (built-in + custom) so Better Auth access-control checks work correctly.
       // When roles is set, Better Auth replaces defaultRoles — we must include owner/admin/member.

@@ -80,12 +80,12 @@ function Button({
   )
 }
 
-function LinkButton({
+function LinkButton<T extends string>({
   variant,
   size,
   className,
   ...props
-}: LinkProps & ButtonVariants & React.ComponentProps<"a">) {
+}: LinkProps<T> & ButtonVariants & Omit<React.ComponentProps<"a">, "href">) {
   return (
     <Link
       rel="noopener noreferrer"

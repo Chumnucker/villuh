@@ -6,6 +6,7 @@ import { Button, LinkButton } from "@/modules/common/ui/button"
 import { Input, PasswordInput } from "@/modules/common/ui/input"
 import { Field, FieldLabel } from "@/modules/common/ui/field"
 import { authClient } from "@/lib/auth-client"
+import { ROUTES } from "@/app/routes"
 import { toast } from "sonner"
 import { GoogleButton } from "./google-button"
 import { AuthCard } from "./auth-card"
@@ -22,7 +23,7 @@ export function LoginForm() {
       footer={
         <p className="text-sm text-muted-foreground">
           Don&apos;t have an account?{" "}
-          <LinkButton href="/register" variant="link">Sign up</LinkButton>
+          <LinkButton href={ROUTES.auth.register} variant="link">Sign up</LinkButton>
         </p>
       }
     >
@@ -37,7 +38,7 @@ export function LoginForm() {
             toast.error("Incorrect email or password. Please try again.")
             return
           }
-          router.push("/")
+          router.push(ROUTES.home)
         }}
       >
         <Field>
@@ -60,7 +61,7 @@ export function LoginForm() {
           />
           <div className="flex justify-end">
             <LinkButton
-              href="/forgot-password"
+              href={ROUTES.auth.forgotPassword}
               variant="link"
               className="h-auto px-0 text-xs"
             >

@@ -6,6 +6,7 @@ import { Button, LinkButton } from "@/modules/common/ui/button"
 import { PasswordInput } from "@/modules/common/ui/input"
 import { Field, FieldLabel, FieldError } from "@/modules/common/ui/field"
 import { authClient } from "@/lib/auth-client"
+import { ROUTES } from "@/app/routes"
 import { toast } from "sonner"
 import { AuthCard } from "./auth-card"
 
@@ -25,7 +26,7 @@ export function ResetPasswordForm() {
         title="Password updated"
         description="You can now sign in with your new password."
       >
-        <LinkButton href="/login" variant="default" className="w-full">
+        <LinkButton href={ROUTES.auth.login} variant="default" className="w-full">
           Sign in
         </LinkButton>
       </AuthCard>
@@ -38,7 +39,7 @@ export function ResetPasswordForm() {
         title="Link expired"
         description="This reset link has expired or already been used."
       >
-        <LinkButton href="/forgot-password" variant="link">
+        <LinkButton href={ROUTES.auth.forgotPassword} variant="link">
           Request a new one
         </LinkButton>
       </AuthCard>

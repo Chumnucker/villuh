@@ -5,6 +5,7 @@ import { Button, LinkButton } from "@/modules/common/ui/button"
 import { Input } from "@/modules/common/ui/input"
 import { Field, FieldLabel } from "@/modules/common/ui/field"
 import { authClient } from "@/lib/auth-client"
+import { ROUTES } from "@/app/routes"
 import { toast } from "sonner"
 import { AuthCard } from "./auth-card"
 
@@ -19,7 +20,7 @@ export function ForgotPasswordForm() {
         title="Reset link sent"
         description={`Check your inbox at ${email}. The link expires in 1 hour.`}
       >
-        <LinkButton href="/login" variant="link">← Back to sign in</LinkButton>
+        <LinkButton href={ROUTES.auth.login} variant="link">← Back to sign in</LinkButton>
       </AuthCard>
     )
   }
@@ -36,7 +37,7 @@ export function ForgotPasswordForm() {
           setLoading(true)
           const { error } = await authClient.requestPasswordReset({
             email,
-            redirectTo: `${window.location.origin}/reset-password`,
+            redirectTo: `${window.location.origin}${ROUTES.auth.resetPassword}`,
           })
           setLoading(false)
           if (error) {

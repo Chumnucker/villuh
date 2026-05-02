@@ -15,45 +15,32 @@ export const me = new Hono<{ Variables: AuthVariables }>().get(
     const user = c.get('user')!
 
     return withTenant(landlordId, userId, async (tx) => {
-      // Load org row (denormalized subscription_tier, subscription_status, setup_completed per D-23)
       const orgRows = await tx
         .select()
         .from(organization)
         .where(eq(organization.id, landlordId))
         .limit(1)
-      if (orgRows.length === 0) {
-        return c.json({ error: 'Organization not found' }, 404)
-      }
+      if (orgRows.length === 0) return c.json({ error: 'Organization not found' }, 404)
+
       const org = orgRows[0]
       const tier = (org.subscription_tier as string) ?? 'trial'
-      const status = (org.subscription_status as string) ?? 'trialing'
+      const status = (org.subscription_status as string) ?? 'trial_pending'
+
+      // Limits — tier 'trial' gets 'pro' limits per D-19
+      const lookupTier = tier === 'trial' ? 'pro' : tier
+      const limitRows = await tx.select().from(planLimits).where(eq(planLimits.tier, lookupTier))
+      const limits: Record<string, number> = {}
+      for (const r of limitRows) limits[r.resource] = r.limit
 
       // Member count
       const memberCountRows = (await tx.execute(
         sql`SELECT COUNT(*)::int AS c FROM "member" WHERE organization_id = ${landlordId}`,
       )) as unknown as { c: number }[]
-      const member_count = memberCountRows[0]?.c ?? 0
 
-      // Phase 2 unit + property counts — onboarding_state table ships in Plan 02-06.
-      // TODO(Plan 02-06): replace with real query against onboarding_state once the table exists.
-      // NOTE: Querying a non-existent table inside a Postgres transaction aborts the entire
-      // transaction ("current transaction is aborted"), so we skip the query for now.
-      // TODO(Phase 3): replace with real COUNT(*) from properties + units tables.
-      let property_count = 0
-      let unit_count = 0
+      // TODO(Phase 3): replace 0s with real COUNT(*) from properties + units tables
+      const counts = { units: 0, properties: 0, members: memberCountRows[0]?.c ?? 0 }
 
-      // Lookup limits from plan_limits — tier 'trial' uses 'pro' limits per D-19 (full Pro access)
-      const lookupTier = tier === 'trial' ? 'pro' : tier
-      const limitRows = await tx
-        .select()
-        .from(planLimits)
-        .where(eq(planLimits.tier, lookupTier))
-      const limitsMap: Record<string, number> = {}
-      for (const r of limitRows) {
-        limitsMap[r.resource] = r.limit
-      }
-
-      // Resolve user's role (member.role)
+      // Permissions
       const memberRows = (await tx.execute(
         sql`SELECT role FROM "member" WHERE organization_id = ${landlordId} AND user_id = ${userId} LIMIT 1`,
       )) as unknown as { role: Role }[]
@@ -77,16 +64,13 @@ export const me = new Hono<{ Variables: AuthVariables }>().get(
           subscription_tier: tier,
           subscription_status: status,
           setup_completed: org.setup_completed ?? false,
+          permissions,
+          quota: {
+            units:      { count: counts.units,      limit: limits['units']      ?? 5 },
+            properties: { count: counts.properties, limit: limits['properties'] ?? 1 },
+            members:    { count: counts.members,    limit: limits['members']    ?? 2 },
+          },
         },
-        tier,
-        unit_count,
-        unit_limit: limitsMap['units'] ?? 5,
-        property_count,
-        property_limit: limitsMap['properties'] ?? 1,
-        member_count,
-        member_limit: limitsMap['members'] ?? 2,
-        subscription_status: status,
-        permissions: permissions,
       })
     })
   },

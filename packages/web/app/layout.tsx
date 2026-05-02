@@ -5,6 +5,7 @@ import "./globals.css"
 import { cn } from "@/lib/utils"
 import { ThemeProvider } from "@/modules/app/components/theme-provider"
 import { LayoutProvider } from "@/modules/app/providers/layout-provider"
+import { QueryProvider } from "@/modules/app/providers/query-provider"
 import { Toaster } from "@/modules/common/ui/sonner"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
@@ -35,8 +36,10 @@ export default function RootLayout({
     >
       <body>
         <ThemeProvider>
-          <LayoutProvider>{children}</LayoutProvider>
-          <Toaster />
+          <QueryProvider>
+            <LayoutProvider>{children}</LayoutProvider>
+            <Toaster />
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -57,6 +57,17 @@ This project uses the Get Shit Done (GSD) workflow. Always follow it.
 - Store only `objectKey` in DB — never pre-signed URLs (they expire)
 - Generate pre-signed GET URLs at read time in Hono routes
 
+## Frontend data fetching
+
+**Always use TanStack Query for any frontend data fetching or mutations.**
+
+- Every API call from a component uses `useQuery` (reads) or `useMutation` (writes) — never raw `fetch` in components or `useEffect`
+- Query keys live in the same file as the fetch function — export them as `const FOO_QUERY_KEY = ['foo'] as const`
+- The Hono RPC client (`api` from `@/lib/api`) provides typed request functions — pass them as `queryFn`
+- Invalidate related queries in `onSuccess` of mutations, not in components
+- `ME_QUERY_KEY` (`['me']`) is the source of truth for the current user — call `queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY })` after any mutation that changes user/org state
+- No `useEffect` + `useState` + `fetch` patterns — that is always replaced by `useQuery`
+
 ## Key constraints
 - Auth: Better Auth only — no custom JWT
 - E-signature: DocuSign non-negotiable

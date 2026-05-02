@@ -11,10 +11,12 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
+    "@better-auth/infra": "^0.2.5",
     "@better-auth/stripe": "^1.6.9",
     "@central-icons-react/all": "^1.1.215",
     "@stripe/react-stripe-js": "6.3.0",
     "@stripe/stripe-js": "9.4.0",
+    "@tanstack/react-query": "^5.100.7",
     "@villuh/db": "workspace:*",
     "better-auth": "1.6.9",
     "class-variance-authority": "^0.7.1",

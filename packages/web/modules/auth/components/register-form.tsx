@@ -5,6 +5,7 @@ import { Button, LinkButton } from "@/modules/common/ui/button"
 import { Input, PasswordInput } from "@/modules/common/ui/input"
 import { Field, FieldLabel } from "@/modules/common/ui/field"
 import { authClient } from "@/lib/auth-client"
+import { ROUTES } from "@/app/routes"
 import { toast } from "sonner"
 import { GoogleButton } from "./google-button"
 import { AuthCard } from "./auth-card"
@@ -24,7 +25,7 @@ export function RegisterForm() {
       >
         <p className="text-sm text-muted-foreground">
           Didn&apos;t get it? Check your spam folder, or{" "}
-          <LinkButton href="/register" variant="link">try again</LinkButton>.
+          <LinkButton href={ROUTES.auth.register} variant="link">try again</LinkButton>.
         </p>
       </AuthCard>
     )
@@ -37,7 +38,7 @@ export function RegisterForm() {
       footer={
         <p className="text-sm text-muted-foreground">
           Already have an account?{" "}
-          <LinkButton href="/login" variant="link">Sign in</LinkButton>
+          <LinkButton href={ROUTES.auth.login} variant="link">Sign in</LinkButton>
         </p>
       }
     >
