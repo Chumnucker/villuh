@@ -6,6 +6,10 @@ const nextConfig = {
     const apiUrl = process.env.API_INTERNAL_URL ?? 'http://localhost:3001'
     return [
       {
+        source: '/trpc/:path*',
+        destination: `${apiUrl}/trpc/:path*`,
+      },
+      {
         // /api/auth/* is handled by app/api/auth/[...all]/route.ts (explicit proxy
         // that preserves Set-Cookie). All other /api/* go through this rewrite.
         source: '/api/((?!auth/).*)',

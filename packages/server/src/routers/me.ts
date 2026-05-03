@@ -1,38 +1,26 @@
-import { Hono } from 'hono'
 import { sql, eq } from 'drizzle-orm'
-import { authMiddleware, type AuthVariables } from '../middleware/auth.js'
-import { requireTenant } from '../middleware/require-tenant.js'
+import { TRPCError } from '@trpc/server'
+import { router, protectedProcedure } from '../trpc.js'
 import { organization } from '../schema/auth.js'
 import { planLimits } from '../schema/plan-limits.js'
 import { loadRolePermissions, type Role } from '../lib/permissions.js'
 import { withTenant } from '../lib/tenant.js'
 
-export const me = new Hono<{ Variables: AuthVariables }>().get(
-  '/',
-  authMiddleware,
-  async (c) => {
-    const { landlordId, userId } = await requireTenant(c)
-    const user = c.get('user')!
-
+export const meRouter = router({
+  get: protectedProcedure.query(async ({ ctx }) => {
+    const { landlordId, userId, user } = ctx
     return withTenant(landlordId, userId, async (tx) => {
-      const orgRows = await tx
-        .select()
-        .from(organization)
-        .where(eq(organization.id, landlordId))
-        .limit(1)
-      if (orgRows.length === 0) return c.json({ error: 'Organization not found' }, 404)
+      const orgRows = await tx.select().from(organization).where(eq(organization.id, landlordId)).limit(1)
+      if (orgRows.length === 0) throw new TRPCError({ code: 'NOT_FOUND', message: 'Organization not found' })
 
-      const org = orgRows[0]
+      const org = orgRows[0]!
       const tier = (org.subscription_tier as string) ?? 'trial'
       const status = (org.subscription_status as string) ?? 'trial_pending'
-
-      // Limits — tier 'trial' gets 'pro' limits per D-19
       const lookupTier = tier === 'trial' ? 'pro' : tier
       const limitRows = await tx.select().from(planLimits).where(eq(planLimits.tier, lookupTier))
       const limits: Record<string, number> = {}
       for (const r of limitRows) limits[r.resource] = r.limit
 
-      // Member count
       const memberCountRows = (await tx.execute(
         sql`SELECT COUNT(*)::int AS c FROM "member" WHERE organization_id = ${landlordId}`,
       )) as unknown as { c: number }[]
@@ -40,7 +28,6 @@ export const me = new Hono<{ Variables: AuthVariables }>().get(
       // TODO(Phase 3): replace 0s with real COUNT(*) from properties + units tables
       const counts = { units: 0, properties: 0, members: memberCountRows[0]?.c ?? 0 }
 
-      // Permissions
       const memberRows = (await tx.execute(
         sql`SELECT role FROM "member" WHERE organization_id = ${landlordId} AND user_id = ${userId} LIMIT 1`,
       )) as unknown as { role: Role }[]
@@ -50,7 +37,7 @@ export const me = new Hono<{ Variables: AuthVariables }>().get(
           ? { write: true, financial: true, communications: true, admin: true }
           : await loadRolePermissions(landlordId, role)
 
-      return c.json({
+      return {
         user: {
           id: user.id,
           name: user.name,
@@ -71,7 +58,7 @@ export const me = new Hono<{ Variables: AuthVariables }>().get(
             members:    { count: counts.members,    limit: limits['members']    ?? 2 },
           },
         },
-      })
+      }
     })
-  },
-)
+  }),
+})

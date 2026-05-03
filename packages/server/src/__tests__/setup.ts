@@ -13,14 +13,22 @@ async function getApp() {
 }
 
 /**
- * Thin wrapper around the Hono app's fetch() — no real HTTP, all in-process.
+ * Thin wrapper that calls the Express app via an in-process HTTP server.
  * Callers pass a relative path (e.g. '/api/audit-log?page=2&limit=1') and standard RequestInit.
  */
 export async function fetchApi(path: string, init: RequestInit = {}): Promise<Response> {
-  const url = `http://localhost${path}`
-  const req = new Request(url, init)
+  const { createServer } = await import('node:http')
   const app = await getApp()
-  return app.fetch(req)
+  return new Promise<Response>((resolve, reject) => {
+    const server = createServer(app)
+    server.listen(0, () => {
+      const addr = server.address() as { port: number }
+      const url = `http://localhost:${addr.port}${path}`
+      fetch(url, init)
+        .then((res) => { server.close(); resolve(res) })
+        .catch((err) => { server.close(); reject(err) })
+    })
+  })
 }
 
 /** Look up a user's ID by email from the owner DB (bypasses RLS). */

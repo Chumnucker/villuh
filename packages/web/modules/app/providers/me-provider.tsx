@@ -1,36 +1,25 @@
 "use client"
 
-import { createContext, useContext, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { api, type Me } from "@/lib/api"
-import { ROUTES } from "@/app/routes"
+import { createContext, useContext, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { trpc } from '@/lib/trpc'
+import { ROUTES } from '@/app/routes'
+import type { inferRouterOutputs } from '@trpc/server'
+import type { AppRouter } from '@villuh/server/router'
 
-export { type Me }
-export const ME_QUERY_KEY = ["me"] as const
+type RouterOutput = inferRouterOutputs<AppRouter>
+export type Me = RouterOutput['me']['get']
 
-async function fetchMe(): Promise<Me> {
-  const res = await api.api.me.$get()
-  if (!res.ok) throw new Error("unauthenticated")
-  return res.json()
-}
+export const ME_QUERY_KEY = ['trpc', 'me', 'get'] as const
 
-type UserContext = {
-  user: Me
-  refresh: () => Promise<void>
-}
-
+type UserContext = { user: Me; refresh: () => Promise<void> }
 const UserContext = createContext<UserContext | null>(null)
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const queryClient = useQueryClient()
+  const utils = trpc.useUtils()
 
-  const { data: user, error, isPending } = useQuery({
-    queryKey: ME_QUERY_KEY,
-    queryFn: fetchMe,
-    retry: false,
-  })
+  const { data: user, error, isPending } = trpc.me.get.useQuery(undefined, { retry: false })
 
   useEffect(() => {
     if (error) router.replace(ROUTES.auth.login)
@@ -38,12 +27,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   if (isPending || error || !user) return null
 
-  async function refresh() {
-    await queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY })
-  }
-
   return (
-    <UserContext.Provider value={{ user, refresh }}>
+    <UserContext.Provider value={{ user, refresh: () => utils.me.get.invalidate() }}>
       {children}
     </UserContext.Provider>
   )
@@ -51,6 +36,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
 export function useUser(): UserContext {
   const ctx = useContext(UserContext)
-  if (!ctx) throw new Error("useUser must be used inside UserProvider")
+  if (!ctx) throw new Error('useUser must be used inside UserProvider')
   return ctx
 }
