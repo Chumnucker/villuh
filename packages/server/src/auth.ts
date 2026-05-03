@@ -4,8 +4,8 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { organization, createAccessControl } from 'better-auth/plugins'
 import { stripe } from '@better-auth/stripe'
 import { dash } from '@better-auth/infra'
-import { db } from '@villuh/db'
-import * as authSchema from '@villuh/db/schema/auth'
+import { db } from './db.js'
+import * as authSchema from './schema/auth.js'
 import Stripe from 'stripe'
 import {
   sendVerificationEmail,
@@ -85,6 +85,12 @@ export const auth = betterAuth({
     process.env.NEXT_PUBLIC_APP_URL ??
     'http://localhost:3000,http://localhost:3002'
   ).split(',').map(s => s.trim()).filter(Boolean),
+
+  // 30-day sliding window — auto-refreshes when < 1 day remains
+  session: {
+    expiresIn: 60 * 60 * 24 * 30,
+    updateAge: 60 * 60 * 24,
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,

@@ -1,4 +1,4 @@
-import { organization, subscription } from '@villuh/db/schema/auth'
+import { organization, subscription } from '../schema/auth.js'
 import { eq } from 'drizzle-orm'
 import { withTenant } from './tenant.js'
 

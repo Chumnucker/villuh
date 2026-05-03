@@ -6,13 +6,20 @@
   "main": "src/app.ts",
   "exports": {
     ".": "./src/app.ts",
-    "./app": "./src/app.ts"
+    "./app": "./src/app.ts",
+    "./db": "./src/db.ts",
+    "./schema": "./src/schema/index.ts",
+    "./schema/auth": "./src/schema/auth.ts",
+    "./schema/role-permissions": "./src/schema/role-permissions.ts",
+    "./schema/plan-limits": "./src/schema/plan-limits.ts"
   },
   "scripts": {
     "dev": "tsx watch --env-file=.env src/index.ts",
     "start": "node --env-file=.env --import tsx/esm src/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "generate": "drizzle-kit generate",
+    "migrate": "tsx --env-file=.env src/migrate.ts"
   },
   "dependencies": {
     "@better-auth/infra": "^0.2.5",
@@ -21,7 +28,6 @@
     "@hono/zod-validator": "0.7.6",
     "@react-email/components": "1.0.12",
     "@types/react": "^19.2.14",
-    "@villuh/db": "workspace:*",
     "better-auth": "1.6.9",
     "drizzle-orm": "0.45.2",
     "hono": "4.12.15",
@@ -35,6 +41,7 @@
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.5",
     "dotenv": "^16.6.1",
+    "drizzle-kit": "0.31.10",
     "postgres": "3.4.9",
     "tsx": "4.21.0",
     "typescript": "^5.9.3",

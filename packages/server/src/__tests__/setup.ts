@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
-import * as schema from '@villuh/db/schema/index'
+import * as schema from '../schema/index.js'
 import { sql } from 'drizzle-orm'
 // afterAll and beforeAll are re-exported from vitest for use in test files
 export { afterAll, beforeAll } from 'vitest'

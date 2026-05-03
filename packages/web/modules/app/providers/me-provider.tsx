@@ -3,13 +3,14 @@
 import { createContext, useContext, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import type { Me } from "@/lib/me"
+import { api, type Me } from "@/lib/api"
 import { ROUTES } from "@/app/routes"
 
+export { type Me }
 export const ME_QUERY_KEY = ["me"] as const
 
 async function fetchMe(): Promise<Me> {
-  const res = await fetch("/api/me", { credentials: "include" })
+  const res = await api.api.me.$get()
   if (!res.ok) throw new Error("unauthenticated")
   return res.json()
 }

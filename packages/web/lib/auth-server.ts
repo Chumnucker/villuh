@@ -7,7 +7,7 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
-import * as authSchema from '@villuh/db/schema/auth'
+import * as authSchema from '@villuh/server/schema/auth'
 
 if (!process.env.DATABASE_APP_URL) {
   throw new Error('DATABASE_APP_URL is required for Next.js middleware Better Auth instance')
@@ -23,10 +23,11 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:3001',
   secret: process.env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, { provider: 'pg', schema: authSchema }),
-  // No emailAndPassword/socialProviders/plugins blocks — middleware only reads sessions.
-  // Better Auth's getSession works without these because session validation only needs
-  // the secret + database adapter. Mutations (signup, signin, etc.) hit the Hono server's
-  // full instance via /api/auth/* (proxied through NEXT_PUBLIC_API_URL).
+  // Must mirror packages/server/src/auth.ts session config exactly
+  session: {
+    expiresIn: 60 * 60 * 24 * 30,
+    updateAge: 60 * 60 * 24,
+  },
 })
 
 export type Session = typeof auth.$Infer.Session

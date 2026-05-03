@@ -1,4 +1,4 @@
-import { rolePermissions } from '@villuh/db/schema/role-permissions'
+import { rolePermissions } from '../schema/role-permissions.js'
 import { and, eq } from 'drizzle-orm'
 import { withTenant } from './tenant.js'
 

@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm'
 import { authMiddleware, type AuthVariables } from '../middleware/auth.js'
 import { requireTenant } from '../middleware/require-tenant.js'
 import { requirePermission } from '../middleware/require-permission.js'
-import { rolePermissions } from '@villuh/db/schema/role-permissions'
+import { rolePermissions } from '../schema/role-permissions.js'
 import { withTenant } from '../lib/tenant.js'
 
 const updateSchema = z.object({

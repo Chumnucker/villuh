@@ -7,8 +7,8 @@ import { authMiddleware, type AuthVariables } from '../middleware/auth.js'
 import { requireTenant } from '../middleware/require-tenant.js'
 import { requirePermission } from '../middleware/require-permission.js'
 import { auth } from '../auth.js'
-import { planLimits } from '@villuh/db/schema/plan-limits'
-import { organization } from '@villuh/db/schema/auth'
+import { planLimits } from '../schema/plan-limits.js'
+import { organization } from '../schema/auth.js'
 import { withTenant } from '../lib/tenant.js'
 
 const inviteSchema = z.object({
