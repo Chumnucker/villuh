@@ -22,7 +22,9 @@
     "./schemas/billing": "./src/modules/billing/schemas.ts",
     "./schemas/audit-log": "./src/modules/audit-log/schemas.ts",
     "./schemas/properties": "./src/modules/properties/schemas.ts",
-    "./schemas/uploads": "./src/modules/uploads/schemas.ts"
+    "./schemas/uploads": "./src/modules/uploads/schemas.ts",
+    "./schemas/units": "./src/modules/units/schemas.ts",
+    "./schemas/unit-statuses": "./src/modules/unit-statuses/schemas.ts"
   },
   "scripts": {
     "dev": "tsx watch --env-file=.env src/index.ts",

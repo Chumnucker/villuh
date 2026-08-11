@@ -6,6 +6,8 @@ import { auditLogRouter } from './modules/audit-log/router.js'
 import { billingRouter } from './modules/billing/router.js'
 import { propertiesRouter } from './modules/properties/router.js'
 import { uploadsRouter } from './modules/uploads/router.js'
+import { unitsRouter } from './modules/units/router.js'
+import { unitStatusesRouter } from './modules/unit-statuses/router.js'
 import { router } from './trpc.js'
 
 export const appRouter = router({
@@ -17,6 +19,8 @@ export const appRouter = router({
   billing: billingRouter,
   properties: propertiesRouter,
   uploads: uploadsRouter,
+  units: unitsRouter,
+  unitStatuses: unitStatusesRouter,
 })
 
 export type AppRouter = typeof appRouter

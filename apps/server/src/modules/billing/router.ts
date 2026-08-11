@@ -8,6 +8,7 @@ import {
 } from './service.js'
 import { getTrialPlan, listActivePlans, requirePlanBySlug } from './plans.js'
 import { internalError, badRequest } from '../../domain/index.js'
+import { syncOrgUnitQuantity } from '../../domain/billing-sync.js'
 import {
   subscribeInputSchema,
   upgradeInputSchema,
@@ -203,21 +204,12 @@ export const billingRouter = router({
       return { ok: true }
     }),
 
+  // Delegates to domain/billing-sync.ts (Pattern 8) — same helper units.create/archive and
+  // properties.archive (cascade) call directly, without a tRPC-to-tRPC call.
   syncUnits: permissionProcedure('write')
     .input(syncUnitsInputSchema)
     .mutation(async ({ ctx, input }) => {
       const { organizationId } = ctx
-      const { unitCount } = input
-
-      const existing = await getOrgSubscription(organizationId)
-      if (!existing?.stripe_subscription_id || !existing?.stripe_subscription_item_id) {
-        return { ok: true, skipped: true, reason: 'no_subscription' }
-      }
-
-      const sub = await stripeClient.subscriptions.update(existing.stripe_subscription_id, {
-        items: [{ id: existing.stripe_subscription_item_id, quantity: unitCount }],
-        proration_behavior: 'create_prorations',
-      })
-      return { ok: true, quantity: unitCount, status: sub.status }
+      return syncOrgUnitQuantity(organizationId, input.unitCount)
     }),
 })
