@@ -11,6 +11,7 @@ export const ROUTES = {
   propertyDetail: (propertyId: string) => r(`/properties/${propertyId}`),
   propertyEdit: (propertyId: string) => r(`/properties/${propertyId}/edit`),
   units: r("/units"),
+  unitDetail: (unitId: string) => r(`/units/${unitId}`),
   tenants: r("/tenants"),
   leases: r("/leases"),
   onboarding: r("/onboarding"),

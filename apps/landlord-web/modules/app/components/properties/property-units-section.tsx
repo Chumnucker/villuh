@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import {
   Button,
   Card,
@@ -15,6 +16,7 @@ import {
   TableRow,
 } from "@villuh/ui"
 import { PlanLimitGate } from "@/modules/app/components/plan-limit/plan-limit-gate"
+import { UnitFormSheet } from "@/modules/app/components/units/unit-form-sheet"
 
 export type PropertyUnitRow = {
   id: string
@@ -24,22 +26,24 @@ export type PropertyUnitRow = {
 }
 
 /**
- * Nested units list on the property detail page. `onAddUnit` is a hook point —
- * Plan 06 wires it to open the unit create Sheet, prefilled + locked to this property.
+ * Nested units list on the property detail page. Add unit opens the shared `UnitFormSheet`
+ * locked + prefilled to `propertyId` (D-10) — same Sheet used by the global `/units` list.
  */
 export function PropertyUnitsSection({
+  propertyId,
   units,
-  onAddUnit,
 }: {
+  propertyId: string
   units: PropertyUnitRow[]
-  onAddUnit?: () => void
 }) {
+  const [sheetOpen, setSheetOpen] = useState(false)
+
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between">
         <CardTitle>Units</CardTitle>
         <PlanLimitGate resource="units" action="Adding a unit">
-          <Button size="sm" onClick={onAddUnit}>
+          <Button size="sm" onClick={() => setSheetOpen(true)}>
             <PlatformIcon icon="IconPlusSmall" size={16} data-icon="inline-start" />
             Add unit
           </Button>
@@ -74,6 +78,13 @@ export function PropertyUnitsSection({
           </Table>
         )}
       </CardContent>
+
+      <UnitFormSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        mode="create"
+        lockedPropertyId={propertyId}
+      />
     </Card>
   )
 }

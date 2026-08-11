@@ -109,7 +109,7 @@ export default function PropertyDetailPage() {
         </CardContent>
       </Card>
 
-      <PropertyUnitsSection units={units} />
+      <PropertyUnitsSection propertyId={property.id} units={units} />
     </div>
   )
 }
