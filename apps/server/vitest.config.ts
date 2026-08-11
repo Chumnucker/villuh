@@ -6,7 +6,12 @@ export default defineConfig({
     include: ['src/__tests__/**/*.test.ts'],
     setupFiles: ['./src/__tests__/setup.ts'],
     pool: 'forks',                  // Better Auth + Postgres connection isolation
-    singleFork: true,               // Serialize DB-touching tests (was poolOptions.forks.singleFork)
+    // Vitest 4 removed poolOptions.forks.singleFork; maxWorkers: 1 is the replacement (see
+    // migration guide). Do NOT also set isolate: false — that shares the module registry
+    // across files, which breaks per-file vi.mock('@aws-sdk/client-s3', ...) in gallery.test.ts
+    // once another file has already loaded the real module. Keep default isolation (fresh
+    // module graph per file) and only limit concurrency so files can't race on shared DB state.
+    maxWorkers: 1,
     testTimeout: 15000,
     hookTimeout: 15000,
     // Default env vars for tests — real values supplied via .env file

@@ -161,10 +161,36 @@ export async function signInTestUser(email: string, password: string) {
   return { cookie }
 }
 
+/**
+ * Build a tRPC server-side caller authenticated as the given session cookie.
+ * Bypasses the HTTP/Express layer entirely (no batch-link envelope to construct) —
+ * this is the standard way to exercise tRPC procedures directly in integration tests.
+ */
+export async function createTrpcCaller(cookie: string) {
+  const auth = await getAuth()
+  const headers = new Headers({ cookie })
+  const session = await auth.api.getSession({ headers })
+  const { appRouter } = await import('../router.js')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return appRouter.createCaller({
+    req: {} as any,
+    res: {} as any,
+    headers,
+    user: session?.user ?? null,
+    session: session?.session ?? null,
+  })
+}
+
 // Test data cleanup helpers — Plan 02+ will populate these as auth tables exist
 export async function clearTestUsers() {
   const owner = createOwnerClient()
   try {
+    // TRUNCATE (not DELETE) — audit_log_organization_id_fkey is ON DELETE CASCADE (migration
+    // 0011), but audit_log rows are immutable (BEFORE DELETE trigger raises unconditionally,
+    // even for the owner role). DELETE FROM organization would cascade into a blocked DELETE
+    // on audit_log and fail every test file's cleanup once any audited table (role_permissions,
+    // properties, units, ...) has rows for a real org. TRUNCATE bypasses per-row triggers.
+    await owner.db.execute(sql`TRUNCATE audit_log`)
     await owner.db.execute(sql`DELETE FROM "session"`)
     await owner.db.execute(sql`DELETE FROM "member"`)
     await owner.db.execute(sql`DELETE FROM "invitation"`)
