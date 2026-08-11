@@ -1,5 +1,12 @@
-import { LoginForm } from "@villuh/auth"
+import { LoginForm, safeCallbackPath } from "@villuh/auth"
 
-export default function LoginPage() {
-  return <LoginForm />
+type LoginPageProps = {
+  searchParams: Promise<{ next?: string }>
+}
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const { next } = await searchParams
+  const callbackURL = safeCallbackPath(next) ?? undefined
+
+  return <LoginForm callbackURL={callbackURL} />
 }

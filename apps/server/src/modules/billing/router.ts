@@ -1,4 +1,3 @@
-import { z } from 'zod'
 import { router, permissionProcedure, protectedProcedure } from '../../trpc.js'
 import { stripeClient } from '../auth/index.js'
 import {
@@ -8,11 +7,13 @@ import {
   getOrgSubscription,
 } from './service.js'
 import { getTrialPlan, listActivePlans, requirePlanBySlug } from './plans.js'
+import { internalError, badRequest } from '../../domain/index.js'
 import {
-  zPlanSlug,
-  internalError,
-  badRequest,
-} from '../../domain/index.js'
+  subscribeInputSchema,
+  upgradeInputSchema,
+  updatePaymentMethodInputSchema,
+  syncUnitsInputSchema,
+} from './schemas.js'
 
 export const billingRouter = router({
   listPlans: protectedProcedure.query(async () => {
@@ -84,11 +85,7 @@ export const billingRouter = router({
   }),
 
   subscribe: permissionProcedure('admin')
-    .input(z.object({
-      tier: zPlanSlug,
-      paymentMethodId: z.string(),
-      unitCount: z.number().int().min(0).default(0),
-    }))
+    .input(subscribeInputSchema)
     .mutation(async ({ ctx, input }) => {
       const { organizationId, user } = ctx
       const { tier, paymentMethodId, unitCount } = input
@@ -125,7 +122,7 @@ export const billingRouter = router({
     }),
 
   upgrade: permissionProcedure('admin')
-    .input(z.object({ tier: zPlanSlug }))
+    .input(upgradeInputSchema)
     .mutation(async ({ ctx, input }) => {
       const { organizationId } = ctx
       const { tier } = input
@@ -191,7 +188,7 @@ export const billingRouter = router({
   }),
 
   updatePaymentMethod: permissionProcedure('admin')
-    .input(z.object({ paymentMethodId: z.string() }))
+    .input(updatePaymentMethodInputSchema)
     .mutation(async ({ ctx, input }) => {
       const { organizationId } = ctx
       const { paymentMethodId } = input
@@ -207,7 +204,7 @@ export const billingRouter = router({
     }),
 
   syncUnits: permissionProcedure('write')
-    .input(z.object({ unitCount: z.number().int().min(0) }))
+    .input(syncUnitsInputSchema)
     .mutation(async ({ ctx, input }) => {
       const { organizationId } = ctx
       const { unitCount } = input

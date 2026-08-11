@@ -5,13 +5,16 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./trpc": "./src/trpc.ts"
+    "./trpc": "./src/trpc.ts",
+    "./server": "./src/server.ts",
+    "./require-me": "./src/require-me.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint ."
   },
   "peerDependencies": {
+    "next": ">=15",
     "react": "^19",
     "react-dom": "^19"
   },
@@ -20,13 +23,15 @@
     "@trpc/client": "^11.17.0",
     "@trpc/react-query": "^11.17.0",
     "@trpc/server": "^11.17.0",
-    "@villuh/server": "workspace:*"
+    "@villuh/server": "workspace:*",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@villuh/eslint-config": "workspace:*",
     "@villuh/typescript-config": "workspace:*",
+    "next": "16.1.7",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "typescript": "^5.9.3"

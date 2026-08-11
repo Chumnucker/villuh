@@ -1,21 +1,28 @@
 "use client"
 
 import { useState } from "react"
+import type { Route } from "next"
 import { useRouter } from "next/navigation"
 import { Button, LinkButton } from "@villuh/ui/button"
 import { Input, PasswordInput } from "@villuh/ui/input"
 import { Field, FieldLabel } from "@villuh/ui/field"
 import { authClient } from "../client"
 import { ROUTES } from "../routes"
+import { safeCallbackPath } from "../callback-path"
 import { toast } from "sonner"
 import { GoogleButton } from "./google-button"
 import { AuthCard } from "./auth-card"
 
-export function LoginForm() {
+export function LoginForm({
+  callbackURL = ROUTES.home,
+}: {
+  callbackURL?: string
+}) {
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const redirectTo = safeCallbackPath(callbackURL) ?? ROUTES.home
 
   return (
     <AuthCard
@@ -38,7 +45,7 @@ export function LoginForm() {
             toast.error("Incorrect email or password. Please try again.")
             return
           }
-          router.push(ROUTES.home)
+          router.push(redirectTo as Route)
         }}
       >
         <Field>
@@ -80,7 +87,7 @@ export function LoginForm() {
             <span className="bg-card px-2 text-muted-foreground">or</span>
           </div>
         </div>
-        <GoogleButton callbackURL="/" />
+        <GoogleButton callbackURL={redirectTo} />
       </form>
     </AuthCard>
   )

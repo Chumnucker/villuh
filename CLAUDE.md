@@ -87,11 +87,21 @@ This project uses the Get Shit Done (GSD) workflow. Always follow it.
 **Always use tRPC + TanStack Query (via `@villuh/api`) for frontend data fetching or mutations.**
 
 - Prefer `trpc.*.useQuery` / `trpc.*.useMutation` from `@villuh/api` — never raw `fetch` in components or `useEffect`
+- Forms: `@tanstack/react-form` + Zod schemas (Standard Schema validators) — not ad hoc `useState` form fields
+- Prefer shared Zod schemas colocated with tRPC inputs (e.g. `@villuh/server/schemas/account`) over duplicating or `z.custom<RouterInputs[…]>()` (types alone have no runtime rules)
+- Module schemas: `@villuh/server/schemas/{account,members,permissions,billing,audit-log}` (barrel: `@villuh/server/schemas`)
 - Query keys for non-tRPC cases live next to the fetch function — export as `const FOO_QUERY_KEY = ['foo'] as const`
-- Invalidate related queries in `onSuccess` of mutations (or `trpc.useUtils()`), not ad hoc in components
+- Invalidate related queries in `onSuccess` of mutations via `invalidateOnSuccess` from `@villuh/api` (or `trpc.useUtils()`), not ad hoc in components
 - `me.get` (via tRPC) is the source of truth for the current organization user — invalidate after mutations that change user/org state
 - No `useEffect` + `useState` + `fetch` patterns
 
+### Mutation → invalidate checklist
+
+1. List every query the mutation makes stale (list, detail, `me.get` quotas/counts, related domains).
+2. Call `invalidateOnSuccess(utils, [(u) => u.domain.list, ...])` as `onSuccess`, or `invalidateQueries(utils, [...])` when you also toast/redirect.
+3. Invalidate by domain — never `utils.invalidate()` unless intentionally wiping everything.
+4. Prefer `invalidate()` over `setQueryData` unless this screen explicitly needs optimistic UI.
+5. See `.planning/decisions/ADR-001-cache-strategy.md` — Postgres is SoT; no Redis/response-cache middleware for org CRUD.
 ## Key constraints
 - Auth: Better Auth only — no custom JWT
 - E-signature: DocuSign non-negotiable

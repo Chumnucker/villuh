@@ -53,9 +53,9 @@ export function SidebarUserMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="ghost-muted"
+          variant="ghost"
           className={cn(
-            "h-auto w-full justify-start gap-2.5 rounded-2xl px-2 py-2 text-left"
+            "h-auto w-full justify-start gap-2.5 rounded-2xl px-2 py-2 text-left outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
           )}
           aria-label="User menu"
         >
@@ -89,7 +89,10 @@ export function SidebarUserMenu() {
           {isDark ? "Light mode" : "Dark mode"}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem variant="destructive" onSelect={() => void handleSignOut()}>
+        <DropdownMenuItem
+          variant="destructive"
+          onSelect={() => void handleSignOut()}
+        >
           <PlatformIcon icon="IconDoor" size={16} />
           Log out
         </DropdownMenuItem>

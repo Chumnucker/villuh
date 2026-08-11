@@ -7,45 +7,43 @@ import { PlatformIcon } from "./icon"
 const inputVariants = cva(
   cn(
     "&::-webkit-outer-spin-button]:appearance-none flex w-full min-w-0 text-base transition-all duration-200 outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none [&_input::-webkit-inner-spin-button]:m-0 [&_input::-webkit-inner-spin-button]:appearance-none [&_input::-webkit-outer-spin-button]:m-0 [&_input::-webkit-outer-spin-button]:appearance-none [&_input[type=number]]:[-moz-appearance:textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&[type=number]]:[-moz-appearance:textfield]",
-    "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 data-[disabled=true]:pointer-events-none data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-50"
+    "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 data-[disabled=true]:pointer-events-none data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-50",
+    "focus-within:ring-1 focus-within:ring-offset-1 focus-within:ring-offset-background focus-within:ring-ring/35 aria-invalid:ring-1 aria-invalid:ring-offset-1 aria-invalid:ring-offset-background aria-invalid:ring-destructive/45"
   ),
   {
     variants: {
       variant: {
         none: "",
         default:
-          "border-input-border border bg-input selection:bg-primary selection:text-foreground file:text-foreground placeholder:text-muted-foreground focus-within:border-ring focus-visible:border-ring aria-invalid:border-destructive/40 dark:aria-invalid:border-destructive/40",
+          "bg-input file:text-foreground placeholder:text-muted-foreground",
         light:
-          "light border bg-white text-black selection:bg-primary selection:text-white file:text-black placeholder:text-muted-foreground focus-within:border-ring focus-visible:border-ring aria-invalid:border-destructive/40 dark:aria-invalid:border-destructive/40",
+          "light border bg-white text-black ile:text-black placeholder:text-muted-foreground",
         muted:
-          "focus-within:bg-muted-light focus-visible:bg-muted-light border border-transparent bg-muted selection:bg-primary selection:text-foreground file:text-foreground placeholder:text-muted-foreground focus-within:border-ring focus-visible:border-ring aria-invalid:border-destructive/40 dark:aria-invalid:border-destructive/40",
-        card: "border border-input bg-muted selection:bg-primary selection:text-foreground file:text-foreground placeholder:text-muted-foreground focus-within:border-ring focus-visible:border-ring aria-invalid:border-destructive/40 dark:aria-invalid:border-destructive/40",
+          "border border-transparent bg-muted file:text-foreground placeholder:text-muted-foreground",
+        card: "border border-input bg-muted file:text-foreground placeholder:text-muted-foreground",
         ghost:
-          "border border-transparent selection:bg-primary selection:text-foreground file:text-foreground placeholder:text-muted-foreground focus-within:border-ring focus-visible:border-ring aria-invalid:border-destructive/40 dark:aria-invalid:border-destructive/40",
+          "border border-transparent file:text-foreground placeholder:text-muted-foreground",
         secondary:
-          "border border-transparent bg-secondary selection:bg-primary selection:text-foreground file:text-foreground placeholder:text-muted-foreground focus-within:border-ring focus-visible:border-ring aria-invalid:border-destructive/40 dark:aria-invalid:border-destructive/40",
-        "muted-light":
-          "focus-within:bg-muted-light focus-visible:bg-muted-light bg-muted-light border border-input selection:bg-primary selection:text-foreground file:text-foreground placeholder:text-muted-foreground focus-within:border-ring focus-visible:border-ring aria-invalid:border-destructive/40 dark:aria-invalid:border-destructive/40",
-        outline:
-          "border border-border bg-background focus-within:border-ring focus-visible:border-ring",
-        "outline-muted":
-          "border border-border bg-muted focus-within:border-ring focus-visible:border-ring",
-        "outline-muted-light":
-          "border-border-light bg-muted-light border focus-within:border-ring focus-visible:border-ring",
-        "outline-secondary":
-          "border border-border bg-secondary focus-within:border-ring focus-visible:border-ring",
+          "border border-transparent bg-secondary file:text-foreground placeholder:text-muted-foreground",
         popover:
-          "border bg-muted selection:bg-primary selection:text-foreground file:text-foreground placeholder:text-muted-foreground focus-within:border-ring focus-visible:border-ring aria-invalid:border-destructive/40 dark:aria-invalid:border-destructive/40",
+          "border bg-muted file:text-foreground placeholder:text-muted-foreground",
+        
+        outline:
+          "border border-border bg-background",
+        "outline-muted":
+          "border border-border bg-muted",
+        "outline-secondary":
+          "border border-border bg-secondary",
       },
       size: {
         none: "",
         default:
-          "h-9 rounded-sm px-3 py-2 text-sm md:text-sm [&_svg:not([class*='size-'])]:size-4",
-        xs: "h-7 gap-1.5 rounded-sm px-2 text-xs [&_svg:not([class*='size-'])]:size-3.5",
-        sm: "h-8 gap-1.5 rounded-sm px-3 text-sm [&_svg:not([class*='size-'])]:size-4",
+          "h-9 rounded-xl px-3 py-2 text-sm md:text-sm [&_svg:not([class*='size-'])]:size-4",
+        xs: "h-7 gap-1.5 rounded-xl px-2 text-xs [&_svg:not([class*='size-'])]:size-3.5",
+        sm: "h-8 gap-1.5 rounded-xl px-3 text-sm [&_svg:not([class*='size-'])]:size-4",
         lg: "h-10 rounded-md px-4 text-sm [&_svg:not([class*='size-'])]:size-4.5",
-        text: "rounded-sm px-1 text-sm",
-        icon: "size-9 rounded-sm text-sm [&_svg:not([class*='size-'])]:size-5",
+        text: "rounded-xl px-1 text-sm",
+        icon: "size-9 rounded-xl text-sm [&_svg:not([class*='size-'])]:size-5",
       },
     },
     defaultVariants: {

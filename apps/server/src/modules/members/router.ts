@@ -1,12 +1,16 @@
-import { z } from 'zod'
-import { sql, eq } from 'drizzle-orm'
 import { router, protectedProcedure, permissionProcedure } from '../../trpc.js'
 import { auth } from '../auth/index.js'
 import { planLimits } from '../../schema/plan-limits.js'
 import { organization } from '../../schema/auth.js'
 import { withOrganization } from '../../db/index.js'
-import { zRole, forbidden } from '../../domain/index.js'
+import { forbidden } from '../../domain/index.js'
 import { resolveLimitsTier } from '../billing/plans.js'
+import { sql, eq } from 'drizzle-orm'
+import {
+  createInvitationInputSchema,
+  removeMemberInputSchema,
+  updateMemberRoleInputSchema,
+} from './schemas.js'
 
 export const membersRouter = router({
   getMembers: protectedProcedure.query(async ({ ctx }) => {
@@ -37,10 +41,7 @@ export const membersRouter = router({
   }),
 
   createInvitation: permissionProcedure('admin')
-    .input(z.object({
-      email: z.string().email(),
-      role: zRole,
-    }))
+    .input(createInvitationInputSchema)
     .mutation(async ({ ctx, input }) => {
       const { organizationId, userId } = ctx
       const { email, role } = input
@@ -87,7 +88,7 @@ export const membersRouter = router({
     }),
 
   removeMember: permissionProcedure('admin')
-    .input(z.object({ userId: z.string() }))
+    .input(removeMemberInputSchema)
     .mutation(async ({ ctx, input }) => {
       const { organizationId } = ctx
       await auth.api.removeMember({
@@ -98,10 +99,7 @@ export const membersRouter = router({
     }),
 
   updateMemberRole: permissionProcedure('admin')
-    .input(z.object({
-      userId: z.string(),
-      role: zRole,
-    }))
+    .input(updateMemberRoleInputSchema)
     .mutation(async ({ ctx, input }) => {
       const { organizationId } = ctx
       const { userId, role } = input

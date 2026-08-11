@@ -1,16 +1,16 @@
 /**
- * Auth proxy — forwards all /api/auth/* requests to the Hono server and
+ * Auth proxy — forwards all /api/auth/* requests to the Express API and
  * explicitly forwards ALL response headers including Set-Cookie back to the
  * browser. This is the canonical Better Auth pattern for Next.js (not rewrites,
  * which strip Set-Cookie from upstream responses).
  */
 import type { NextRequest } from 'next/server'
 
-const HONO_URL = process.env.API_INTERNAL_URL ?? 'http://localhost:4000'
+const API_URL = process.env.API_INTERNAL_URL ?? 'http://localhost:4000'
 
 async function handler(req: NextRequest): Promise<Response> {
   const url = new URL(req.url)
-  const target = `${HONO_URL}${url.pathname}${url.search}`
+  const target = `${API_URL}${url.pathname}${url.search}`
 
   const headers = new Headers(req.headers)
 

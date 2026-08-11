@@ -21,7 +21,7 @@ export function AppSidebar({ appName }: AppSidebarProps) {
           ))}
         </nav>
       </ScrollArea>
-      <div className="shrink-0 border-t p-page">
+      <div className="shrink-0 p-page">
         <SidebarUserMenu />
       </div>
     </aside>

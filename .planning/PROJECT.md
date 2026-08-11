@@ -178,6 +178,7 @@ A landlord can onboard a tenant from zero to signed lease in one structured flow
 | Full audit trail (CDC) | Compliance requirement + operator debugging | — Pending |
 | 3 billing tiers (Starter/Growth/Pro) | Serves small landlords and larger portfolios via plan limits | — Pending |
 | Stripe Connect for deposit payments | Money flows tenant→landlord, not through Villuh | — Pending |
+| UI cache = TanStack Query; Postgres = SoT; Redis deferred | Create→list freshness is mutation invalidation; Redis is a separate heavier system — defer until measured | Accepted — see `.planning/decisions/ADR-001-cache-strategy.md` |
 
 ## Evolution
 

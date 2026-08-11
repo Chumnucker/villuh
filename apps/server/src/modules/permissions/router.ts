@@ -1,9 +1,9 @@
-import { z } from 'zod'
 import { eq } from 'drizzle-orm'
 import { router, protectedProcedure, permissionProcedure } from '../../trpc.js'
 import { rolePermissions } from '../../schema/role-permissions.js'
 import { withOrganization } from '../../db/index.js'
-import { zRole, zActionCategory, badRequest } from '../../domain/index.js'
+import { badRequest } from '../../domain/index.js'
+import { updateRolePermissionInputSchema } from './schemas.js'
 
 export const rolePermissionsRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
@@ -18,11 +18,7 @@ export const rolePermissionsRouter = router({
   }),
 
   update: permissionProcedure('admin')
-    .input(z.object({
-      role: zRole,
-      action: zActionCategory,
-      allowed: z.boolean(),
-    }))
+    .input(updateRolePermissionInputSchema)
     .mutation(async ({ ctx, input }) => {
       const { organizationId, userId } = ctx
       const { role, action, allowed } = input

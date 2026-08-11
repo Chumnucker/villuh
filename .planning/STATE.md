@@ -66,7 +66,7 @@ Recent decisions affecting current work:
 - [2026-08-11]: Split frontends into `apps/landlord-web` + `apps/resident-web`; hosts `{slug}.app.villuh.com` / `{slug}.villuh.com`; shared Express+tRPC API; resident portal in-scope
 - [2026-08-11]: Extracted `@villuh/ui`, `@villuh/auth`, `@villuh/api`; app-specific `UserProvider`/`me` stays per app
 - [2026-08-11]: **API locked: Express + tRPC** (not Hono / not `hono/client`). Docs updated; older phase plans mentioning Hono are historical
-- [2026-08-11]: Server refactor: `domain/`, `db/`, `modules/*`; typed app errors + errorFormatter; nested withTenant fixed; Drizzle kept
+- [2026-08-11]: UI cache = TanStack Query + `invalidateOnSuccess`/`invalidateQueries`; Postgres = SoT; Redis deferred (ADR-001)
 - [Phase 1]: Audit log: Postgres triggers, full JSONB snapshots (old+new), all tenant tables, SET LOCAL actor, RLS on audit_log, 'system' sentinel, monthly partitioned, immutable via trigger
 - [Phase 1]: Icon library: @central-icons-react/all is sole library; lucide-react removed; all icons through PlatformIcon wrapper
 - [Phase 1]: No CI, no Railway deploy in Phase 1 — local validation only; CI and Railway deferred to Phase 2

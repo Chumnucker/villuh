@@ -1,11 +1,14 @@
-import { z } from 'zod'
 import { router, protectedProcedure } from '../../trpc.js'
 import { auth } from '../auth/index.js'
 import { badRequest } from '../../domain/index.js'
+import {
+  changePasswordInputSchema,
+  updateProfileInputSchema,
+} from './schemas.js'
 
 export const accountRouter = router({
   updateProfile: protectedProcedure
-    .input(z.object({ name: z.string().min(1).max(120) }))
+    .input(updateProfileInputSchema)
     .mutation(async ({ ctx, input }) => {
       try {
         await auth.api.updateUser({ body: { name: input.name }, headers: ctx.headers })
@@ -16,11 +19,7 @@ export const accountRouter = router({
     }),
 
   changePassword: protectedProcedure
-    .input(z.object({
-      currentPassword: z.string().min(1),
-      newPassword: z.string().min(8),
-      revokeOtherSessions: z.boolean().optional(),
-    }))
+    .input(changePasswordInputSchema)
     .mutation(async ({ ctx, input }) => {
       const { currentPassword, newPassword, revokeOtherSessions } = input
       try {

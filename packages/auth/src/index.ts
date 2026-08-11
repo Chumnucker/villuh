@@ -6,6 +6,10 @@ export type { Session as ServerSession } from "./server"
 
 export { useSession } from "./hooks/use-session"
 export { ROUTES as AUTH_ROUTES, ROUTES } from "./routes"
+export { createAuthProxy } from "./proxy"
+export type { AuthProxyRoutes } from "./proxy"
+export { safeCallbackPath } from "./callback-path"
+export { requireSession } from "./require-session"
 
 export { AuthCard } from "./components/auth-card"
 export { LoginForm } from "./components/login-form"

@@ -1,7 +1,4 @@
-import {
-  NavigationBreadcrumbs,
-  SearchInput,
-} from "@villuh/ui"
+import { NavigationBreadcrumbs, SearchInput } from "@villuh/ui"
 import { AppSidebar } from "@/modules/app/components/sidebar"
 
 type SidebarTemplateProps = {

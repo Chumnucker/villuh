@@ -7,7 +7,9 @@
     ".": "./src/index.ts",
     "./client": "./src/client.ts",
     "./server": "./src/server.ts",
-    "./routes": "./src/routes.ts"
+    "./routes": "./src/routes.ts",
+    "./proxy": "./src/proxy.ts",
+    "./require-session": "./src/require-session.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

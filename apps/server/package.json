@@ -14,7 +14,13 @@
     "./schema/role-permissions": "./src/schema/role-permissions.ts",
     "./schema/plan-limits": "./src/schema/plan-limits.ts",
     "./schema/billing-plans": "./src/schema/billing-plans.ts",
-    "./domain": "./src/domain/index.ts"
+    "./domain": "./src/domain/index.ts",
+    "./schemas": "./src/schemas/index.ts",
+    "./schemas/account": "./src/modules/account/schemas.ts",
+    "./schemas/members": "./src/modules/members/schemas.ts",
+    "./schemas/permissions": "./src/modules/permissions/schemas.ts",
+    "./schemas/billing": "./src/modules/billing/schemas.ts",
+    "./schemas/audit-log": "./src/modules/audit-log/schemas.ts"
   },
   "scripts": {
     "dev": "tsx watch --env-file=.env src/index.ts",
