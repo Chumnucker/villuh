@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { trpc } from "@villuh/api"
 import {
@@ -15,6 +15,7 @@ import {
   useLayout,
 } from "@villuh/ui"
 import { ROUTES } from "@/app/routes"
+import { ArchivePropertyDialog } from "@/modules/app/components/properties/archive-property-dialog"
 import { PropertyGallery } from "@/modules/app/components/properties/property-gallery"
 import { PropertyUnitsSection } from "@/modules/app/components/properties/property-units-section"
 import { TagPicker } from "@/modules/app/components/tags/tag-picker"
@@ -22,6 +23,7 @@ import { TagPicker } from "@/modules/app/components/tags/tag-picker"
 export default function PropertyDetailPage() {
   const { propertyId } = useParams<{ propertyId: string }>()
   const { setBreadcrumbs } = useLayout()
+  const [archiveOpen, setArchiveOpen] = useState(false)
   const { data, isLoading } = trpc.properties.get.useQuery({ propertyId })
 
   useEffect(() => {
@@ -56,8 +58,7 @@ export default function PropertyDetailPage() {
           <LinkButton href={ROUTES.propertyEdit(property.id)} variant="outline">
             Edit property
           </LinkButton>
-          {/* Plan 08 wires the type-name-confirm dialog + cascading unit list onto this trigger. */}
-          <Button variant="ghost-destructive" onClick={() => undefined}>
+          <Button variant="ghost-destructive" onClick={() => setArchiveOpen(true)}>
             Archive property
           </Button>
         </div>
@@ -99,6 +100,13 @@ export default function PropertyDetailPage() {
       <PropertyGallery propertyId={property.id} />
 
       <PropertyUnitsSection propertyId={property.id} units={units} />
+
+      <ArchivePropertyDialog
+        open={archiveOpen}
+        onOpenChange={setArchiveOpen}
+        propertyId={property.id}
+        propertyName={property.name}
+      />
     </div>
   )
 }

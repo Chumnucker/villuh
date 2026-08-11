@@ -6,6 +6,7 @@ import Link from "next/link"
 import { trpc } from "@villuh/api"
 import { Button, PlatformIcon, Skeleton, useLayout } from "@villuh/ui"
 import { ROUTES } from "@/app/routes"
+import { ArchiveUnitDialog } from "@/modules/app/components/units/archive-unit-dialog"
 import { StatusBadge } from "@/modules/app/components/units/status-badge"
 import { UnitDetailTabs } from "@/modules/app/components/units/unit-detail-tabs"
 import { UnitFormSheet } from "@/modules/app/components/units/unit-form-sheet"
@@ -14,6 +15,7 @@ export default function UnitDetailPage() {
   const { unitId } = useParams<{ unitId: string }>()
   const { setBreadcrumbs } = useLayout()
   const [editOpen, setEditOpen] = useState(false)
+  const [archiveOpen, setArchiveOpen] = useState(false)
 
   const { data, isLoading } = trpc.units.get.useQuery({ unitId })
   const { data: propertiesData } = trpc.properties.list.useQuery()
@@ -61,8 +63,7 @@ export default function UnitDetailPage() {
           <Button variant="outline" onClick={() => setEditOpen(true)}>
             Edit unit
           </Button>
-          {/* Plan 08 wires the confirm dialog onto this trigger. */}
-          <Button variant="ghost-destructive" onClick={() => undefined}>
+          <Button variant="ghost-destructive" onClick={() => setArchiveOpen(true)}>
             Archive unit
           </Button>
         </div>
@@ -71,6 +72,13 @@ export default function UnitDetailPage() {
       <UnitDetailTabs unit={unit} property={property} status={status} />
 
       <UnitFormSheet open={editOpen} onOpenChange={setEditOpen} mode="edit" unit={unit} />
+      <ArchiveUnitDialog
+        open={archiveOpen}
+        onOpenChange={setArchiveOpen}
+        unitId={unit.id}
+        unitLabel={unit.label}
+        propertyId={property?.id}
+      />
     </div>
   )
 }

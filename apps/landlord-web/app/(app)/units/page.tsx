@@ -18,6 +18,7 @@ import {
   Skeleton,
 } from "@villuh/ui"
 import { ROUTES } from "@/app/routes"
+import { ArchiveUnitDialog } from "@/modules/app/components/units/archive-unit-dialog"
 import { PlanLimitGate } from "@/modules/app/components/plan-limit/plan-limit-gate"
 import { UnitFormSheet, type UnitRow } from "@/modules/app/components/units/unit-form-sheet"
 import { UnitsTable } from "@/modules/app/components/units/units-table"
@@ -31,6 +32,7 @@ export default function UnitsPage() {
   const [propertyFilter, setPropertyFilter] = useState(ALL_PROPERTIES)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editingUnit, setEditingUnit] = useState<UnitRow | undefined>(undefined)
+  const [archivingUnit, setArchivingUnit] = useState<UnitRow | undefined>(undefined)
 
   const { data: unitsData, isLoading } = trpc.units.list.useQuery(
     propertyFilter === ALL_PROPERTIES ? {} : { propertyId: propertyFilter }
@@ -64,6 +66,12 @@ export default function UnitsPage() {
     if (!unit) return
     setEditingUnit(unit)
     setSheetOpen(true)
+  }
+
+  function openArchive(unitId: string) {
+    const unit = unitsData?.units.find((u) => u.id === unitId)
+    if (!unit) return
+    setArchivingUnit(unit)
   }
 
   return (
@@ -121,7 +129,7 @@ export default function UnitsPage() {
           ))}
         </div>
       ) : rows.length > 0 ? (
-        <UnitsTable units={rows} onEdit={openEdit} />
+        <UnitsTable units={rows} onEdit={openEdit} onArchive={openArchive} />
       ) : (
         <div className="flex flex-col items-center gap-1 py-16 text-center">
           <p className="text-sm font-medium text-foreground">No units yet</p>
@@ -136,6 +144,14 @@ export default function UnitsPage() {
         onOpenChange={setSheetOpen}
         mode={editingUnit ? "edit" : "create"}
         unit={editingUnit}
+      />
+      <ArchiveUnitDialog
+        open={Boolean(archivingUnit)}
+        onOpenChange={(open) => {
+          if (!open) setArchivingUnit(undefined)
+        }}
+        unitId={archivingUnit?.id ?? ""}
+        unitLabel={archivingUnit?.label ?? ""}
       />
     </div>
   )

@@ -32,9 +32,11 @@ export type UnitsTableRow = {
 export function UnitsTable({
   units,
   onEdit,
+  onArchive,
 }: {
   units: UnitsTableRow[]
   onEdit: (unitId: string) => void
+  onArchive: (unitId: string) => void
 }) {
   return (
     <Table>
@@ -82,8 +84,7 @@ export function UnitsTable({
                     <PlatformIcon icon="IconPencil" size={16} />
                     Edit unit
                   </DropdownMenuItem>
-                  {/* Plan 08 wires ArchiveUnitDialog onto this trigger. */}
-                  <DropdownMenuItem variant="destructive" onSelect={() => undefined}>
+                  <DropdownMenuItem variant="destructive" onSelect={() => onArchive(unit.id)}>
                     <PlatformIcon icon="IconArchive" size={16} />
                     Archive unit
                   </DropdownMenuItem>
