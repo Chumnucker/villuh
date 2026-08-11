@@ -98,12 +98,32 @@ Plans:
 **Depends on**: Phase 2
 **Requirements**: PROP-01, PROP-02, PROP-03, PROP-04, PROP-05, UNIT-01, UNIT-02, UNIT-03, UNIT-04, UNIT-05
 **Success Criteria** (what must be TRUE):
-  1. Landlord can create, edit, and delete a property with name, address, notes, custom tags, and an image gallery uploaded to S3
-  2. Landlord can view a property dashboard showing total units, occupancy, monthly rent total, and any active alerts
-  3. Landlord can create, edit, and delete units under a property with label, square footage, base rent, and a custom availability status
-  4. Landlord can view full rent history and tenant history for any unit
-  5. When a lease starts mid-month, the system displays a prorated rent amount that the landlord can accept or override; the system automatically sends tenant renewal notices when the configured expiry threshold is reached
-**Plans**: TBD
+  1. Landlord can create, edit, and soft-archive a property with name, structured address, notes, custom tags, and an S3 image gallery
+  2. Landlord can create, edit, and soft-archive units (from `/units` and under a property) with label, sq ft, base rent, and custom availability statuses
+  3. Plan limits gate property/unit creates in UI and on the server; `me.get` quotas reflect active counts
+  4. Unit detail exposes stub empty Rent history and Tenant history tabs (live history deferred)
+  5. PROP-03 dashboard, PROP-04/05 lease-expiry alerts/notices, and UNIT-05 proration are explicitly deferred (CONTEXT overrides older roadmap wording)
+**Plans**: 8 plans (03-01 through 03-08)
+
+**Wave dependency notes:**
+- **Wave 0** — 03-01: Vitest stubs + deps + env + Tabs
+- **Wave 1** — 03-02: Drizzle schemas + [BLOCKING] migrate + audit triggers
+- **Wave 2** — 03-03: properties + uploads APIs (depends on 02)
+- **Wave 3** — 03-04: units + statuses + tags + me.get quotas + Stripe sync (depends on 03)
+- **Wave 4** — 03-05: PlanLimitGate + properties UI + Mapbox + TipTap (depends on 04)
+- **Wave 5** — 03-06: Units UI + stub history tabs (depends on 05)
+- **Wave 6** — 03-07: Gallery + tags UI + status catalog (depends on 05+06)
+- **Wave 7** — 03-08: Archive dialogs + deferral docs + human verify (depends on 07)
+
+Plans:
+- [ ] 03-01-PLAN.md — Wave 0 stubs, deps, env, Tabs
+- [ ] 03-02-PLAN.md — Portfolio schema + [BLOCKING] migrate + audit triggers
+- [ ] 03-03-PLAN.md — Properties CRUD, sanitize notes, S3 gallery API
+- [ ] 03-04-PLAN.md — Units, statuses, tags APIs + Stripe sync + live quotas
+- [ ] 03-05-PLAN.md — PlanLimitGate + properties list/create/edit/detail (Mapbox/TipTap)
+- [ ] 03-06-PLAN.md — Units list/Sheet/detail + UNIT-03/04 stub tabs
+- [ ] 03-07-PLAN.md — Gallery DnD + TagPicker + status catalog UI
+- [ ] 03-08-PLAN.md — Archive confirms + deferred REQ docs + human verify
 **UI hint**: yes
 
 ### Phase 4: Tenants, Leases & Documents
@@ -178,7 +198,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 |-------|----------------|--------|-----------|
 | 1. Infrastructure Foundation | 6/6 | Complete | All plans done 2026-04-29–30 |
 | 2. Auth & Billing | 0/12 | Not started | - |
-| 3. Properties & Units | 0/TBD | Not started | - |
+| 3. Properties & Units | 0/8 | Planned | - |
 | 4. Tenants, Leases & Documents | 0/TBD | Not started | - |
 | 5. Onboarding Flow Engine | 0/TBD | Not started | - |
 | 6. Rent Ledger | 0/TBD | Not started | - |
