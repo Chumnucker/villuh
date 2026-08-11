@@ -7,6 +7,7 @@ import { withOrganization } from '../../db/index.js'
 import { DEFAULT_PERMISSIONS } from '../permissions/service.js'
 import { notFound, type Role } from '../../domain/index.js'
 import { resolveLimitsTier } from '../billing/plans.js'
+import { countActiveProperties, countActiveUnits } from '../../domain/portfolio-counts.js'
 
 export const meRouter = router({
   get: protectedProcedure.query(async ({ ctx }) => {
@@ -27,7 +28,12 @@ export const meRouter = router({
         sql`SELECT COUNT(*)::int AS c FROM "member" WHERE organization_id = ${organizationId}`,
       )) as unknown as { c: number }[]
 
-      const counts = { units: 0, properties: 0, members: memberCountRows[0]?.c ?? 0 }
+      // D-41: units/properties reflect active (non-archived) counts — never client-supplied (T-03-20).
+      const counts = {
+        units: await countActiveUnits(tx, organizationId),
+        properties: await countActiveProperties(tx, organizationId),
+        members: memberCountRows[0]?.c ?? 0,
+      }
 
       const memberRows = (await tx.execute(
         sql`SELECT role FROM "member" WHERE organization_id = ${organizationId} AND user_id = ${userId} LIMIT 1`,
