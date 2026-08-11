@@ -32,6 +32,8 @@
     "migrate": "tsx --env-file=.env src/migrate.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1108.0",
+    "@aws-sdk/s3-request-presigner": "3.1108.0",
     "@better-auth/infra": "^0.2.5",
     "@better-auth/stripe": "^1.6.9",
     "@react-email/components": "1.0.12",
@@ -45,12 +47,14 @@
     "pino-http": "^10.0.0",
     "react": "^19.2.5",
     "resend": "6.12.2",
+    "sanitize-html": "2.17.6",
     "stripe": "22.1.0",
     "zod": "4.3.6"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/sanitize-html": "^2.16.1",
     "@villuh/eslint-config": "workspace:*",
     "@villuh/typescript-config": "workspace:*",
     "@vitest/coverage-v8": "^4.1.5",
