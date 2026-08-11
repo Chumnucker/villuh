@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-06-PLAN.md
-last_updated: "2026-08-11T23:17:57.267Z"
+stopped_at: Completed 03-07-PLAN.md
+last_updated: "2026-08-11T23:35:22.700Z"
 last_activity: 2026-08-11
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 27
-  completed_plans: 20
+  completed_plans: 21
   percent: 13
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 ## Current Position
 
 Phase: 03 (properties-units) — EXECUTING
-Plan: 7 of 9 (03-09 completed out of order as Wave 4; 05-08 remain)
+Plan: 8 of 9 (03-09 completed out of order as Wave 4; 05-08 remain)
 Status: Ready to execute
 Last activity: 2026-08-11
 
-Progress: [███████░░░] 74%
+Progress: [████████░░] 78%
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Progress: [███████░░░] 74%
 | Phase 03 P09 | 35min | 2 tasks | 6 files |
 | Phase 03 P05 | 55min | 2 tasks | 13 files |
 | Phase 03 P06 | 65min | 2 tasks | 9 files |
+| Phase 03 P07 | 70min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -90,6 +91,8 @@ Recent decisions affecting current work:
 - [Phase 03]: Added @tiptap/extension-placeholder@3.30.0 for the NotesEditor 'Add notes...' placeholder (D-16) — no existing dependency covered it
 - [Phase 03]: PropertyUnitsSection owns its own locked UnitFormSheet instance (propertyId prop) rather than an onAddUnit callback — single reusable Sheet shared by /units and the property nested Units section
 - [Phase 03]: units.list/get stay unjoined; landlord UI builds propertyId->property and statusId->status lookup Maps client-side from properties.list/unitStatuses.list rather than adding a backend join
+- [Phase 03]: TagPicker is dual-mode: staged local array during property create, live tRPC mutations once propertyId exists (03-07)
+- [Phase 03]: IconWrench (UI-SPEC fixed icon key) missing from installed @central-icons-react/all; cast to PlatformIconName at render sites, enum itself untouched (03-07)
 
 ### Pending Todos
 
@@ -103,8 +106,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-11T23:17:57.257Z
-Stopped at: Completed 03-06-PLAN.md
+Last session: 2026-08-11T23:35:22.690Z
+Stopped at: Completed 03-07-PLAN.md
 Resume file: None
 
 Phase 1 complete. Next: run `/gsd-plan-phase 2` to plan Phase 2 (Auth & Billing).
