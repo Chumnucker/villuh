@@ -1,4 +1,4 @@
-import type { SidebarNavGroup } from "@/modules/app/config/sidebar-nav"
+import type { SidebarNavGroup } from "@/modules/app/components/sidebar/sidebar-config"
 import { SidebarNavItemLink } from "./sidebar-nav-item"
 
 type SidebarNavGroupProps = {

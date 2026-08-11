@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { zRole } from '../../domain/roles.js'
 
 export const createInvitationInputSchema = z.object({
-  email: z.string().email(),
+  email: z.email(),
   role: zRole,
 })
 

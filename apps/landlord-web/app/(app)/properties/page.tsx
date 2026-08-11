@@ -12,10 +12,16 @@ export default function PropertiesPage() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="font-heading text-2xl font-medium tracking-tight">Properties</h1>
+        <h1 className="font-heading text-2xl font-medium tracking-tight">
+          Properties
+        </h1>
         <PlanLimitGate resource="properties">
           <LinkButton href={ROUTES.propertyNew}>
-            <PlatformIcon icon="IconPlusSmall" size={16} data-icon="inline-start" />
+            <PlatformIcon
+              icon="IconPlusSmall"
+              size={16}
+              data-icon="inline-start"
+            />
             Add property
           </LinkButton>
         </PlanLimitGate>
@@ -28,14 +34,16 @@ export default function PropertiesPage() {
           ))}
         </div>
       ) : data && data.properties.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
           {data.properties.map((property) => (
             <PropertyCard key={property.id} property={property} />
           ))}
         </div>
       ) : (
         <div className="flex flex-col items-center gap-1 py-16 text-center">
-          <p className="text-sm font-medium text-foreground">No properties yet</p>
+          <p className="text-sm font-medium text-foreground">
+            No properties yet
+          </p>
           <p className="text-sm text-muted-foreground">
             Add your first property to start organizing units and leases.
           </p>

@@ -22,21 +22,21 @@ export const createPropertyInputSchema = z.object({
 export type CreatePropertyInput = z.infer<typeof createPropertyInputSchema>
 
 export const updatePropertyInputSchema = createPropertyInputSchema.partial().extend({
-  propertyId: z.string().uuid(),
+  propertyId: z.uuid(),
 })
 
 export type UpdatePropertyInput = z.infer<typeof updatePropertyInputSchema>
 
 export const propertyIdInputSchema = z.object({
-  propertyId: z.string().uuid(),
+  propertyId: z.uuid(),
 })
 
 export const galleryListInputSchema = z.object({
-  propertyId: z.string().uuid(),
+  propertyId: z.uuid(),
 })
 
 export const galleryAddInputSchema = z.object({
-  propertyId: z.string().uuid(),
+  propertyId: z.uuid(),
   // Opaque S3 key only — never a full URL (D-38); returned by uploads.presignPropertyImage.
   objectKey: z.string().trim().min(1),
   contentType: z.string().trim().min(1),
@@ -44,12 +44,12 @@ export const galleryAddInputSchema = z.object({
 })
 
 export const galleryReorderInputSchema = z.object({
-  propertyId: z.string().uuid(),
+  propertyId: z.uuid(),
   // Full ordered list of image IDs for this property — index 0 becomes the cover (D-35).
-  imageIds: z.array(z.string().uuid()).min(1),
+  imageIds: z.array(z.uuid()).min(1),
 })
 
 export const galleryRemoveInputSchema = z.object({
-  propertyId: z.string().uuid(),
-  imageId: z.string().uuid(),
+  propertyId: z.uuid(),
+  imageId: z.uuid(),
 })

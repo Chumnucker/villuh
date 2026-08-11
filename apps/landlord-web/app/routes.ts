@@ -17,9 +17,11 @@ export const ROUTES = {
   onboarding: r("/onboarding"),
   documents: r("/documents"),
   rent: r("/rent"),
+  inbox: r("/inbox"),
   members: r("/members"),
   billing: r("/billing"),
   settings: r("/settings"),
+  settingsUnitStatuses: r("/settings/unit-statuses"),
   auth: {
     login: r("/auth/login"),
     register: r("/auth/register"),

@@ -75,6 +75,11 @@ export const SIDEBAR_NAV: SidebarNavGroup[] = [
         href: ROUTES.rent,
         icon: "IconCurrencyDollar",
       },
+      {
+        label: "Inbox",
+        href: ROUTES.inbox,
+        icon: "IconInboxEmpty",
+      },
     ],
   },
   {

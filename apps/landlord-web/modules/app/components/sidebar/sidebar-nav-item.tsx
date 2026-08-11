@@ -2,7 +2,7 @@
 
 import { LinkButton, PlatformIcon, cn } from "@villuh/ui"
 import { usePathname } from "next/navigation"
-import type { SidebarNavItem } from "@/modules/app/config/sidebar-nav"
+import type { SidebarNavItem } from "@/modules/app/components/sidebar/sidebar-config"
 
 function isNavActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/"

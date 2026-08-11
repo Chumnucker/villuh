@@ -1,7 +1,7 @@
 "use client"
 
 import { ScrollArea } from "@villuh/ui"
-import { SIDEBAR_NAV } from "@/modules/app/config/sidebar-nav"
+import { SIDEBAR_NAV } from "@/modules/app/components/sidebar/sidebar-config"
 import { SidebarHeader } from "./sidebar-header"
 import { SidebarNavGroupSection } from "./sidebar-nav-group"
 import { SidebarUserMenu } from "./sidebar-user-menu"

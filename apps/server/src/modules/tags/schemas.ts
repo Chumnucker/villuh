@@ -39,7 +39,7 @@ export type CreateOrganizationTagInput = z.infer<typeof createOrganizationTagInp
 
 // D-19: same write permission as promote; rename/re-icon/re-color allowed on any catalog row.
 export const updateOrganizationTagInputSchema = z.object({
-  organizationTagId: z.string().uuid(),
+  organizationTagId: z.uuid(),
   name: z.string().trim().min(1).max(100).optional(),
   iconKey: zTagIconKey.optional(),
   colorKey: zTagColorKey.optional(),
@@ -47,16 +47,16 @@ export const updateOrganizationTagInputSchema = z.object({
 export type UpdateOrganizationTagInput = z.infer<typeof updateOrganizationTagInputSchema>
 
 export const organizationTagIdInputSchema = z.object({
-  organizationTagId: z.string().uuid(),
+  organizationTagId: z.uuid(),
 })
 
 export const propertyIdInputSchema = z.object({
-  propertyId: z.string().uuid(),
+  propertyId: z.uuid(),
 })
 
 // Freeform tag (D-17): display-only property_tag row, organizationTagId stays null until promoted.
 export const addFreeformTagInputSchema = z.object({
-  propertyId: z.string().uuid(),
+  propertyId: z.uuid(),
   label: z.string().trim().min(1, 'Tag label is required').max(100, 'Label must be at most 100 characters'),
   iconKey: zTagIconKey,
   colorKey: zTagColorKey,
@@ -64,23 +64,23 @@ export const addFreeformTagInputSchema = z.object({
 export type AddFreeformTagInput = z.infer<typeof addFreeformTagInputSchema>
 
 export const attachOrganizationTagInputSchema = z.object({
-  propertyId: z.string().uuid(),
-  organizationTagId: z.string().uuid(),
+  propertyId: z.uuid(),
+  organizationTagId: z.uuid(),
 })
 export type AttachOrganizationTagInput = z.infer<typeof attachOrganizationTagInputSchema>
 
 // Bulk-replace a property's catalog-backed tags (TagPicker multi-select) — freeform rows untouched.
 export const setPropertyTagsInputSchema = z.object({
-  propertyId: z.string().uuid(),
-  organizationTagIds: z.array(z.string().uuid()),
+  propertyId: z.uuid(),
+  organizationTagIds: z.array(z.uuid()),
 })
 export type SetPropertyTagsInput = z.infer<typeof setPropertyTagsInputSchema>
 
 export const propertyTagIdInputSchema = z.object({
-  propertyTagId: z.string().uuid(),
+  propertyTagId: z.uuid(),
 })
 
 export const promoteFreeformTagInputSchema = z.object({
-  propertyTagId: z.string().uuid(),
+  propertyTagId: z.uuid(),
 })
 export type PromoteFreeformTagInput = z.infer<typeof promoteFreeformTagInputSchema>
