@@ -97,7 +97,9 @@ Each task was committed atomically:
 
 ## Deviations from Plan
 
-None - plan executed exactly as written. `@types/sanitize-html` was already anticipated by the plan's own acceptance criteria ("as a devDependency if types are not bundled").
+None in the implementation itself - plan executed exactly as written. `@types/sanitize-html` was already anticipated by the plan's own acceptance criteria ("as a devDependency if types are not bundled").
+
+**State tracking note:** This plan's frontmatter lists `requirements: [PROP-01, UNIT-01]`, but those same requirement IDs also appear in five other Phase 3 plans' frontmatter (03-02, 03-03, 03-05, 03-07, 03-08 for PROP-01; 03-02, 03-04, 03-06 for UNIT-01) — Phase 3 plans use `requirements` to mean "contributes to," not "fully delivers." Running `requirements.mark-complete PROP-01 UNIT-01` would have incorrectly flipped `.planning/REQUIREMENTS.md` to `Complete` after only the Wave 0 bootstrap plan (deps/env/stubs, no actual CRUD yet). Skipped that mechanical step and left both requirements `Pending` in REQUIREMENTS.md — they should only flip to Complete once their last contributing plan (03-08 for PROP-01, 03-06 for UNIT-01) lands.
 
 ## Issues Encountered
 None.
@@ -118,3 +120,7 @@ Neither blocks Wave 0-3 work — S3 is mocked in tests and Mapbox falls back to 
 ---
 *Phase: 03-properties-units*
 *Completed: 2026-08-11*
+
+## Self-Check: PASSED
+
+All created files verified present on disk; all task/summary commit hashes (`53484ce`, `93ce72e`, `703ae4d`) verified in git log.
