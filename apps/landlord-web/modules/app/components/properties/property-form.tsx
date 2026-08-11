@@ -1,18 +1,10 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { useForm } from "@tanstack/react-form"
 import { toast } from "sonner"
-import {
-  Button,
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldLabel,
-  Input,
-  LinkButton,
-  PlatformIcon,
-} from "@villuh/ui"
+import { Button, Field, FieldError, FieldLabel, Input, LinkButton } from "@villuh/ui"
 import { invalidateQueries, trpc } from "@villuh/api"
 import {
   createPropertyInputSchema,
@@ -23,6 +15,7 @@ import type { inferRouterOutputs } from "@trpc/server"
 import type { AppRouter } from "@villuh/server/router"
 import { ROUTES } from "@/app/routes"
 import { getPlanLimitMeta, isPlanLimitError } from "@/modules/app/components/plan-limit/plan-limit-gate"
+import { TagPicker, type TagPickerTag } from "@/modules/app/components/tags/tag-picker"
 import { AddressFields } from "./address-fields"
 import { NotesEditor } from "./notes-editor"
 
@@ -81,13 +74,39 @@ export function PropertyForm({
 }) {
   const router = useRouter()
   const utils = trpc.useUtils()
+  const [stagedTags, setStagedTags] = useState<TagPickerTag[]>([])
+
+  const addFreeformTag = trpc.tags.addFreeform.useMutation()
+  const setPropertyTags = trpc.tags.setPropertyTags.useMutation()
 
   const createProperty = trpc.properties.create.useMutation({
-    onSuccess: (data) =>
-      invalidateQueries(utils, [(u) => u.properties.list, (u) => u.me.get]).then(() => {
-        toast.success("Property created")
-        router.push(ROUTES.propertyDetail(data.property.id))
-      }),
+    onSuccess: async (data) => {
+      const propertyId = data.property.id
+      const catalogTagIds = stagedTags
+        .filter((tag) => tag.organizationTagId)
+        .map((tag) => tag.organizationTagId!)
+      const freeformTags = stagedTags.filter((tag) => !tag.organizationTagId)
+
+      try {
+        if (catalogTagIds.length > 0) {
+          await setPropertyTags.mutateAsync({ propertyId, organizationTagIds: catalogTagIds })
+        }
+        for (const tag of freeformTags) {
+          await addFreeformTag.mutateAsync({
+            propertyId,
+            label: tag.label,
+            iconKey: tag.iconKey,
+            colorKey: tag.colorKey,
+          })
+        }
+      } catch {
+        toast.error("Property created, but some tags could not be saved")
+      }
+
+      await invalidateQueries(utils, [(u) => u.properties.list, (u) => u.me.get])
+      toast.success("Property created")
+      router.push(ROUTES.propertyDetail(propertyId))
+    },
     onError: (err) => {
       if (isPlanLimitError(err)) {
         const meta = getPlanLimitMeta(err)
@@ -185,15 +204,11 @@ export function PropertyForm({
         )}
       </form.Field>
 
-      {/* Placeholder slot only — TagPicker wiring is Plan 07 (needs Plan 09 tags API). */}
-      <Field>
-        <FieldLabel>Tags</FieldLabel>
-        <div className="flex min-h-9 items-center rounded-xl border border-dashed border-border px-3 text-sm text-muted-foreground">
-          <PlatformIcon icon="IconTag" size={16} className="mr-1.5" />
-          Tags managed on the property detail page
-        </div>
-        <FieldDescription>Tagging is coming soon.</FieldDescription>
-      </Field>
+      {mode === "edit" && property ? (
+        <TagPicker propertyId={property.id} />
+      ) : (
+        <TagPicker value={stagedTags} onChange={setStagedTags} />
+      )}
 
       <form.Field name="notes">
         {(field) => (

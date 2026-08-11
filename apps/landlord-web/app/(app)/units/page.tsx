@@ -1,9 +1,14 @@
 "use client"
 
+import Link from "next/link"
 import { useState } from "react"
 import { trpc } from "@villuh/api"
 import {
   Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
   PlatformIcon,
   Select,
   SelectContent,
@@ -12,13 +17,17 @@ import {
   SelectValue,
   Skeleton,
 } from "@villuh/ui"
+import { ROUTES } from "@/app/routes"
 import { PlanLimitGate } from "@/modules/app/components/plan-limit/plan-limit-gate"
 import { UnitFormSheet, type UnitRow } from "@/modules/app/components/units/unit-form-sheet"
 import { UnitsTable } from "@/modules/app/components/units/units-table"
+import { useUser } from "@/modules/app/providers/me-provider"
 
 const ALL_PROPERTIES = "__all__"
 
 export default function UnitsPage() {
+  const { user } = useUser()
+  const isAdmin = user.org.permissions.admin
   const [propertyFilter, setPropertyFilter] = useState(ALL_PROPERTIES)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editingUnit, setEditingUnit] = useState<UnitRow | undefined>(undefined)
@@ -61,12 +70,32 @@ export default function UnitsPage() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-4">
         <h1 className="font-heading text-2xl font-medium tracking-tight">Units</h1>
-        <PlanLimitGate resource="units">
-          <Button onClick={openCreate}>
-            <PlatformIcon icon="IconPlusSmall" size={16} data-icon="inline-start" />
-            Add unit
-          </Button>
-        </PlanLimitGate>
+        <div className="flex items-center gap-2">
+          <PlanLimitGate resource="units">
+            <Button onClick={openCreate}>
+              <PlatformIcon icon="IconPlusSmall" size={16} data-icon="inline-start" />
+              Add unit
+            </Button>
+          </PlanLimitGate>
+          {isAdmin ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <PlatformIcon icon="IconDotGrid1x3Horizontal" size={16} />
+                  <span className="sr-only">Units options</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href={ROUTES.settingsUnitStatuses}>
+                    <PlatformIcon icon="IconCircleCheck" size={16} />
+                    Manage statuses
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
+        </div>
       </div>
 
       {properties.length > 0 ? (
