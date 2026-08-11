@@ -29,8 +29,8 @@
 
 - [x] **UNIT-01**: Landlord can create, edit, and delete units with property, label, square footage, base rent, and availability status
 - [x] **UNIT-02**: Landlord can define custom availability statuses (defaults: Available / Occupied / Maintenance)
-- [ ] **UNIT-03**: Landlord can view rent history for a unit (all payments ever recorded against it)
-- [ ] **UNIT-04**: Landlord can view tenant history for a unit (chronological list of previous tenants)
+- [x] **UNIT-03**: Landlord can view rent history for a unit (all payments ever recorded against it)
+- [x] **UNIT-04**: Landlord can view tenant history for a unit (chronological list of previous tenants)
 - [ ] **UNIT-05**: System auto-calculates prorated rent when a lease starts mid-month; landlord can override
 
 ### Tenants
@@ -176,8 +176,8 @@ Core resident portal (login + branded subdomain shell) is now **in v1 scope** vi
 | PROP-05 | Phase 3 | Pending |
 | UNIT-01 | Phase 3 | Complete |
 | UNIT-02 | Phase 3 | Complete |
-| UNIT-03 | Phase 3 | Pending |
-| UNIT-04 | Phase 3 | Pending |
+| UNIT-03 | Phase 3 | Complete |
+| UNIT-04 | Phase 3 | Complete |
 | UNIT-05 | Phase 3 | Pending |
 | TENT-01 | Phase 4 | Pending |
 | TENT-02 | Phase 4 | Pending |
