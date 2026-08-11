@@ -3,19 +3,20 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "pnpm --filter @villuh/web dev & pnpm --filter @villuh/server dev",
-    "dev:web": "pnpm --filter @villuh/web dev",
-    "dev:server": "pnpm --filter @villuh/server dev",
-    "typecheck": "pnpm -r typecheck",
-    "migrate": "pnpm --filter @villuh/db migrate",
-    "test": "pnpm -r test"
+    "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=@villuh/web",
+    "dev:server": "turbo run dev --filter=@villuh/server",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "migrate": "turbo run migrate --filter=@villuh/server",
+    "generate": "turbo run generate --filter=@villuh/server",
+    "start": "turbo run start"
   },
   "devDependencies": {
-    "@types/node": "^25.6.0"
+    "@types/node": "^25.6.0",
+    "turbo": "^2.10.9"
   },
-  "pnpm": {
-    "overrides": {
-      "drizzle-orm": "0.45.2"
-    }
-  }
+  "packageManager": "pnpm@11.1.3"
 }

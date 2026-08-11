@@ -2,20 +2,31 @@
 
 This is a Next.js template with shadcn/ui.
 
-## Adding components
+## Monorepo
 
-To add components to your app, run the following command:
-
-```bash
-npx shadcn@latest add button
+```
+apps/
+  web/       # Next.js frontend (@villuh/web)
+  server/    # Hono API (@villuh/server)
+packages/
+  typescript-config/
+  eslint-config/
 ```
 
-This will place the ui components in the `components` directory.
+```bash
+pnpm install
+pnpm dev          # turbo run dev (web + server)
+pnpm build
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm migrate
+```
 
-## Using components
+## Adding components
 
-To use the components in your app, import them as follows:
+To add components to your app, run from `apps/web`:
 
-```tsx
-import { Button } from "@/components/ui/button";
+```bash
+pnpm --filter @villuh/web exec shadcn@latest add button
 ```

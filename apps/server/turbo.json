@@ -1,0 +1,28 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "test": {
+      "dependsOn": ["transit"],
+      "inputs": ["$TURBO_DEFAULT$", ".env", ".env.*"],
+      "env": [
+        "DATABASE_URL",
+        "DATABASE_APP_URL",
+        "DATABASE_TEST_URL",
+        "DATABASE_OWNER_TEST_URL",
+        "BETTER_AUTH_URL",
+        "BETTER_AUTH_SECRET",
+        "BETTER_AUTH_API_KEY",
+        "CORS_ALLOWED_ORIGINS",
+        "STRIPE_SECRET_KEY"
+      ]
+    },
+    "migrate": {
+      "cache": false,
+      "env": ["DATABASE_URL"]
+    }
+  }
+}

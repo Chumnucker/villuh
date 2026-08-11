@@ -1,2 +1,13 @@
 packages:
+  - "apps/*"
   - "packages/*"
+
+overrides:
+  drizzle-orm: 0.45.2
+
+allowBuilds:
+  "@central-icons-react/all": true
+  esbuild: true
+  msw: true
+  sharp: true
+  unrs-resolver: true

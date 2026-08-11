@@ -1,5 +1,5 @@
 # dependencies
-/node_modules
+node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -9,14 +9,16 @@
 !.yarn/versions
 
 # testing
-/coverage
+coverage
+**/coverage
 
 # next.js
-/.next/
-/out/
+.next
+out
 
 # production
 /build
+dist
 
 # misc
 .DS_Store
@@ -28,9 +30,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# env files
-.env*.local
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts
@@ -38,12 +37,15 @@ next-env.d.ts
 # VSCode sensitive files
 .vscode/github-accounts.json
 
-# Package build artifacts
-packages/*/dist/
-packages/*/.next/
-packages/*/node_modules/
+# Turborepo
+.turbo
 
-# Environment files
+# Environment files (never commit secrets)
 .env
-.env.local
-.env*.local
+.env.*
+!.env.example
+!.env*.example
+
+# Claude / GSD local-only
+.claude/worktrees/
+.claude/settings.local.json

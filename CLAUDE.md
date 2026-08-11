@@ -33,6 +33,13 @@ This project uses the Get Shit Done (GSD) workflow. Always follow it.
 
 **Stack:** Next.js 16 (App Router) + Hono 4 (Railway) + Postgres + Drizzle ORM + Better Auth
 
+**Monorepo (Turborepo + pnpm):**
+- `apps/web` — Next.js frontend (`@villuh/web`)
+- `apps/server` — Hono API (`@villuh/server`)
+- `packages/typescript-config` — shared TSConfigs
+- `packages/eslint-config` — shared ESLint configs
+- Root scripts delegate to `turbo run` — never bypass Turbo for build/dev/lint/test
+
 **Critical: Multi-tenancy via Postgres RLS**
 - App connects as `villuh_app` role (non-owner) — never the migration/owner role
 - Every authenticated Hono request must call `withTenant(landlordId, fn)` to set `SET LOCAL app.current_landlord_id`
