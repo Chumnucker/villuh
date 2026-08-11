@@ -4,6 +4,7 @@ import { ScrollArea } from "@villuh/ui"
 import { SIDEBAR_NAV } from "@/modules/app/config/sidebar-nav"
 import { SidebarHeader } from "./sidebar-header"
 import { SidebarNavGroupSection } from "./sidebar-nav-group"
+import { SidebarUserMenu } from "./sidebar-user-menu"
 
 type AppSidebarProps = {
   appName?: string
@@ -20,6 +21,9 @@ export function AppSidebar({ appName }: AppSidebarProps) {
           ))}
         </nav>
       </ScrollArea>
+      <div className="shrink-0 border-t p-page">
+        <SidebarUserMenu />
+      </div>
     </aside>
   )
 }
