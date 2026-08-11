@@ -20,3 +20,24 @@ describe('AUTH-04: Trial + subscription gate', () => {
     expect.fail('TODO: Plan 06 implements subscriptionExpiredGate')
   })
 })
+
+describe('PROP-01: Properties plan limit enforcement (D-39-D-43)', () => {
+  it('starter tier blocks property creation past the tier limit with appCode PLAN_LIMIT', () => {
+    expect.fail('TODO: Plan 03-03 implements checkPlanLimit for resource=properties')
+  })
+  it('PLAN_LIMIT error data matches { resource: "properties", limit, current, upgrade_to }', () => {
+    expect.fail('TODO: Plan 03-03 returns Pattern 2 error shape for properties')
+  })
+})
+
+describe('UNIT-01: Units plan limit enforcement (D-39-D-43)', () => {
+  it('starter tier blocks unit creation past the tier limit with appCode PLAN_LIMIT', () => {
+    expect.fail('TODO: Plan 03-04 implements checkPlanLimit for resource=units')
+  })
+  it('PLAN_LIMIT error data matches { resource: "units", limit, current, upgrade_to }', () => {
+    expect.fail('TODO: Plan 03-04 returns Pattern 2 error shape for units')
+  })
+  it('pro tier with -1 unit limit allows unlimited creation', () => {
+    expect.fail('TODO: Plan 03-04 handles -1 limit as unlimited for units')
+  })
+})
