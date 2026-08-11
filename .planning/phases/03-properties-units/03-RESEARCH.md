@@ -529,27 +529,31 @@ onSuccess: async () => {
 
 **If this table is empty:** N/A — assumptions listed above need planner awareness (A1 especially).
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Notes storage format (HTML vs markdown)**
    - What we know: TipTap `getHTML()` + D-15 sanitize HTML; D-13 says “optional markdown”.
    - What's unclear: whether export/search needs markdown later.
    - Recommendation: Store sanitized HTML; treat D-13 as “rich notes via TipTap” (confirm only if user objects).
+   - **RESOLVED:** Persist sanitized HTML (Assumption A1 / TipTap HTML output) — not markdown source. Plans 03-01 (sanitize-html), 03-03 (`sanitizeNotesHtml`), and 03-05 (TipTap → HTML) already assume this.
 
 2. **S3 provider & bucket env**
    - What we know: No S3 vars in `.env.example` yet; architecture assumes AWS S3-compatible.
    - What's unclear: AWS vs R2/MinIO for local/dev.
    - Recommendation: Env `S3_BUCKET`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, optional `S3_ENDPOINT` for compatible stores; document in Wave 0.
+   - **RESOLVED:** Env shape as planned in 03-01 (`S3_BUCKET`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, optional `S3_ENDPOINT`). Compatible endpoints (R2/MinIO) via `S3_ENDPOINT` only — no alternate key scheme.
 
 3. **Mapbox token scoping**
    - What we know: AddressAutofill needs a **public** access token in the browser.
    - What's unclear: URL restrictions / billing alerts for token.
    - Recommendation: `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` with URL restrictions to landlord app hosts.
+   - **RESOLVED:** Public client token `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` (03-01 user_setup + landlord `.env.example`); URL-restrict to landlord hosts in Mapbox dashboard. Missing token → manual address fields (D-25).
 
 4. **Subscription expired write gate**
    - What we know: `SUBSCRIPTION_REQUIRED` exists; plan-limit tests still TODO for expired gate.
    - What's unclear: whether Phase 3 must implement the gate or inherit from unfinished Phase 2 Plan 06.
    - Recommendation: Enforce `PLAN_LIMIT` solidly in Phase 3; add expired-status check on write procedures if not already middleware — flag to orchestrator if Plan 06 incomplete.
+   - **RESOLVED:** OUT of Phase 3 — AUTH-04 / Phase 2 concern (`subscriptionExpiredGate`). Plan 03-04 already defers AUTH-04 TODOs and does not implement the expired write gate; Phase 3 enforces `PLAN_LIMIT` only.
 
 ## Environment Availability
 

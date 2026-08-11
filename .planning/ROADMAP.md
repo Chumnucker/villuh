@@ -103,27 +103,28 @@ Plans:
   3. Plan limits gate property/unit creates in UI and on the server; `me.get` quotas reflect active counts
   4. Unit detail exposes stub empty Rent history and Tenant history tabs (live history deferred)
   5. PROP-03 dashboard, PROP-04/05 lease-expiry alerts/notices, and UNIT-05 proration are explicitly deferred (CONTEXT overrides older roadmap wording)
-**Plans**: 8 plans (03-01 through 03-08)
+**Plans**: 9 plans (03-01 through 03-09)
 
 **Wave dependency notes:**
 - **Wave 0** — 03-01: Vitest stubs + deps + env + Tabs
 - **Wave 1** — 03-02: Drizzle schemas + [BLOCKING] migrate + audit triggers
 - **Wave 2** — 03-03: properties + uploads APIs (depends on 02)
-- **Wave 3** — 03-04: units + statuses + tags + me.get quotas + Stripe sync (depends on 03)
-- **Wave 4** — 03-05: PlanLimitGate + properties UI + Mapbox + TipTap (depends on 04)
+- **Wave 3** — 03-04: units + statuses + Stripe sync (depends on 03)
+- **Wave 4** — 03-09: tags API + me.get quotas (depends on 04; sequential for router.ts ownership); 03-05: PlanLimitGate + properties UI + Mapbox + TipTap (depends on 04; parallel with 09 — tags UI deferred to 07)
 - **Wave 5** — 03-06: Units UI + stub history tabs (depends on 05)
-- **Wave 6** — 03-07: Gallery + tags UI + status catalog (depends on 05+06)
+- **Wave 6** — 03-07: Gallery + TagPicker + status catalog (depends on 05+06+09)
 - **Wave 7** — 03-08: Archive dialogs + deferral docs + human verify (depends on 07)
 
 Plans:
 - [ ] 03-01-PLAN.md — Wave 0 stubs, deps, env, Tabs
 - [ ] 03-02-PLAN.md — Portfolio schema + [BLOCKING] migrate + audit triggers
 - [ ] 03-03-PLAN.md — Properties CRUD, sanitize notes, S3 gallery API
-- [ ] 03-04-PLAN.md — Units, statuses, tags APIs + Stripe sync + live quotas
-- [ ] 03-05-PLAN.md — PlanLimitGate + properties list/create/edit/detail (Mapbox/TipTap)
+- [ ] 03-04-PLAN.md — Units + statuses APIs + Stripe sync
+- [ ] 03-05-PLAN.md — PlanLimitGate + properties list/create/edit/detail (Mapbox/TipTap); tags placeholder only
 - [ ] 03-06-PLAN.md — Units list/Sheet/detail + UNIT-03/04 stub tabs
 - [ ] 03-07-PLAN.md — Gallery DnD + TagPicker + status catalog UI
 - [ ] 03-08-PLAN.md — Archive confirms + deferred REQ docs + human verify
+- [ ] 03-09-PLAN.md — Tags API + live me.get quotas
 **UI hint**: yes
 
 ### Phase 4: Tenants, Leases & Documents
