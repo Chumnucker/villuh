@@ -166,7 +166,7 @@ Dark mode: reuse existing `.dark` token counterparts; soft badge fills use `/15`
 
 ### Screen 2: Create / Edit property `/properties/new` · `/properties/[propertyId]/edit`
 
-**Layout:** App shell. Breadcrumbs: Properties → Add property / Edit. Max content width `max-w-2xl`.
+**Layout:** App shell. Breadcrumbs: Properties → Add property / Edit property. Max content width `max-w-2xl`.
 
 **Why page (not Dialog):** Mapbox + TipTap + gallery need vertical space; Dialog would scroll poorly.
 
