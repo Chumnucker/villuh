@@ -18,12 +18,28 @@ function toLatLng(value: number | undefined): string | null | undefined {
   return value === null ? null : String(value)
 }
 
-export async function listProperties(tx: OrganizationTx, organizationId: string): Promise<PropertyRow[]> {
-  return tx
+export async function listProperties(
+  tx: OrganizationTx,
+  organizationId: string,
+): Promise<(PropertyRow & { unitCount: number })[]> {
+  const rows = await tx
     .select()
     .from(properties)
     .where(and(eq(properties.organizationId, organizationId), isNull(properties.archivedAt)))
     .orderBy(asc(properties.createdAt))
+
+  if (rows.length === 0) return []
+
+  // Landlord card list footer snippet (UI-SPEC Screen 1: `{unitCount} units`) — count active
+  // units per property in one grouped query rather than N+1 per card.
+  const countRows = await tx
+    .select({ propertyId: units.propertyId, count: sql<number>`count(*)::int` })
+    .from(units)
+    .where(and(eq(units.organizationId, organizationId), isNull(units.archivedAt)))
+    .groupBy(units.propertyId)
+  const countByProperty = new Map(countRows.map((row) => [row.propertyId, row.count]))
+
+  return rows.map((row) => ({ ...row, unitCount: countByProperty.get(row.id) ?? 0 }))
 }
 
 async function requireProperty(

@@ -23,6 +23,7 @@
     "@tanstack/react-form": "^1.33.4",
     "@tanstack/react-query": "^5.100.7",
     "@tiptap/extension-link": "3.30.0",
+    "@tiptap/extension-placeholder": "3.30.0",
     "@tiptap/pm": "3.30.0",
     "@tiptap/react": "3.30.0",
     "@tiptap/starter-kit": "3.30.0",
