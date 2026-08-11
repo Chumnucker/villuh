@@ -4,6 +4,8 @@ import { rolePermissionsRouter } from './modules/permissions/router.js'
 import { accountRouter } from './modules/account/router.js'
 import { auditLogRouter } from './modules/audit-log/router.js'
 import { billingRouter } from './modules/billing/router.js'
+import { propertiesRouter } from './modules/properties/router.js'
+import { uploadsRouter } from './modules/uploads/router.js'
 import { router } from './trpc.js'
 
 export const appRouter = router({
@@ -13,6 +15,8 @@ export const appRouter = router({
   account: accountRouter,
   auditLog: auditLogRouter,
   billing: billingRouter,
+  properties: propertiesRouter,
+  uploads: uploadsRouter,
 })
 
 export type AppRouter = typeof appRouter
