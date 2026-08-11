@@ -29,6 +29,9 @@ export default defineConfig({
       // Resend — mocked in auth tests; lazy init in email.ts avoids env check at load time
       RESEND_API_KEY: process.env.RESEND_API_KEY ?? 're_test_placeholder',
       RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL ?? 'noreply@test.local',
+      // S3 — mocked in gallery tests (Assumption A6); placeholder avoids getBucket() throwing
+      S3_BUCKET: process.env.S3_BUCKET ?? 'villuh-test-bucket',
+      AWS_REGION: process.env.AWS_REGION ?? 'us-east-1',
       NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
       // Database — @villuh/db uses DATABASE_APP_URL for the runtime connection
       // In tests, we point it at the test DB (villuh_app role, RLS enforced)
