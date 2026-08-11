@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
+import { toast } from "sonner"
 import {
   Avatar,
   AvatarFallback,
@@ -37,8 +38,15 @@ export function SidebarUserMenu() {
   const isDark = resolvedTheme === "dark"
 
   async function handleSignOut() {
-    await authClient.signOut()
-    router.replace(ROUTES.auth.login)
+    const { error } = await authClient.signOut()
+    if (error) {
+      toast.error("Failed to log out. Please try again.")
+      return
+    }
+    // Hard navigation (not router.replace) so all providers remount and
+    // TanStack Query's client-side cache is cleared, preventing a second
+    // user signing in on the same tab from seeing the previous user's data.
+    window.location.href = ROUTES.auth.login
   }
 
   return (
