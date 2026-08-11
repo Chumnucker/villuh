@@ -11,7 +11,7 @@ import {
   createOwnerClient,
 } from './setup.js'
 
-vi.mock('../lib/email.js', () => ({
+vi.mock('../modules/email/index.js', () => ({
   resend: { emails: { send: vi.fn() } },
   sendVerificationEmail: vi.fn(),
   sendResetPasswordEmail: vi.fn(),
@@ -26,14 +26,14 @@ afterAll(async () => { await clearTestUsers() })
  * Used to create reliable test data for SETT-02 audit log tests.
  * This matches what Phase 1 audit triggers produce on real DML operations.
  */
-async function seedAuditEntry(landlordId: string, actorId: string, tableName: string) {
+async function seedAuditEntry(organizationId: string, actorId: string, tableName: string) {
   const owner = createOwnerClient()
   try {
-    // audit_log.landlord_id is text (migration 0009) — no uuid cast needed
+    // audit_log.organization_id is text (migration 0009) — no uuid cast needed
     await owner.db.execute(sql`
-      INSERT INTO audit_log (landlord_id, table_name, row_id, operation, actor_id)
+      INSERT INTO audit_log (organization_id, table_name, row_id, operation, actor_id)
       VALUES (
-        ${landlordId},
+        ${organizationId},
         ${tableName},
         gen_random_uuid(),
         'UPDATE',
@@ -54,7 +54,7 @@ describe('SETT-02: Personal audit log', () => {
     const { cookie } = await signInTestUser('audit@test.local', 'TestPass123!')
 
     // Seed a synthetic audit entry so the audit log has data to return.
-    // (Replaces the Phase 1 trigger approach: real triggers fire on DML in withTenant context.
+    // (Replaces the Phase 1 trigger approach: real triggers fire on DML in withOrganization context.
     // Synthetic seeding avoids the complexity of triggering real DML in tests.)
     await seedAuditEntry(orgId, userId, 'role_permissions')
 
@@ -87,7 +87,7 @@ describe('SETT-02: Personal audit log', () => {
     const resB = await fetchApi('/api/audit-log', { headers: { cookie: cookieB } })
     expect(resB.status).toBe(200)
     const body = await resB.json() as { entries: { actor_id: string }[] }
-    // User B should NOT see user A's actions (RLS isolates landlord_id, actor_id filter isolates user)
+    // User B should NOT see user A's actions (RLS isolates organization_id, actor_id filter isolates user)
     expect(body.entries.every((e) => e.actor_id !== userIdA)).toBe(true)
   })
 

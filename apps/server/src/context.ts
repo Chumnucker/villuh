@@ -1,5 +1,5 @@
 import { fromNodeHeaders } from 'better-auth/node'
-import { auth } from './auth.js'
+import { auth } from './modules/auth/index.js'
 import type { Request, Response } from 'express'
 
 export async function createContext({ req, res }: { req: Request; res: Response }) {

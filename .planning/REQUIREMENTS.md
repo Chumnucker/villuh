@@ -71,6 +71,12 @@
 - [ ] **FLOW-09**: Landlord can configure invite expiry (N days) and can resend, revoke, or regenerate the invite link
 - [ ] **FLOW-10**: Tenant identity is verified via magic link only — no account creation required
 
+### Resident Portal
+
+- [ ] **PORT-01**: Resident can access a persistent branded portal at `{slug}.villuh.com` (separate from landlord `{slug}.app.villuh.com`)
+- [ ] **PORT-02**: Resident can view their lease documents from the portal
+- [ ] **PORT-05**: Landlord and resident apps share one design system via `packages/*` (same look/feel; different shells)
+
 ### Rent Ledger
 
 - [ ] **LEDG-01**: System auto-generates a monthly rent entry for each active lease on the due date
@@ -115,10 +121,10 @@
 
 ## v2 Requirements
 
-### Tenant Portal
+### Tenant Portal (extended)
 
-- **PORT-01**: Tenant can create an account and log in to a persistent portal
-- **PORT-02**: Tenant can view their lease documents from the portal
+Core resident portal (login + branded subdomain shell) is now **in v1 scope** via `apps/resident-web`. Remaining portal depth:
+
 - **PORT-03**: Tenant can submit maintenance requests from the portal
 - **PORT-04**: Tenant can view payment history from the portal
 

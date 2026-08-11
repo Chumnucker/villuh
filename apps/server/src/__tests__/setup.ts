@@ -57,12 +57,12 @@ export async function getOrgIdForUser(userId: string): Promise<string> {
   }
 }
 
-// auth is imported lazily inside helpers to support vi.mock('../lib/email.js') in tests:
+// auth is imported lazily inside helpers to support vi.mock('../modules/email/index.js') in tests:
 // vi.mock is hoisted but setupFiles run first, so top-level auth import would capture
 // real email functions before the mock can intercept. Lazy import ensures the mock
 // is applied before auth's first use.
 async function getAuth() {
-  const { auth } = await import('../auth.js')
+  const { auth } = await import('../modules/auth/index.js')
   return auth
 }
 
@@ -82,15 +82,15 @@ export function createAppClient() {
   return { db: drizzle({ client, schema }), end: () => client.end() }
 }
 
-// Replicate withTenant from src/lib/tenant.ts (avoid circular import in tests)
-export async function withTestTenant<T>(
+// Replicate withOrganization from src/db/organization.ts (avoid circular import in tests)
+export async function withTestOrganization<T>(
   appDb: ReturnType<typeof createAppClient>['db'],
-  landlordId: string,
+  organizationId: string,
   actorId: string = 'system',
   fn: (tx: any) => Promise<T>
 ): Promise<T> {
   return appDb.transaction(async (tx) => {
-    await tx.execute(sql`SELECT set_config('app.current_landlord_id', ${landlordId}, TRUE)`)
+    await tx.execute(sql`SELECT set_config('app.current_organization_id', ${organizationId}, TRUE)`)
     await tx.execute(sql`SELECT set_config('app.current_user_id', ${actorId}, TRUE)`)
     return fn(tx)
   })
@@ -128,7 +128,7 @@ export async function markUserEmailVerified(userId: string) {
  * Sign in an existing (verified) user and set their org as active in the DB.
  * Returns a session cookie.
  *
- * requireTenant (require-tenant.ts) checks session.activeOrganizationId — if null it throws 401.
+ * active organization check checks session.activeOrganizationId — if null it throws 401.
  * Better Auth auto-creates an org per user in databaseHooks.user.create.after, but
  * the session doesn't have activeOrganizationId set by default. We update the session
  * record directly in the test DB to set activeOrganizationId.
@@ -181,7 +181,7 @@ export async function clearTestUsers() {
 /**
  * Sign in and activate the user's organization in the session.
  * Better Auth session.activeOrganizationId is null until setActiveOrganization is called.
- * This is required for requireTenant() to work in integration tests.
+ * This is required for protectedProcedure org check to work in integration tests.
  * Returns the session cookie with the active org set.
  */
 export async function signInAndActivateOrg(email: string, password: string): Promise<{ cookie: string }> {

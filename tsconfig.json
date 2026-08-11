@@ -1,7 +1,23 @@
 {
   "files": [],
   "references": [
-    { "path": "./apps/web" },
-    { "path": "./apps/server" }
+    {
+      "path": "./apps/landlord-web"
+    },
+    {
+      "path": "./apps/resident-web"
+    },
+    {
+      "path": "./apps/server"
+    },
+    {
+      "path": "./packages/ui"
+    },
+    {
+      "path": "./packages/auth"
+    },
+    {
+      "path": "./packages/api"
+    }
   ]
 }

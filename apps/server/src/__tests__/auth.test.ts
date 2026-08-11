@@ -9,14 +9,14 @@ import {
 } from './setup.js'
 
 // Mock Resend so tests don't actually send email
-vi.mock('../lib/email.js', () => ({
+vi.mock('../modules/email/index.js', () => ({
   resend: { emails: { send: vi.fn().mockResolvedValue({ id: 'mock' }) } },
   sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
   sendResetPasswordEmail: vi.fn().mockResolvedValue(undefined),
   sendInvitationEmail: vi.fn().mockResolvedValue(undefined),
 }))
 
-const { sendVerificationEmail, sendResetPasswordEmail } = await import('../lib/email.js')
+const { sendVerificationEmail, sendResetPasswordEmail } = await import('../modules/email/index.js')
 
 beforeAll(async () => { await clearTestUsers() })
 afterAll(async () => { await clearTestUsers() })
@@ -89,7 +89,7 @@ describe('AUTH-09: Password reset', () => {
     }
 
     // Trigger forgot-password via Better Auth API
-    const { auth } = await import('../auth.js')
+    const { auth } = await import('../modules/auth/index.js')
     await auth.api.requestPasswordReset({
       body: { email: 'reset@test.local', redirectTo: 'http://localhost:3000/reset-password' },
     })

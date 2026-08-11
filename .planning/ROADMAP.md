@@ -12,7 +12,8 @@ Villuh Lease is built in 8 phases following the natural dependency chain of the 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Infrastructure Foundation** - Hono backend scaffold, Postgres + Drizzle with RLS, audit log pattern, monorepo wiring, codebase cleanup
+- [ ] **Phase 1: Infrastructure Foundation** - Express + tRPC backend scaffold, Postgres + Drizzle with RLS, audit log pattern, monorepo wiring, codebase cleanup
+
 - [ ] **Phase 2: Auth & Billing** - Better Auth (email/password + Google OAuth, org/roles), Stripe Subscriptions, plan limits, setup wizard, settings
 - [ ] **Phase 3: Properties & Units** - Full CRUD for properties and units, S3 image upload, custom tags/statuses, proration, lease expiry alerts
 - [ ] **Phase 4: Tenants, Leases & Documents** - Tenant profiles, co-tenants, lease entity, DocuSign integration, document lifecycle, signed PDF storage
@@ -24,11 +25,11 @@ Decimal phases appear between their surrounding integers in numeric order.
 ## Phase Details
 
 ### Phase 1: Infrastructure Foundation
-**Goal**: The monorepo runs a working Hono API with Postgres, Drizzle-managed migrations, and Postgres RLS enforced at the DB layer — every subsequent phase builds on this secure, correctly wired foundation
+**Goal**: The monorepo runs a working Express + tRPC API with Postgres, Drizzle-managed migrations, and Postgres RLS enforced at the DB layer — every subsequent phase builds on this secure, correctly wired foundation
 **Depends on**: Nothing (first phase)
 **Requirements**: None (foundational scaffolding — prerequisites for all 70 v1 requirements)
 **Success Criteria** (what must be TRUE):
-  1. A Hono API server starts in the monorepo and responds to health-check requests from the Next.js frontend via type-safe RPC client
+  1. An Express API server starts in the monorepo and responds to health-check / tRPC requests from the Next.js frontends via `@villuh/api`
   2. Drizzle migrations run against a Postgres instance and the `villuh_app` non-owner role is enforced — an integration test confirms that cross-tenant data is invisible to a different landlord's session
   3. The audit log pattern (`audit_log` table + triggers) is in place and records changes on at least one table
   4. Codebase is clean: Toaster is mounted, one icon library is in use, and `.vscode/github-accounts.json` is removed from version control
@@ -36,7 +37,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave dependency notes:**
 - **Wave 1** — 01-01: Monorepo scaffold (unblocks everything)
-- **Wave 2** *(blocked on Wave 1 completion)* — 01-02: Hono server + RPC, 01-03: @villuh/db package, 01-06: Icon consolidation + Toaster (run in parallel)
+- **Wave 2** *(blocked on Wave 1 completion)* — 01-02: Express/tRPC server + withTenant, 01-03: @villuh/db package, 01-06: Icon consolidation + Toaster (run in parallel)
 - **Wave 3** *(blocked on Wave 2 completion, specifically 01-03)* — 01-04: Postgres provision + migrations (checkpoint required)
 - **Wave 4** *(blocked on Wave 3 completion)* — 01-05: RLS + audit log integration tests
 
@@ -45,7 +46,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - `DATABASE_APP_URL` must point to `villuh_app` credentials; `DATABASE_URL` must point to owner credentials (all waves)
 Plans:
 - [x] 01-01-PLAN.md — pnpm workspace monorepo scaffold + root config + file relocation (2026-04-29)
-- [x] 01-02-PLAN.md — Hono API server + withTenant wrapper + Next.js RPC client (2026-04-29)
+- [x] 01-02-PLAN.md — API server + withTenant wrapper + typed client (originally Hono; live stack Express+tRPC) (2026-04-29)
 - [x] 01-03-PLAN.md — @villuh/db package: Drizzle schema, RLS policy, db clients, bootstrap SQL (2026-04-29)
 - [x] 01-04-PLAN.md — [BLOCKING] Postgres provision + drizzle-kit generate + audit log SQL injection + migrate (2026-04-30)
 - [x] 01-05-PLAN.md — RLS cross-tenant isolation + audit log integration tests (vitest) (2026-04-30)
@@ -74,7 +75,7 @@ Plans:
 **Cross-cutting constraints:**
 - BETTER_AUTH_SECRET, GOOGLE_CLIENT_ID/SECRET, RESEND_API_KEY, STRIPE_SECRET_KEY/WEBHOOK_SECRET/STARTER/GROWTH/PRO_PRICE_ID, STRIPE_CLIENT_ID env vars must be configured before Plan 02 ships
 - Better Auth Drizzle adapter MUST point at DATABASE_APP_URL (villuh_app role) — never DATABASE_URL (Pitfall 1)
-- No global JSON body parser in Hono — Stripe webhook needs raw body (Pitfall 4)
+- No global JSON body parser on Express — Stripe webhook needs raw body via `express.raw()` (Pitfall 4)
 - Stripe trial subscription created via direct stripeClient.subscriptions.create (NOT authClient.subscription.upgrade — Pitfall 5)
 - session.activeOrganizationId is the landlord_id for RLS — never user.id (Pitfall 7)
 Plans:

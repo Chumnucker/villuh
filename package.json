@@ -3,8 +3,10 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
+    "menu": "./scripts/menu",
     "dev": "turbo run dev",
-    "dev:web": "turbo run dev --filter=@villuh/web",
+    "dev:landlord": "turbo run dev --filter=@villuh/landlord-web",
+    "dev:resident": "turbo run dev --filter=@villuh/resident-web",
     "dev:server": "turbo run dev --filter=@villuh/server",
     "build": "turbo run build",
     "lint": "turbo run lint",

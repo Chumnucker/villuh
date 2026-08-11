@@ -13,6 +13,10 @@ const migrationClient = postgres(process.env.DATABASE_URL!, { max: 1 })
 const migrationDb = drizzle({ client: migrationClient })
 
 await migrate(migrationDb, { migrationsFolder: join(__dirname, '../migrations') })
+
+const { hydrateBillingPlanPricesFromEnv } = await import('./modules/billing/hydrate-prices.js')
+await hydrateBillingPlanPricesFromEnv(migrationDb)
+
 await migrationClient.end()
 
 console.log('Migrations applied successfully')

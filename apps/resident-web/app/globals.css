@@ -1,0 +1,3 @@
+/* Shared design tokens + Tailwind live in @villuh/ui.
+   Relative path: PostCSS/Tailwind resolve package CSS exports unreliably. */
+@import "../../../packages/ui/src/globals.css";

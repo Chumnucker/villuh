@@ -11,7 +11,7 @@ import {
   createOwnerClient,
 } from './setup.js'
 
-vi.mock('../lib/email.js', () => ({
+vi.mock('../modules/email/index.js', () => ({
   resend: { emails: { send: vi.fn().mockResolvedValue({ id: 'mock' }) } },
   sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
   sendResetPasswordEmail: vi.fn().mockResolvedValue(undefined),
@@ -40,7 +40,7 @@ describe('AUTH-02: Team invitations', () => {
     await markUserEmailVerified(inviterId)
     const { cookie } = await signInTestUser('inviter@test.local', 'TestPass123!')
 
-    // Set the active organization (required for requireTenant)
+    // Set the active organization (required for organization-scoped procedures)
     const orgId = await getOrgIdForUser(inviterId)
     const setActiveRes = await fetchApi('/api/auth/organization/set-active', {
       method: 'POST',
@@ -50,7 +50,7 @@ describe('AUTH-02: Team invitations', () => {
     const activeSetCookie = setActiveRes.headers.get('set-cookie') ?? cookie
     const sessionCookie = activeSetCookie || cookie
 
-    const { sendInvitationEmail } = await import('../lib/email.js')
+    const { sendInvitationEmail } = await import('../modules/email/index.js')
     const res = await fetchApi('/api/team/invitations', {
       method: 'POST',
       headers: { 'content-type': 'application/json', cookie: sessionCookie },

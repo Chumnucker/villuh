@@ -2,7 +2,6 @@
   "extends": "@villuh/typescript-config/node.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "baseUrl": ".",
     "noEmit": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],

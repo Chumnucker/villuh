@@ -15,7 +15,7 @@ export default defineConfig({
     // Set real values in apps/server/.env (see .env.example).
     env: {
       // Better Auth — required for betterAuth() initialization
-      BETTER_AUTH_URL: process.env.BETTER_AUTH_URL ?? 'http://localhost:3001',
+      BETTER_AUTH_URL: process.env.BETTER_AUTH_URL ?? 'http://localhost:4000',
       BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? 'test-secret-for-vitest-32-bytes-!!',
       // Stripe — required for stripeClient initialization (no actual API calls in tests)
       STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY ?? 'sk_test_placeholder_for_vitest',

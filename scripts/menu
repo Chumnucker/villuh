@@ -1,0 +1,616 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+SERVER_ENV="$ROOT/apps/server/.env"
+LANDLORD_WEB_ENV="$ROOT/apps/landlord-web/.env.local"
+LANDLORD_WEB_ENV_FALLBACK="$ROOT/apps/landlord-web/.env"
+RESIDENT_WEB_ENV="$ROOT/apps/resident-web/.env.local"
+RESIDENT_WEB_ENV_FALLBACK="$ROOT/apps/resident-web/.env"
+
+LOCAL_LANDLORD_ORIGIN="http://localhost:3000"
+LOCAL_RESIDENT_ORIGIN="http://localhost:3001"
+LOCAL_API_ORIGIN="http://localhost:4000"
+# Fill these in once Railway services exist (or override via env).
+STAGING_API_ORIGIN="${VILLUH_STAGING_API_ORIGIN:-}"
+PRODUCTION_API_ORIGIN="${VILLUH_PRODUCTION_API_ORIGIN:-}"
+
+# Villuh palette: amber brand mark, teal actions, stone chrome.
+if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
+  C_RESET=$'\033[0m'
+  C_BOLD=$'\033[1m'
+  C_DIM=$'\033[2m'
+  C_AMBER=$'\033[38;5;214m'
+  C_GOLD=$'\033[38;5;178m'
+  C_TEAL=$'\033[38;5;44m'
+  C_STONE=$'\033[38;5;245m'
+  C_CREAM=$'\033[38;5;230m'
+  C_GREEN=$'\033[38;5;114m'
+  C_YELLOW=$'\033[38;5;221m'
+  C_RED=$'\033[38;5;203m'
+else
+  C_RESET=""; C_BOLD=""; C_DIM=""; C_AMBER=""; C_GOLD=""; C_TEAL=""
+  C_STONE=""; C_CREAM=""; C_GREEN=""; C_YELLOW=""; C_RED=""
+fi
+
+BOX_TL="╔"; BOX_TR="╗"; BOX_BL="╚"; BOX_BR="╝"; BOX_H="═"; BOX_V="║"
+
+banner_art() {
+  cat <<'EOF'
+  ██╗   ██╗██╗██╗     ██╗     ██╗   ██╗██╗  ██╗
+  ██║   ██║██║██║     ██║     ██║   ██║██║  ██║
+  ██║   ██║██║██║     ██║     ██║   ██║███████║
+  ╚██╗ ██╔╝██║██║     ██║     ██║   ██║██╔══██║
+   ╚████╔╝ ██║███████╗███████╗╚██████╔╝██║  ██║
+    ╚═══╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝
+EOF
+}
+
+frame_line() {
+  local left="$1" fill="$2" right="$3" width="$4"
+  local i line="$left"
+  for ((i = 0; i < width; i++)); do line+="$fill"; done
+  line+="$right"
+  printf '%s\n' "$line"
+}
+
+pad_inner() {
+  local s="$1" width="$2"
+  while ((${#s} > width)); do s="${s:0:$((${#s} - 1))}"; done
+  while ((${#s} < width)); do s+=" "; done
+  printf '%s' "$s"
+}
+
+header() {
+  clear 2>/dev/null || true
+  local inner=58
+  local section="${1:-}"
+  {
+    echo ""
+    echo -n "${C_STONE}"
+    frame_line "$BOX_TL" "$BOX_H" "$BOX_TR" "$inner"
+    echo -n "${C_RESET}"
+
+    printf '%s%s%s\n' "${C_STONE}${BOX_V}${C_RESET}" "$(pad_inner '' "$inner")" "${C_STONE}${BOX_V}${C_RESET}"
+
+    while IFS= read -r art_line; do
+      printf '%s%s%s%s%s\n' \
+        "${C_STONE}${BOX_V}${C_RESET}" \
+        "${C_BOLD}${C_AMBER}" "$(pad_inner "$art_line" "$inner")" "${C_RESET}" \
+        "${C_STONE}${BOX_V}${C_RESET}"
+    done < <(banner_art)
+
+    printf '%s%s%s%s%s\n' \
+      "${C_STONE}${BOX_V}${C_RESET}" \
+      "${C_GOLD}" "$(pad_inner '  lease os  ·  developer cli' "$inner")" "${C_RESET}" \
+      "${C_STONE}${BOX_V}${C_RESET}"
+
+    printf '%s%s%s\n' "${C_STONE}${BOX_V}${C_RESET}" "$(pad_inner '' "$inner")" "${C_STONE}${BOX_V}${C_RESET}"
+
+    echo -n "${C_STONE}"
+    frame_line "$BOX_BL" "$BOX_H" "$BOX_BR" "$inner"
+    echo -n "${C_RESET}"
+
+    if [[ -n "$section" ]]; then
+      echo ""
+      printf '%s%s%s\n' "${C_TEAL}${C_BOLD}" " ▸ $section " "${C_RESET}"
+      printf '%s%s%s\n' "${C_STONE}" "$(printf '%.0s─' {1..40})" "${C_RESET}"
+    else
+      echo ""
+      printf '%s%s%s\n' "${C_STONE}" "$(printf '%.0s─' {1..40})" "${C_RESET}"
+    fi
+  } >&2
+}
+
+item() {
+  local num="$1" label="$2" hint="${3:-}"
+  local bracket
+  bracket="${C_STONE}[${C_RESET} ${C_BOLD}${C_TEAL}${num}${C_RESET} ${C_STONE}]${C_RESET}"
+  if [[ -n "$hint" ]]; then
+    printf '  %s  %s%s%s  %s%s%s\n' \
+      "$bracket" \
+      "${C_CREAM}" "$label" "${C_RESET}" \
+      "${C_DIM}${C_STONE}" "$hint" "${C_RESET}" >&2
+  else
+    printf '  %s  %s%s%s\n' \
+      "$bracket" \
+      "${C_CREAM}" "$label" "${C_RESET}" >&2
+  fi
+}
+
+info() { echo "${C_STONE}$*${C_RESET}" >&2; }
+ok() { echo "${C_GREEN}$*${C_RESET}" >&2; }
+warn() { echo "${C_YELLOW}$*${C_RESET}" >&2; }
+err() { echo "${C_RED}$*${C_RESET}" >&2; }
+
+require_cmd() {
+  local name="$1"
+  if ! command -v "$name" >/dev/null 2>&1; then
+    err "Missing required command: $name"
+    return 1
+  fi
+}
+
+env_get() {
+  local file="$1" key="$2"
+  if [[ ! -f "$file" ]]; then
+    printf ''
+    return 0
+  fi
+  local line
+  line="$(grep -E "^${key}=" "$file" | tail -n1 || true)"
+  if [[ -z "$line" ]]; then
+    printf ''
+    return 0
+  fi
+  printf '%s\n' "${line#*=}"
+}
+
+env_upsert() {
+  local file="$1" key="$2" value="$3"
+  local dir
+  dir="$(dirname "$file")"
+  mkdir -p "$dir"
+  if [[ ! -f "$file" ]]; then
+    printf '%s=%s\n' "$key" "$value" >"$file"
+    return 0
+  fi
+  if grep -qE "^${key}=" "$file"; then
+    local tmp
+    tmp="$(mktemp)"
+    awk -v k="$key" -v v="$value" '
+      BEGIN { done=0 }
+      index($0, k "=") == 1 {
+        if (!done) { print k "=" v; done=1; next }
+        next
+      }
+      { print }
+      END { if (!done) print k "=" v }
+    ' "$file" >"$tmp"
+    mv "$tmp" "$file"
+  else
+    if [[ -s "$file" ]] && [[ "$(tail -c 1 "$file" | wc -l)" -eq 0 ]]; then
+      printf '\n' >>"$file"
+    fi
+    printf '%s=%s\n' "$key" "$value" >>"$file"
+  fi
+}
+
+landlord_web_env_file() {
+  if [[ -f "$LANDLORD_WEB_ENV" ]]; then
+    printf '%s\n' "$LANDLORD_WEB_ENV"
+  else
+    printf '%s\n' "$LANDLORD_WEB_ENV_FALLBACK"
+  fi
+}
+
+resident_web_env_file() {
+  if [[ -f "$RESIDENT_WEB_ENV" ]]; then
+    printf '%s\n' "$RESIDENT_WEB_ENV"
+  else
+    printf '%s\n' "$RESIDENT_WEB_ENV_FALLBACK"
+  fi
+}
+
+database_url() {
+  local url
+  url="$(env_get "$SERVER_ENV" DATABASE_URL)"
+  if [[ -z "$url" ]]; then
+    url="postgres://chum:chum_local_dev@localhost:5432/villuh"
+  fi
+  printf '%s\n' "$url"
+}
+
+database_app_url() {
+  local url
+  url="$(env_get "$SERVER_ENV" DATABASE_APP_URL)"
+  if [[ -z "$url" ]]; then
+    url="postgres://villuh_app:villuh_app_password_changeme@localhost:5432/villuh"
+  fi
+  printf '%s\n' "$url"
+}
+
+database_test_url() {
+  local url
+  url="$(env_get "$SERVER_ENV" DATABASE_OWNER_TEST_URL)"
+  if [[ -z "$url" ]]; then
+    url="postgres://chum:chum_local_dev@localhost:5432/villuh_test"
+  fi
+  printf '%s\n' "$url"
+}
+
+confirm() {
+  local prompt="${1:-Are you sure?}"
+  local reply
+  read -r -p "${C_YELLOW}${prompt} ${C_STONE}[${C_RESET}${C_BOLD}y${C_RESET}${C_STONE}/${C_RESET}N${C_STONE}]${C_RESET} " reply || true
+  [[ "$reply" == "y" || "$reply" == "Y" ]]
+}
+
+pause() {
+  echo "" >&2
+  read -r -p "${C_STONE}  ── press ${C_RESET}${C_BOLD}Enter${C_RESET}${C_STONE} to continue ──${C_RESET} " _ || true
+}
+
+run_cmd() {
+  echo "" >&2
+  info "  ▸ $*"
+  echo "" >&2
+  set +e
+  "$@"
+  local code=$?
+  set -e
+  echo "" >&2
+  if [[ $code -eq 0 ]]; then
+    ok "  ✓ exit $code"
+  else
+    err "  ✗ exit $code"
+  fi
+  pause
+  return 0
+}
+
+exec_long() {
+  echo "" >&2
+  info "  ▸ $*"
+  echo "" >&2
+  exec "$@"
+}
+
+read_choice() {
+  local choice
+  echo "" >&2
+  read -r -p "  ${C_TEAL}${C_BOLD}❯${C_RESET} ${C_CREAM}select${C_RESET}${C_STONE}:${C_RESET} " choice || true
+  printf '%s\n' "$choice"
+}
+
+show_stack_status() {
+  echo "" >&2
+  info "  landlord  $LOCAL_LANDLORD_ORIGIN"
+  info "  resident  $LOCAL_RESIDENT_ORIGIN"
+  info "  server    $LOCAL_API_ORIGIN"
+  info "  env       server=$([[ -f $SERVER_ENV ]] && echo ok || echo missing)  landlord=$([[ -f $(landlord_web_env_file) ]] && echo ok || echo missing)  resident=$([[ -f $(resident_web_env_file) ]] && echo ok || echo missing)"
+  echo "" >&2
+
+  if command -v pg_isready >/dev/null 2>&1; then
+    if pg_isready -h localhost -p 5432 >/dev/null 2>&1; then
+      ok "  ✓ Postgres accepting connections on :5432"
+    else
+      warn "  ✗ Postgres not ready on :5432"
+    fi
+  else
+    warn "  · pg_isready not installed — skip Postgres probe"
+  fi
+
+  if command -v curl >/dev/null 2>&1; then
+    if curl -sf "$LOCAL_API_ORIGIN/api/health" >/dev/null 2>&1; then
+      ok "  ✓ API health  $LOCAL_API_ORIGIN/api/health"
+    else
+      warn "  ✗ API health unreachable (is pnpm dev running?)"
+    fi
+    if curl -sf -o /dev/null "$LOCAL_LANDLORD_ORIGIN" >/dev/null 2>&1; then
+      ok "  ✓ Landlord web  $LOCAL_LANDLORD_ORIGIN"
+    else
+      warn "  ✗ Landlord web unreachable on $LOCAL_LANDLORD_ORIGIN"
+    fi
+    if curl -sf -o /dev/null "$LOCAL_RESIDENT_ORIGIN" >/dev/null 2>&1; then
+      ok "  ✓ Resident web  $LOCAL_RESIDENT_ORIGIN"
+    else
+      warn "  ✗ Resident web unreachable on $LOCAL_RESIDENT_ORIGIN"
+    fi
+  fi
+  echo "" >&2
+}
+
+menu_dev() {
+  while true; do
+    header "Dev"
+    item 1 "All services" "(pnpm dev → landlord + resident + server)"
+    item 2 "Landlord web" "(@villuh/landlord-web · :3000)"
+    item 3 "Resident web" "(@villuh/resident-web · :3001)"
+    item 4 "Server only" "(@villuh/server · :4000)"
+    item 5 "Stack status" "postgres · health · env"
+    item 6 "API health" "GET /api/health"
+    item 0 "Back"
+    case "$(read_choice)" in
+      1) exec_long pnpm dev ;;
+      2) exec_long pnpm dev:landlord ;;
+      3) exec_long pnpm dev:resident ;;
+      4) exec_long pnpm dev:server ;;
+      5) show_stack_status; pause ;;
+      6)
+        require_cmd curl || { pause; continue; }
+        run_cmd bash -c "curl -sf '${LOCAL_API_ORIGIN}/api/health' | (command -v jq >/dev/null && jq . || cat)"
+        ;;
+      0) return 0 ;;
+      *) warn "  Invalid choice"; sleep 1 ;;
+    esac
+  done
+}
+
+menu_quality() {
+  while true; do
+    header "Quality"
+    item 1 "Typecheck all"
+    item 2 "Lint all"
+    item 3 "Test all"
+    item 4 "Build all"
+    item 5 "Server tests only" "(@villuh/server)"
+    item 6 "Landlord typecheck" "(@villuh/landlord-web)"
+    item 7 "Resident typecheck" "(@villuh/resident-web)"
+    item 0 "Back"
+    case "$(read_choice)" in
+      1) run_cmd pnpm typecheck ;;
+      2) run_cmd pnpm lint ;;
+      3) run_cmd pnpm test ;;
+      4) run_cmd pnpm build ;;
+      5) run_cmd pnpm --filter @villuh/server test ;;
+      6) run_cmd pnpm --filter @villuh/landlord-web typecheck ;;
+      7) run_cmd pnpm --filter @villuh/resident-web typecheck ;;
+      0) return 0 ;;
+      *) warn "  Invalid choice"; sleep 1 ;;
+    esac
+  done
+}
+
+menu_database() {
+  while true; do
+    header "Database"
+    item 1 "Migrate" "(drizzle → villuh)"
+    item 2 "Migrate test DB" "(drizzle → villuh_test)"
+    item 3 "Generate migration" "(drizzle-kit generate)"
+    item 4 "psql · villuh" "(owner / DATABASE_URL)"
+    item 5 "psql · villuh_test" "(owner test)"
+    item 6 "psql · as villuh_app" "(RLS role)"
+    item 7 "Plan limits check" "(expect 9 rows)"
+    item 8 "Postgres ready?" "(pg_isready)"
+    item 0 "Back"
+    case "$(read_choice)" in
+      1) run_cmd pnpm migrate ;;
+      2)
+        local url
+        url="$(database_test_url)"
+        run_cmd env DATABASE_URL="$url" pnpm --filter @villuh/server migrate
+        ;;
+      3) run_cmd pnpm generate ;;
+      4)
+        require_cmd psql || { pause; continue; }
+        exec_long psql "$(database_url)"
+        ;;
+      5)
+        require_cmd psql || { pause; continue; }
+        exec_long psql "$(database_test_url)"
+        ;;
+      6)
+        require_cmd psql || { pause; continue; }
+        exec_long psql "$(database_app_url)"
+        ;;
+      7)
+        require_cmd psql || { pause; continue; }
+        run_cmd psql "$(database_url)" -c 'SELECT tier, resource, "limit" FROM plan_limits ORDER BY tier, resource;'
+        ;;
+      8)
+        require_cmd pg_isready || { pause; continue; }
+        run_cmd pg_isready -h localhost -p 5432
+        ;;
+      0) return 0 ;;
+      *) warn "  Invalid choice"; sleep 1 ;;
+    esac
+  done
+}
+
+show_server_env() {
+  local key val masked
+  echo "" >&2
+  for key in DATABASE_URL DATABASE_APP_URL BETTER_AUTH_URL BETTER_AUTH_SECRET CORS_ALLOWED_ORIGINS STRIPE_SECRET_KEY; do
+    val="$(env_get "$SERVER_ENV" "$key")"
+    if [[ -z "$val" ]]; then
+      masked="(unset)"
+    elif [[ "$key" == *SECRET* || "$key" == STRIPE_SECRET_KEY || "$key" == DATABASE_* ]]; then
+      masked="${val:0:12}…"
+    else
+      masked="$val"
+    fi
+    info "  $key = $masked"
+  done
+  echo "" >&2
+}
+
+show_web_env() {
+  local key val env_file label
+  label="$1"
+  env_file="$2"
+  echo "" >&2
+  info "  ($label — $env_file)"
+  for key in NEXT_PUBLIC_API_URL NEXT_PUBLIC_APP_URL BETTER_AUTH_URL DATABASE_APP_URL NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY; do
+    val="$(env_get "$env_file" "$key")"
+    info "  $key = ${val:-(unset)}"
+  done
+  echo "" >&2
+}
+
+seed_env_examples() {
+  if [[ ! -f "$SERVER_ENV" && -f "$ROOT/apps/server/.env.example" ]]; then
+    cp "$ROOT/apps/server/.env.example" "$SERVER_ENV"
+    ok "  Created apps/server/.env from example"
+  else
+    info "  apps/server/.env already exists (or no example)"
+  fi
+  if [[ ! -f "$LANDLORD_WEB_ENV" && -f "$ROOT/apps/landlord-web/.env.example" ]]; then
+    cp "$ROOT/apps/landlord-web/.env.example" "$LANDLORD_WEB_ENV"
+    ok "  Created apps/landlord-web/.env.local from example"
+  else
+    info "  apps/landlord-web/.env.local already exists (or no example)"
+  fi
+  if [[ ! -f "$RESIDENT_WEB_ENV" && -f "$ROOT/apps/resident-web/.env.example" ]]; then
+    cp "$ROOT/apps/resident-web/.env.example" "$RESIDENT_WEB_ENV"
+    ok "  Created apps/resident-web/.env.local from example"
+  else
+    info "  apps/resident-web/.env.local already exists (or no example)"
+  fi
+}
+
+menu_env() {
+  while true; do
+    header "Env"
+    local landlord_file resident_file
+    landlord_file="$(landlord_web_env_file)"
+    resident_file="$(resident_web_env_file)"
+    item 1 "Show key server vars"
+    item 2 "Show landlord web vars"
+    item 3 "Show resident web vars"
+    item 4 "Open server .env" "($SERVER_ENV)"
+    item 5 "Open landlord env" "($landlord_file)"
+    item 6 "Open resident env" "($resident_file)"
+    item 7 "Copy examples → local" "(if missing)"
+    item 0 "Back"
+    case "$(read_choice)" in
+      1) show_server_env; pause ;;
+      2) show_web_env "landlord" "$landlord_file"; pause ;;
+      3) show_web_env "resident" "$resident_file"; pause ;;
+      4)
+        require_cmd "${EDITOR:-nano}" || { pause; continue; }
+        exec_long "${EDITOR:-nano}" "$SERVER_ENV"
+        ;;
+      5)
+        require_cmd "${EDITOR:-nano}" || { pause; continue; }
+        exec_long "${EDITOR:-nano}" "$landlord_file"
+        ;;
+      6)
+        require_cmd "${EDITOR:-nano}" || { pause; continue; }
+        exec_long "${EDITOR:-nano}" "$resident_file"
+        ;;
+      7) seed_env_examples; pause ;;
+      0) return 0 ;;
+      *) warn "  Invalid choice"; sleep 1 ;;
+    esac
+  done
+}
+
+pick_health_target() {
+  header "Health target"
+  item 1 "local" "$LOCAL_API_ORIGIN"
+  if [[ -n "$STAGING_API_ORIGIN" ]]; then
+    item 2 "staging" "$STAGING_API_ORIGIN"
+  else
+    item 2 "staging" "(set VILLUH_STAGING_API_ORIGIN)"
+  fi
+  if [[ -n "$PRODUCTION_API_ORIGIN" ]]; then
+    item 3 "production" "$PRODUCTION_API_ORIGIN"
+  else
+    item 3 "production" "(set VILLUH_PRODUCTION_API_ORIGIN)"
+  fi
+  item 0 "Cancel"
+  case "$(read_choice)" in
+    1) printf '%s\n' "$LOCAL_API_ORIGIN" ;;
+    2) printf '%s\n' "$STAGING_API_ORIGIN" ;;
+    3) printf '%s\n' "$PRODUCTION_API_ORIGIN" ;;
+    *) printf '%s\n' "" ;;
+  esac
+}
+
+menu_railway() {
+  while true; do
+    header "Railway"
+    item 1 "Health check" "(local / staging / production)"
+    item 2 "Status"
+    item 3 "Logs · server"
+    item 4 "Open dashboard"
+    item 5 "Whoami"
+    item 0 "Back"
+    case "$(read_choice)" in
+      1)
+        require_cmd curl || { pause; continue; }
+        local base
+        base="$(pick_health_target)"
+        if [[ -z "$base" ]]; then
+          warn "  No origin configured (or cancelled)"
+          pause
+          continue
+        fi
+        run_cmd bash -c "curl -sf '${base}/api/health' | (command -v jq >/dev/null && jq . || cat)"
+        ;;
+      2)
+        require_cmd railway || { pause; continue; }
+        run_cmd railway status
+        ;;
+      3)
+        require_cmd railway || { pause; continue; }
+        exec_long railway logs
+        ;;
+      4)
+        require_cmd railway || { pause; continue; }
+        run_cmd railway open
+        ;;
+      5)
+        require_cmd railway || { pause; continue; }
+        run_cmd railway whoami
+        ;;
+      0) return 0 ;;
+      *) warn "  Invalid choice"; sleep 1 ;;
+    esac
+  done
+}
+
+menu_turbo() {
+  while true; do
+    header "Turbo / deps"
+    item 1 "pnpm install"
+    item 2 "Turbo dry-run · dev"
+    item 3 "Turbo dry-run · build"
+    item 4 "Clear turbo cache" "(.turbo)"
+    item 5 "Clear Next caches" "(landlord-web + resident-web .next)"
+    item 0 "Back"
+    case "$(read_choice)" in
+      1) run_cmd pnpm install ;;
+      2) run_cmd pnpm exec turbo run dev --dry-run ;;
+      3) run_cmd pnpm exec turbo run build --dry-run ;;
+      4)
+        if confirm "Delete .turbo caches?"; then
+          run_cmd rm -rf .turbo apps/*/.turbo
+        else
+          warn "  Cancelled"
+          pause
+        fi
+        ;;
+      5)
+        if confirm "Delete apps/landlord-web/.next and apps/resident-web/.next?"; then
+          run_cmd rm -rf apps/landlord-web/.next apps/resident-web/.next
+        else
+          warn "  Cancelled"
+          pause
+        fi
+        ;;
+      0) return 0 ;;
+      *) warn "  Invalid choice"; sleep 1 ;;
+    esac
+  done
+}
+
+main_menu() {
+  while true; do
+    header
+    item 1 "Dev" "landlord · resident · server · health"
+    item 2 "Quality" "typecheck · lint · test · build"
+    item 3 "Database" "migrate · generate · psql"
+    item 4 "Env" "inspect · edit dotenv"
+    item 5 "Railway" "health · logs · status"
+    item 6 "Turbo / deps" "install · cache"
+    item 0 "Quit"
+    info "  root  $ROOT"
+    info "  apps  landlord=:3000  resident=:3001  server=:4000"
+    case "$(read_choice)" in
+      1) menu_dev ;;
+      2) menu_quality ;;
+      3) menu_database ;;
+      4) menu_env ;;
+      5) menu_railway ;;
+      6) menu_turbo ;;
+      0) echo "" >&2; ok "  ✓ later, landlord."; exit 0 ;;
+      *) warn "  Invalid choice"; sleep 1 ;;
+    esac
+  done
+}
+
+main_menu

@@ -1,0 +1,43 @@
+{
+  "name": "@villuh/auth",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./server": "./src/server.ts",
+    "./routes": "./src/routes.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "peerDependencies": {
+    "next": ">=15",
+    "react": "^19",
+    "react-dom": "^19",
+    "sonner": ">=2"
+  },
+  "dependencies": {
+    "@better-auth/infra": "^0.2.5",
+    "@better-auth/stripe": "^1.6.9",
+    "@villuh/server": "workspace:*",
+    "@villuh/ui": "workspace:*",
+    "better-auth": "1.6.9",
+    "drizzle-orm": "0.45.2",
+    "postgres": "3.4.5",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@villuh/eslint-config": "workspace:*",
+    "@villuh/typescript-config": "workspace:*",
+    "next": "16.1.7",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "sonner": "^2.0.7",
+    "typescript": "^5.9.3"
+  }
+}

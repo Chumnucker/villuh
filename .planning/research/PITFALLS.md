@@ -40,10 +40,10 @@ Mistakes that cause data leaks, rewrites, or irreversible production incidents.
 **Consequences:** Either migrations break in CI, or you silently run the app with an owner role that bypasses RLS. Both outcomes cause problems.
 
 **Prevention:**
-- Maintain two connection strings: `DATABASE_URL` (owner, used only by migrations and `drizzle-kit`) and `DATABASE_APP_URL` (restricted `villuh_app` role, used by the Hono server). Never swap them.
+- Maintain two connection strings: `DATABASE_URL` (owner, used only by migrations and `drizzle-kit`) and `DATABASE_APP_URL` (restricted `villuh_app` role, used by the Express/tRPC server). Never swap them.
 - The Drizzle docs explicitly show using `max: 1` for the migration client and a separate pool for the app client — treat this as mandatory, not optional.
 
-**Detection warning signs:** A single `DATABASE_URL` environment variable used for both Drizzle migrate and the Hono server.
+**Detection warning signs:** A single `DATABASE_URL` environment variable used for both Drizzle migrate and the Express/tRPC server.
 
 **Phase:** Phase 1 (DB setup).
 
@@ -183,8 +183,8 @@ Mistakes that cause data leaks, rewrites, or irreversible production incidents.
 **Consequences:** All Stripe webhook events fail verification silently or loudly. Subscription state never updates.
 
 **Prevention:**
-- Register `/webhooks/stripe/*` routes before any global JSON body parser middleware in Hono.
-- Use Hono's raw body access (`c.req.raw` or a custom middleware that reads the raw body stream) for webhook routes.
+- Register `/webhooks/stripe/*` routes with `express.raw()` before any global JSON body parser.
+- Do not apply `express.json()` globally in a way that consumes webhook bodies first.
 - Verify this in the first webhook test — don't assume it works.
 
 **Phase:** Auth & Billing phase.
@@ -200,7 +200,7 @@ Mistakes that cause data leaks, rewrites, or irreversible production incidents.
 **Consequences:** RLS policies can't read the landlord ID because no Postgres session variable is set. Developer patches by fetching `session.userId`, then passing it into every Drizzle query manually — which is application-layer enforcement, not DB-layer enforcement.
 
 **Prevention:**
-- In every Hono request handler (or middleware), after validating the Better Auth session, explicitly run `SET LOCAL app.current_landlord_id = '<id>'` before executing any Drizzle queries. Wrap this in a helper: `withLandlordContext(db, landlordId, async (tx) => { ... })`.
+- In every authenticated tRPC procedure (or middleware/context helper), after validating the Better Auth session, explicitly run `SET LOCAL app.current_landlord_id = '<id>'` before executing any Drizzle queries. Wrap this in a helper: `withTenant(landlordId, async (tx) => { ... })`.
 - Use the Better Auth Organization plugin for RBAC (landlord/manager/viewer roles), but treat it as orthogonal to the DB-level RLS tenant isolation.
 - Test: a logged-in manager must not be able to read properties from a different landlord's organization even if they somehow obtain the other landlord's property ID.
 

@@ -10,7 +10,7 @@
 
 Villuh Lease operates in a mature but underserved SaaS vertical. The 1–50 unit independent landlord segment has no competitor that delivers a structured, sequential onboarding workflow engine — every existing tool (TurboTenant, Avail, Hemlane, RentRedi) requires landlords to manually coordinate lease signing, deposit collection, and document handoff across disconnected tools. Villuh's core value proposition — "zero to signed lease in one flow" — is a genuine market gap, not a marketing claim.
 
-The technical stack is well-chosen and constrained: Next.js + Hono + Postgres + Drizzle + Better Auth. The most architecturally consequential decision is the multi-tenancy strategy. Postgres RLS enforced via `set_config` session variables (not application-layer WHERE clauses) is the correct approach, but it carries a critical prerequisite: the app must run as a non-owner Postgres role (`villuh_app`), or all RLS policies are silently bypassed. This decision must be made before the first table is created.
+The technical stack is well-chosen and constrained: Next.js + **Express + tRPC** + Postgres + Drizzle + Better Auth. (Early research proposed Hono + `hono/client`; **superseded 2026-08-11** — live server is Express/tRPC.) The most architecturally consequential decision is the multi-tenancy strategy. Postgres RLS enforced via `set_config` session variables (not application-layer WHERE clauses) is the correct approach, but it carries a critical prerequisite: the app must run as a non-owner Postgres role (`villuh_app`), or all RLS policies are silently bypassed. This decision must be made before the first table is created.
 
 The onboarding flow engine is the product's highest-value differentiator and its most complex component. Two design decisions are load-bearing for correctness: (1) storing a `snapshot_json` of the flow at instance creation time so mid-execution edits can't corrupt active tenants, and (2) using a custom `onboarding_session` token for the invite page rather than Better Auth's magic link plugin (which has 5-minute expiry defaults unsuitable for multi-step onboarding). Both decisions must be made before any flow engine code is written.
 
@@ -20,13 +20,14 @@ The onboarding flow engine is the product's highest-value differentiator and its
 
 ### Stack
 
-- **Next.js 16.1.7** (upgrade to 16.2.4 early) + **Hono 4.12.15** + **Postgres** via `postgres` porsager driver 3.4.9 + **Drizzle 0.45.2**
+- **Next.js 16** + **Express 5** + **tRPC 11** + **Postgres** via `postgres` porsager driver + **Drizzle 0.45.x**
 - **Better Auth 1.6.9** has all required plugins bundled: `organization`, `organization/access`, `admin`, `magic-link`, `one-time-token`; `@better-auth/stripe@1.6.9` is a separate scoped package
-- **Stripe 22.1.0** (two separate integrations: Subscriptions + Connect — two webhook endpoints, two secrets)
+- **Stripe 22.x** (two separate integrations: Subscriptions + Connect — two webhook endpoints, two secrets)
 - **Twilio 6.0.0** requires Node >=20 — this is the hard floor; pin `.nvmrc` to Node 22 LTS immediately
-- **Zod 4.3.6** — use v4 throughout; `@hono/zod-validator@0.7.6` explicitly supports `^4.0.0`
-- **@anthropic-ai/sdk 0.91.1** for AI message drafting
+- **Zod 4.x** — use with tRPC procedure inputs
+- **@anthropic-ai/sdk** for AI message drafting
 - Railway Cron is a platform HTTP trigger, not an npm package — expose a `POST /internal/cron/mark-overdue` endpoint with secret header validation
+- **Frontends:** `apps/landlord-web` + `apps/resident-web`; shared `@villuh/ui`, `@villuh/auth`, `@villuh/api`
 
 ### Features
 
@@ -36,16 +37,17 @@ The onboarding flow engine is the product's highest-value differentiator and its
 
 **Secondary differentiators:** AI message drafting with full tenant context (Claude, unique because the data is all in one place), Stripe Connect deposit payment inside the flow, configurable signing order for co-tenants.
 
-**Anti-features (correctly excluded):** Tenant screening (FCRA liability), listing syndication (API maintenance nightmare), full accounting (different product), maintenance marketplace (two-sided network problem), tenant portal (deferred to v2).
+**Anti-features (correctly excluded from early v1; resident portal now in scope):** Tenant screening (FCRA liability), listing syndication (API maintenance nightmare), full accounting (different product), maintenance marketplace (two-sided network problem). Full resident portal is in-scope via `apps/resident-web` (maintenance request depth may remain v2).
 
 ### Architecture
 
 - **RLS pattern:** `withTenant(landlordId, fn)` wrapper executes `SET LOCAL app.current_landlord_id` inside every transaction. App runs as `villuh_app` role (non-owner). Policies on all tenant tables use `current_setting('app.current_landlord_id', true)::uuid`. PgBouncer transaction-mode compatible.
-- **Two Postgres connection strings:** `DATABASE_URL` (owner, migrations only) vs `DATABASE_APP_URL` (restricted `villuh_app`, Hono runtime)
-- **Hono structure:** `server/` directory in monorepo, `app.route()` per domain, exported `AppType` for type-safe `hono/client` RPC in Next.js
-- **Webhook architecture:** Idempotency table (`webhook_events` with unique `(provider, provider_event_id)`), synchronous processing, raw body required for signature verification — no global JSON body parser
-- **S3:** Presigned PUT from Hono, browser uploads directly, store only `objectKey` in DB (never URLs)
+- **Two Postgres connection strings:** `DATABASE_URL` (owner, migrations only) vs `DATABASE_APP_URL` (restricted `villuh_app`, Express/tRPC runtime)
+- **API structure:** `apps/server` Express app mounts Better Auth, webhooks, health, and tRPC (`/trpc`). Frontends use `@villuh/api` (`AppRouter`).
+- **Webhook architecture:** Idempotency table (`webhook_events` with unique `(provider, provider_event_id)`), synchronous processing, raw body required for signature verification — use `express.raw()` on webhook routes, no global JSON parser
+- **S3:** Presigned PUT from API, browser uploads directly, store only `objectKey` in DB (never URLs)
 - **Flow engine:** Copy steps to instance at activation (`snapshot_json`), server-side step advancement with precondition validation, `locked_at` on flow template while instance is active
+- **Portals:** `{slug}.app.villuh.com` (landlord) + `{slug}.villuh.com` (resident)
 
 ### Pitfalls (critical)
 
@@ -63,7 +65,7 @@ The onboarding flow engine is the product's highest-value differentiator and its
 
 Based on combined research, the natural phase structure follows the feature dependency chain:
 
-1. **Infrastructure Foundation** — Hono scaffold, Postgres + Drizzle, RLS setup (`villuh_app` role, `withTenant()`), Better Auth integration, shared types + Hono RPC client, pre-Phase 1 cleanup (remove committed `.vscode/github-accounts.json`, mount Toaster, pick one icon library)
+1. **Infrastructure Foundation** — Express + tRPC scaffold, Postgres + Drizzle, RLS setup (`villuh_app` role, `withTenant()`), Better Auth integration, shared `@villuh/api` client, pre-Phase 1 cleanup
    - Addresses: critical pitfalls P1, P2, P13, P14, P15, P16, P17 — all Phase 1 decisions
    - Phase must not end without RLS integration test confirming cross-tenant isolation
 
@@ -112,10 +114,10 @@ Based on combined research, the natural phase structure follows the feature depe
 | Area | Confidence | Notes |
 |------|------------|-------|
 | Stack (versions) | HIGH | npm registry live queries on 2026-04-29 |
-| Stack (integration patterns) | MEDIUM | Hono + Drizzle RLS wiring needs integration testing; Better Auth org/RLS bridge needs validation |
+| Stack (integration patterns) | MEDIUM | Express + tRPC + Drizzle RLS wiring needs ongoing integration testing; Better Auth org/RLS bridge needs validation |
+| Architecture (RLS + Express/tRPC + Better Auth) | HIGH | Core patterns verified; API host decision locked 2026-08-11 |
 | Features (table stakes) | HIGH | Stable, well-documented vertical |
 | Features (differentiators) | MEDIUM | Onboarding flow engine novelty verified by competitor absence at Aug 2025 cutoff |
-| Architecture (RLS + Hono + Better Auth) | HIGH | All core patterns verified via Context7 against official docs |
 | Architecture (DocuSign specifics) | LOW→MEDIUM | HMAC header name unverified; overall integration pattern is standard |
 | Pitfalls | HIGH | Most critical pitfalls verified against official SDK docs |
 

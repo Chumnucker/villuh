@@ -31,49 +31,66 @@ This project uses the Get Shit Done (GSD) workflow. Always follow it.
 
 ## Architecture (must-know before writing any code)
 
-**Stack:** Next.js 16 (App Router) + Hono 4 (Railway) + Postgres + Drizzle ORM + Better Auth
+**Stack:** Next.js 16 (App Router) + Express 5 + tRPC (Railway) + Postgres + Drizzle ORM + Better Auth
 
 **Monorepo (Turborepo + pnpm):**
-- `apps/web` — Next.js frontend (`@villuh/web`)
-- `apps/server` — Hono API (`@villuh/server`)
+- `apps/landlord-web` — Landlord Next.js app (`@villuh/landlord-web`) — `{slug}.app.villuh.com`
+- `apps/resident-web` — Resident Next.js app (`@villuh/resident-web`) — `{slug}.villuh.com`
+- `apps/server` — Express API + tRPC (`@villuh/server`) — shared by both frontends
+- `packages/ui` — shared design system (`@villuh/ui`) — components, theme, layout chrome
+- `packages/auth` — shared Better Auth client/server + auth forms (`@villuh/auth`)
+- `packages/api` — shared tRPC client + `TRPCProvider` (`@villuh/api`)
 - `packages/typescript-config` — shared TSConfigs
 - `packages/eslint-config` — shared ESLint configs
 - Root scripts delegate to `turbo run` — never bypass Turbo for build/dev/lint/test
 
-**Critical: Multi-tenancy via Postgres RLS**
+**Critical: API = Express + tRPC (not Hono)**
+- HTTP shell: Express on Railway (`apps/server`)
+- Typed RPC: tRPC mounted at `/trpc` via `@trpc/server/adapters/express`
+- Frontends call through `@villuh/api` (`trpc.*` hooks) — end-to-end type safety from `AppRouter`
+- Do **not** introduce Hono or `hono/client` — older planning docs that mention Hono are superseded
+- NestJS / GraphQL are out of scope
+
+**Critical: Portal hosts (white-label)**
+- Resident: `{slug}.villuh.com` (visual branding + per-landlord subdomain)
+- Landlord: `{slug}.app.villuh.com` (same slug, sibling product host — not `/admin` or `admin.` nest)
+- One shared Postgres + RLS per organization; not per-org deployments
+- App-specific providers (e.g. landlord `UserProvider` / `me.get`) stay in each app — do not force-share portal-specific data hooks
+
+**Critical: Organization isolation via Postgres RLS**
+- Isolation unit = Better Auth `organization` (the landlord’s account)
 - App connects as `villuh_app` role (non-owner) — never the migration/owner role
-- Every authenticated Hono request must call `withTenant(landlordId, fn)` to set `SET LOCAL app.current_landlord_id`
-- Never add `WHERE landlord_id =` manually — RLS enforces this at the DB layer
+- Every authenticated API/tRPC procedure that touches org-scoped data must call `withOrganization(organizationId, fn)` to set `SET LOCAL app.current_organization_id`
+- Org-scoped tables use `organization_id` FK → `organization.id` — never filter manually; RLS enforces isolation
 - Two connection strings: `DATABASE_URL` (migrations only), `DATABASE_APP_URL` (runtime)
 
 **Critical: Stripe has two separate integrations**
-- `/webhooks/stripe/subscriptions` + `STRIPE_WEBHOOK_SECRET` → landlord billing (Better Auth Stripe plugin)
-- `/webhooks/stripe/connect` + `STRIPE_CONNECT_WEBHOOK_SECRET` → tenant deposit payments
+- `/webhooks/stripe/subscriptions` + `STRIPE_WEBHOOK_SECRET` → organization billing (Better Auth Stripe plugin)
+- `/webhooks/stripe/connect` + `STRIPE_CONNECT_WEBHOOK_SECRET` → resident deposit payments
 - Never combine them into one endpoint
 
 **Critical: Webhook raw body**
 - Stripe and DocuSign signature verification requires raw request bytes
-- Never apply a global JSON body parser — webhook routes call `c.req.text()` directly
+- Never apply a global JSON body parser — webhook routes use `express.raw()` (or equivalent) before other parsers
 
 **Critical: Onboarding flow engine**
 - Invite page renders from `snapshot_json` on the instance — not the live flow definition
 - Tenant invite uses a custom `onboarding_session` token — NOT Better Auth magic link (5-min expiry)
-- All step advancement goes through Hono with server-side precondition validation
+- All step advancement goes through the API (tRPC/Express) with server-side precondition validation
 
 **Critical: S3**
 - Store only `objectKey` in DB — never pre-signed URLs (they expire)
-- Generate pre-signed GET URLs at read time in Hono routes
+- Generate pre-signed GET URLs at read time in API routes/procedures
 
 ## Frontend data fetching
 
-**Always use TanStack Query for any frontend data fetching or mutations.**
+**Always use tRPC + TanStack Query (via `@villuh/api`) for frontend data fetching or mutations.**
 
-- Every API call from a component uses `useQuery` (reads) or `useMutation` (writes) — never raw `fetch` in components or `useEffect`
-- Query keys live in the same file as the fetch function — export them as `const FOO_QUERY_KEY = ['foo'] as const`
-- The Hono RPC client (`api` from `@/lib/api`) provides typed request functions — pass them as `queryFn`
-- Invalidate related queries in `onSuccess` of mutations, not in components
-- `ME_QUERY_KEY` (`['me']`) is the source of truth for the current user — call `queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY })` after any mutation that changes user/org state
-- No `useEffect` + `useState` + `fetch` patterns — that is always replaced by `useQuery`
+- Prefer `trpc.*.useQuery` / `trpc.*.useMutation` from `@villuh/api` — never raw `fetch` in components or `useEffect`
+- Query keys for non-tRPC cases live next to the fetch function — export as `const FOO_QUERY_KEY = ['foo'] as const`
+- Invalidate related queries in `onSuccess` of mutations (or `trpc.useUtils()`), not ad hoc in components
+- `me.get` (via tRPC) is the source of truth for the current organization user — invalidate after mutations that change user/org state
+- No `useEffect` + `useState` + `fetch` patterns
 
 ## Key constraints
 - Auth: Better Auth only — no custom JWT

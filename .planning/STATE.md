@@ -63,6 +63,10 @@ Recent decisions affecting current work:
 - [Pre-Phase 1]: `villuh_app` non-owner Postgres role must be created before the first migration or RLS is silently bypassed
 - [Pre-Phase 1]: Two Stripe webhook endpoints required — `/webhooks/stripe/subscriptions` and `/webhooks/stripe/connect` with separate secrets
 - [Phase 1]: Monorepo: pnpm workspace, packages/web + packages/server + packages/db (@villuh/db), existing Next.js moves to packages/web/, plain pnpm scripts
+- [2026-08-11]: Split frontends into `apps/landlord-web` + `apps/resident-web`; hosts `{slug}.app.villuh.com` / `{slug}.villuh.com`; shared Express+tRPC API; resident portal in-scope
+- [2026-08-11]: Extracted `@villuh/ui`, `@villuh/auth`, `@villuh/api`; app-specific `UserProvider`/`me` stays per app
+- [2026-08-11]: **API locked: Express + tRPC** (not Hono / not `hono/client`). Docs updated; older phase plans mentioning Hono are historical
+- [2026-08-11]: Server refactor: `domain/`, `db/`, `modules/*`; typed app errors + errorFormatter; nested withTenant fixed; Drizzle kept
 - [Phase 1]: Audit log: Postgres triggers, full JSONB snapshots (old+new), all tenant tables, SET LOCAL actor, RLS on audit_log, 'system' sentinel, monthly partitioned, immutable via trigger
 - [Phase 1]: Icon library: @central-icons-react/all is sole library; lucide-react removed; all icons through PlatformIcon wrapper
 - [Phase 1]: No CI, no Railway deploy in Phase 1 — local validation only; CI and Railway deferred to Phase 2

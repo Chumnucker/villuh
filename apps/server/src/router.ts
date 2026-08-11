@@ -1,14 +1,14 @@
+import { meRouter } from './modules/me/router.js'
+import { membersRouter } from './modules/members/router.js'
+import { rolePermissionsRouter } from './modules/permissions/router.js'
+import { accountRouter } from './modules/account/router.js'
+import { auditLogRouter } from './modules/audit-log/router.js'
+import { billingRouter } from './modules/billing/router.js'
 import { router } from './trpc.js'
-import { meRouter } from './routers/me.js'
-import { teamRouter } from './routers/team.js'
-import { rolePermissionsRouter } from './routers/role-permissions.js'
-import { accountRouter } from './routers/account.js'
-import { auditLogRouter } from './routers/audit-log.js'
-import { billingRouter } from './routers/billing.js'
 
 export const appRouter = router({
   me: meRouter,
-  team: teamRouter,
+  members: membersRouter,
   rolePermissions: rolePermissionsRouter,
   account: accountRouter,
   auditLog: auditLogRouter,

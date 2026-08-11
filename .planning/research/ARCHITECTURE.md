@@ -2,7 +2,10 @@
 
 **Project:** Villuh Lease
 **Researched:** 2026-04-29
-**Confidence:** HIGH (all patterns verified against official Drizzle, Hono, Better Auth docs)
+**Updated:** 2026-08-11 — canonical API is Express + tRPC (Hono/`hono/client` superseded)
+**Confidence:** HIGH (live codebase + Better Auth / tRPC / Drizzle patterns)
+
+> **Canonical API:** `apps/server` is **Express 5 + tRPC** (`/trpc`, `AppRouter`). Frontends use `@villuh/api`. Older sections below that still show Hono code samples are historical — prefer Express/tRPC patterns matching `apps/server/src/app.ts`.
 
 ---
 
@@ -11,31 +14,36 @@
 ### Deployment Topology
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  Monorepo Root (villuh/)                                │
-│                                                         │
-│  ┌──────────────────────┐  ┌───────────────────────┐   │
-│  │  Next.js (Vercel)    │  │  Hono (Railway)       │   │
-│  │  app/                │  │  server/              │   │
-│  │  - RSC pages         │  │  - REST API           │   │
-│  │  - Client components │  │  - Webhook receivers  │   │
-│  │  - Auth routes       │  │  - Cron endpoints     │   │
-│  │  - /api/auth/* proxy │  │  - S3 presign         │   │
-│  └──────────────────────┘  └───────────────────────┘   │
-│             │                          │                │
-│             └──────────┬───────────────┘                │
-│                        │                                │
-│              ┌─────────▼──────────┐                    │
-│              │  Postgres (Railway) │                    │
-│              │  - RLS enforced    │                    │
-│              │  - Drizzle schema  │                    │
-│              └────────────────────┘                    │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│  Monorepo Root (villuh/)                                             │
+│                                                                      │
+│  ┌─────────────────────┐  ┌─────────────────────┐  ┌──────────────┐ │
+│  │ landlord-web        │  │ resident-web        │  │ Express API  │ │
+│  │ (Vercel)            │  │ (Vercel)            │  │ (Railway)    │ │
+│  │ {slug}.app.villuh.com│  │ {slug}.villuh.com   │  │ tRPC /trpc   │ │
+│  │ sidebar + top nav   │  │ center-aligned      │  │ webhooks     │ │
+│  └──────────┬──────────┘  └──────────┬──────────┘  │ Better Auth  │ │
+│             │                        │             └──────┬───────┘ │
+│             └────────────┬───────────┘                    │         │
+│                          │      @villuh/api (tRPC)        │         │
+│                          └────────────────────────────────┘         │
+│                                          │                          │
+│                               ┌──────────▼──────────┐               │
+│                               │  Postgres (Railway) │               │
+│                               │  RLS multi-tenant   │               │
+│                               └─────────────────────┘               │
+│                                                                      │
+│  packages/: ui, auth, api, eslint/tsconfig                          │
+└──────────────────────────────────────────────────────────────────────┘
 ```
+
+**White-label:** Resolve landlord from Host subdomain (`livanosunlake` → org). Apply logo/colors to both portals. Custom domains deferred.
+
+**API contract:** Express + tRPC (`AppRouter` → `@villuh/api`). One backend serves both apps. Not Hono. Not GraphQL/Nest.
 
 ### Shared TypeScript types
 
-Both the Next.js app and the Hono server live in the same monorepo and share a `packages/types` (or `shared/`) directory for request/response types. Hono exports its `AppType` for full RPC client type safety on the frontend via `hono/client`.
+Both Next.js apps and the Express server live in the same monorepo. Shared UI/auth live in `packages/ui` and `packages/auth`. Typed API access is `packages/api` exporting `trpc` bound to `AppRouter` from `@villuh/server/router`.
 
 ---
 
@@ -43,12 +51,16 @@ Both the Next.js app and the Hono server live in the same monorepo and share a `
 
 | Component | Responsibility | Communicates With |
 |-----------|---------------|-------------------|
-| **Next.js App** | All UI, RSC data fetching, auth session read | Hono API (via `hc<AppType>`), Better Auth (direct via `auth.api.getSession`) |
-| **Hono API Server** | All mutations, business logic, external service orchestration | Postgres (via Drizzle), S3, Stripe, DocuSign, Twilio, Resend |
-| **Hono Webhook Receivers** | Ingest Stripe/DocuSign/Twilio/Resend events | Postgres (via Drizzle), internal Hono route handlers |
-| **Postgres + RLS** | Authoritative data store, enforces tenant isolation | Drizzle client (Hono), Drizzle client (Better Auth) |
-| **Better Auth** | Session management, OAuth, password reset, org plugin | Postgres (via its own Drizzle adapter), exposed on both Next.js (`/api/auth/*`) and Hono |
-| **S3** | Document and image storage, signed URL generation | Hono (presign endpoint), browser (direct PUT), Next.js (presigned GET for previews) |
+| **landlord-web** | Landlord UI (sidebar shell), RSC, auth session | tRPC via `@villuh/api`, Better Auth |
+| **resident-web** | Resident UI (center shell), invite/onboarding UX | tRPC via `@villuh/api`, Better Auth / onboarding session |
+| **packages/ui** | Shared design system, theme, layout chrome | Consumed by both Next apps |
+| **packages/auth** | Better Auth client/server helpers + auth forms | Both Next apps; sessions share Postgres with server |
+| **packages/api** | `trpc` client + `TRPCProvider` | Both Next apps → Express `/trpc` |
+| **Express API Server** | tRPC procedures, Better Auth, webhooks, cron, S3 presign | Postgres (Drizzle), S3, Stripe, DocuSign, Twilio, Resend |
+| **Webhook Receivers** | Ingest Stripe/DocuSign/Twilio/Resend events | Postgres (Drizzle), internal handlers |
+| **Postgres + RLS** | Authoritative data store, enforces tenant isolation | Drizzle (server), Better Auth adapter |
+| **Better Auth** | Session management, OAuth, password reset, org plugin | Postgres; mounted on Express (`/api/auth/*`) + Next proxies |
+| **S3** | Document and image storage, signed URL generation | Server (presign), browser (direct PUT), Next apps (presigned GET) |
 
 ---
 
@@ -58,19 +70,19 @@ Both the Next.js app and the Hono server live in the same monorepo and share a `
 
 ```
 Browser
-  → Next.js RSC or Client Component
-  → hc<AppType>(HONO_URL) — Hono RPC client with session cookie forwarded
-  → Hono middleware: auth.api.getSession(headers) → landlordId resolved
-  → Hono middleware: db.execute(sql`select set_config('app.current_landlord_id', ${landlordId}, true)`)
-  → Drizzle query — RLS policy filters rows by current_setting('app.current_landlord_id')
-  → Response
+  → Next.js Client Component
+  → trpc.*.useQuery / useMutation (@villuh/api) → /trpc
+  → Express tRPC middleware: createContext → auth.api.getSession → landlordId
+  → withTenant(landlordId): SET LOCAL app.current_landlord_id
+  → Drizzle query — RLS filters by current_setting('app.current_landlord_id')
+  → Response (fully typed via AppRouter)
 ```
 
 ### Webhook Event (Stripe / DocuSign / Twilio / Resend)
 
 ```
 Provider
-  → POST /webhooks/{provider}  (Hono, public route, no auth middleware)
+  → POST /webhooks/{provider}  (Express, public route, raw body via express.raw())
   → Signature verification middleware (provider SDK)
   → Idempotency check: SELECT FROM webhook_events WHERE provider_event_id = $1
   → If already processed: return 200 immediately

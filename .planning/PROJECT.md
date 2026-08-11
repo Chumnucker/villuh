@@ -116,7 +116,6 @@ A landlord can onboard a tenant from zero to signed lease in one structured flow
 
 ### Out of Scope
 
-- Tenant portal — v2 (invite page is the v1 lightweight tenant experience)
 - Full accounting / bookkeeping
 - Maintenance marketplace
 - Tenant screening / background checks
@@ -124,26 +123,34 @@ A landlord can onboard a tenant from zero to signed lease in one structured flow
 - Marketing/landing site (app only)
 - SMS/email inbound routing strategy (figured out during comms phase)
 - Cron monitoring / ops alerting (ops concern for later)
+- Native mobile apps (planned later; `-web` suffix reserved for that split)
+- Custom domains per landlord (v2+; v1 is `{slug}.villuh.com` / `{slug}.app.villuh.com`)
 
 ## Context
 
-**Existing codebase:** Next.js 16 App Router monorepo with a full UI component library, theming, and layout system. Backend (Hono + Postgres) will be added to the same repo. Frontend deployed to Vercel, backend + DB to Railway.
+**Existing codebase:** Turborepo monorepo with two Next.js frontends (`landlord-web`, `resident-web`), shared Express + tRPC API (`apps/server`), shared packages (`ui`, `auth`, `api`). Frontends deploy to Vercel (two projects or multi-domain), backend + DB to Railway.
 
-**Two user personas:**
-- *Independent Landlord* (1–20 units): non-tech-savvy, values simplicity, currently on spreadsheets
-- *Portfolio Builder* (10–50 units): more operationally mature, wants visibility and automation
+**Two user personas (product):**
+- *Independent Landlord* (1–20 units): non-tech-savvy, values simplicity, currently on spreadsheets — served via lower-tier plans
+- *Portfolio Builder* (10–50+ units): more operationally mature, wants visibility and automation — white-label subdomain + resident portal
+
+**Two portals:**
+- *Landlord* — `{slug}.app.villuh.com` — sidebar + top nav ops shell
+- *Resident* — `{slug}.villuh.com` — center-aligned resident shell (same design system)
 
 **DocuSign developer account:** Not yet set up — setup is part of the work. Field placement configured in DocuSign UI, not Villuh.
 
-**Stripe architecture:** Two separate integrations — Stripe Subscriptions (landlord pays Villuh) and Stripe Connect (tenant pays landlord for deposits via Stripe Checkout on invite page).
+**Stripe architecture:** Two separate integrations — Stripe Subscriptions (landlord pays Villuh) and Stripe Connect (tenant pays landlord for deposits via Stripe Checkout on invite/resident flows).
 
 **Webhook reliability:** Relies on provider-level retries (DocuSign, Stripe, Twilio). No custom retry infrastructure in v1.
 
-**Known codebase concerns (from map):** `--font-mono` CSS variable used for Gambetta display font (semantic mismatch), dual icon libraries (lucide-react + @central-icons-react/all), Toaster never mounted, zero test infrastructure, `.vscode/github-accounts.json` committed.
+**Known codebase concerns (from map):** `--font-mono` CSS variable used for Gambetta display font (semantic mismatch), dual icon libraries historically (lucide removed; PlatformIcon), Toaster mount, test infrastructure evolving.
 
 ## Constraints
 
-- **Tech Stack**: Next.js + Hono + Postgres + Drizzle (no deviation) — monorepo
+- **Tech Stack**: Next.js + Express + tRPC + Postgres + Drizzle — monorepo (Hono / Nest / GraphQL out)
+- **Frontends**: Separate `landlord-web` and `resident-web` apps; shared `@villuh/ui`, `@villuh/auth`, `@villuh/api`
+- **API**: Single Express backend for both portals; typed RPC via tRPC (`AppRouter` → `@villuh/api`)
 - **Auth**: Better Auth only — no custom JWT implementation
 - **E-signature**: DocuSign non-negotiable for v1
 - **Data isolation**: Postgres RLS enforced at DB level for all landlord data
@@ -155,15 +162,22 @@ A landlord can onboard a tenant from zero to signed lease in one structured flow
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Separate Hono backend (monorepo) | Clean API boundary, TypeScript throughout, Railway deployment | — Pending |
+| Separate Express API backend (monorepo) | Clean API boundary, TypeScript throughout, Railway deployment | Accepted |
+| Express + tRPC (not Hono / not `hono/client`) | Live code already Express+tRPC; industry-standard typed RPC for TS monorepos; equal type safety to Hono RPC without migration churn | Accepted (supersedes earlier Hono plan) |
+| No NestJS / GraphQL | Too many layers for fixed-workflow SaaS; weak fit for raw-body webhooks + RLS | Accepted |
+| Two Next.js apps: landlord-web + resident-web | Separate hosts/auth cookies; shared UI via packages; future mobile keeps `-web` suffix | Accepted |
+| Hosts: `{slug}.villuh.com` + `{slug}.app.villuh.com` | White-label both portals without `/admin` or nested `admin.` subdomain | Accepted |
+| Shared packages: `@villuh/ui`, `@villuh/auth`, `@villuh/api` | One design system + auth + typed API client across portals | Accepted |
+| Shared Postgres RLS multi-tenancy | One DB, `withTenant` + RLS; not per-tenant deploys | Accepted |
+| Visual branding + per-landlord subdomain (not custom domains yet) | Covers white-label for scale without DNS/cert complexity in v1 | Accepted |
 | DocuSign for e-sign | Core differentiator; landlords expect it | — Pending |
-| Postgres RLS for multi-tenancy | Security enforced at DB layer, not just application code | — Pending |
-| Tenant portal deferred to v2 | Invite page covers onboarding UX; reduces v1 scope | — Pending |
+| Postgres RLS for multi-tenancy | Security enforced at DB layer, not just application code | Accepted |
+| Full resident portal in scope (not invite-only v1) | Scope expanded: resident app is a first-class portal | Accepted |
 | Provider-level webhook retries only | Sufficient for v1; avoids BullMQ/Redis complexity | — Pending |
 | Inbound message routing TBD | Architecture not obvious; figured out during comms phase | — Pending |
 | Full audit trail (CDC) | Compliance requirement + operator debugging | — Pending |
-| 3 billing tiers (Starter/Growth/Pro) | Standard SaaS pricing for this market segment | — Pending |
-| Stripe Connect for deposit payments | Money flows landlord→tenant, not through Villuh | — Pending |
+| 3 billing tiers (Starter/Growth/Pro) | Serves small landlords and larger portfolios via plan limits | — Pending |
+| Stripe Connect for deposit payments | Money flows tenant→landlord, not through Villuh | — Pending |
 
 ## Evolution
 
@@ -183,4 +197,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-29 after initialization*
+*Last updated: 2026-08-11 — Express+tRPC locked; dual portals + shared packages*

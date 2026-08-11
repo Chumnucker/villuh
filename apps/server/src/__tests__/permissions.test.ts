@@ -11,7 +11,7 @@ import {
   createOwnerClient,
 } from './setup.js'
 
-vi.mock('../lib/email.js', () => ({
+vi.mock('../modules/email/index.js', () => ({
   resend: { emails: { send: vi.fn().mockResolvedValue({ id: 'mock' }) } },
   sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
   sendResetPasswordEmail: vi.fn().mockResolvedValue(undefined),
@@ -47,7 +47,7 @@ describe('AUTH-02: Configurable role permissions', () => {
     const owner = createOwnerClient()
     try {
       const rows = (await owner.db.execute(
-        sql`SELECT role, action, allowed FROM role_permissions WHERE landlord_id = ${orgId}`,
+        sql`SELECT role, action, allowed FROM role_permissions WHERE organization_id = ${orgId}`,
       )) as unknown as { role: string; action: string; allowed: boolean }[]
       expect(rows.length).toBe(12) // 3 roles × 4 actions
       const find = (role: string, action: string) =>

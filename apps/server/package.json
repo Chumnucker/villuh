@@ -8,11 +8,13 @@
     ".": "./src/app.ts",
     "./app": "./src/app.ts",
     "./router": "./src/router.ts",
-    "./db": "./src/db.ts",
+    "./db": "./src/db/index.ts",
     "./schema": "./src/schema/index.ts",
     "./schema/auth": "./src/schema/auth.ts",
     "./schema/role-permissions": "./src/schema/role-permissions.ts",
-    "./schema/plan-limits": "./src/schema/plan-limits.ts"
+    "./schema/plan-limits": "./src/schema/plan-limits.ts",
+    "./schema/billing-plans": "./src/schema/billing-plans.ts",
+    "./domain": "./src/domain/index.ts"
   },
   "scripts": {
     "dev": "tsx watch --env-file=.env src/index.ts",

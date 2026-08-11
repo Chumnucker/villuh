@@ -1,0 +1,10 @@
+{
+  "extends": "@villuh/typescript-config/react-library.json",
+  "compilerOptions": {
+    "paths": {
+      "@villuh/ui/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules"]
+}

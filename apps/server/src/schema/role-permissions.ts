@@ -1,29 +1,26 @@
 import { sql } from 'drizzle-orm'
 import { pgPolicy, pgTable, text, uuid, boolean, timestamp, unique } from 'drizzle-orm/pg-core'
-import { villuhApp } from './landlords.js'
+import { villuhApp } from './rls.js'
+import { organization } from './auth.js'
+import type { ActionCategory, Role } from '../domain/index.js'
 
-// NOTE: landlord_id is text (not uuid) because Better Auth organization IDs are generated
-// as random text strings (e.g. "gOd2RxeLcJfxvwmjZceIxqeult0stA5x"), not UUID v4 format.
-// When using crypto.randomUUID() in Better Auth's advanced.generateId, they ARE UUIDs,
-// but the column type stays text for forward compatibility with any ID strategy.
-// The RLS policy compares text to text (no ::uuid cast needed).
 export const rolePermissions = pgTable('role_permissions', {
   id: uuid('id').primaryKey().defaultRandom(),
-  // landlord_id is text (not uuid) — Better Auth generates alphanumeric org IDs, not UUIDs
-  landlordId: text('landlord_id').notNull(),
-  role: text('role').notNull(),       // 'owner' | 'manager' | 'viewer'
-  action: text('action').notNull(),   // 'write' | 'financial' | 'communications' | 'admin'
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  role: text('role').$type<Role>().notNull(),
+  action: text('action').$type<ActionCategory>().notNull(),
   allowed: boolean('allowed').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (t) => [
-  unique('role_permissions_unique').on(t.landlordId, t.role, t.action),
-  pgPolicy('tenant_isolation', {
+  unique('role_permissions_org_role_action_unique').on(t.organizationId, t.role, t.action),
+  pgPolicy('organization_isolation', {
     as: 'permissive',
     for: 'all',
     to: villuhApp,
-    // Compare as text (no ::uuid cast) — landlord_id is text type
-    using: sql`landlord_id = current_setting('app.current_landlord_id', true)`,
-    withCheck: sql`landlord_id = current_setting('app.current_landlord_id', true)`,
+    using: sql`organization_id = current_setting('app.current_organization_id', true)`,
+    withCheck: sql`organization_id = current_setting('app.current_organization_id', true)`,
   }),
 ]).enableRLS()

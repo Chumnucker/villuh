@@ -1,24 +1,40 @@
-import { initTRPC, TRPCError } from '@trpc/server'
+import { initTRPC } from '@trpc/server'
 import type { Context } from './context.js'
-import type { ActionCategory, Role } from './lib/permissions.js'
-import { isAllowed } from './lib/permissions.js'
-import { auth } from './auth.js'
+import type { ActionCategory, Role } from './domain/index.js'
+import { isAppErrorCause, unauthorized, forbidden } from './domain/index.js'
+import { isAllowed } from './modules/permissions/service.js'
+import { auth } from './modules/auth/index.js'
 
-const t = initTRPC.context<Context>().create()
+const t = initTRPC.context<Context>().create({
+  errorFormatter({ shape, error }) {
+    const cause = error.cause
+    if (!isAppErrorCause(cause)) {
+      return shape
+    }
+    return {
+      ...shape,
+      data: {
+        ...shape.data,
+        appCode: cause.appCode,
+        meta: cause.meta,
+      },
+    }
+  },
+})
 
 export const router = t.router
 export const publicProcedure = t.procedure
 
 const withAuth = t.middleware(({ ctx, next }) => {
-  if (!ctx.user || !ctx.session) throw new TRPCError({ code: 'UNAUTHORIZED' })
-  const landlordId = (ctx.session as { activeOrganizationId?: string }).activeOrganizationId
-  if (!landlordId) throw new TRPCError({ code: 'UNAUTHORIZED', message: 'No active organization' })
+  if (!ctx.user || !ctx.session) unauthorized()
+  const organizationId = (ctx.session as { activeOrganizationId?: string }).activeOrganizationId
+  if (!organizationId) unauthorized('No active organization')
   return next({
     ctx: {
       ...ctx,
       user: ctx.user,
       session: ctx.session,
-      landlordId,
+      organizationId,
       userId: ctx.user.id,
     },
   })
@@ -32,9 +48,9 @@ export function permissionProcedure(action: ActionCategory) {
       .getActiveMember({ headers: ctx.headers })
       .catch(() => null)
     const role = (memberResponse as { role?: Role } | null)?.role
-    if (!role) throw new TRPCError({ code: 'FORBIDDEN', message: 'Not a member of this organization' })
-    const allowed = await isAllowed(ctx.landlordId, role, action)
-    if (!allowed) throw new TRPCError({ code: 'FORBIDDEN', message: `${action} permission required` })
+    if (!role) forbidden('Not a member of this organization')
+    const allowed = await isAllowed(ctx.organizationId, role, action)
+    if (!allowed) forbidden(`${action} permission required`)
     return next()
   })
 }

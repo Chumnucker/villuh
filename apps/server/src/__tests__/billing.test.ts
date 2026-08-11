@@ -12,7 +12,7 @@ import {
 import { sql } from 'drizzle-orm'
 
 // Mock Resend
-vi.mock('../lib/email.js', () => ({
+vi.mock('../modules/email/index.js', () => ({
   resend: { emails: { send: vi.fn().mockResolvedValue({ id: 'mock' }) } },
   sendVerificationEmail: vi.fn(),
   sendResetPasswordEmail: vi.fn(),
@@ -92,7 +92,7 @@ describe('AUTH-04: Trial start (no credit card)', () => {
       trial_period_days: 30,
       trial_settings: { end_behavior: { missing_payment_method: 'cancel' } },
       items: [expect.objectContaining({ quantity: 0 })],
-      metadata: expect.objectContaining({ landlord_id: expect.any(String) }),
+      metadata: expect.objectContaining({ organization_id: expect.any(String) }),
     }))
   })
 
@@ -269,7 +269,7 @@ describe('Stripe webhook subscription state sync (D-22, T-2-09)', () => {
     const userId = await getCurrentUserId('webhook@test.local')
     const orgId = await getOrgIdForUser(userId)
 
-    const { setOrgSubscriptionStatus } = await import('../lib/billing.js')
+    const { setOrgSubscriptionStatus } = await import('../modules/billing/service.js')
     await setOrgSubscriptionStatus(orgId, 'expired')
 
     const owner = createOwnerClient()
@@ -283,5 +283,5 @@ describe('Stripe webhook subscription state sync (D-22, T-2-09)', () => {
 // Stripe Connect tests — Plan 08 implements them
 describe('AUTH-06: Stripe Connect OAuth', () => {
   it.todo('callback stores stripe_user_id on org.stripe_connected_account_id (Plan 08)')
-  it.todo('OAuth state param matches landlord_id (Plan 08)')
+  it.todo('OAuth state param matches organization_id (Plan 08)')
 })

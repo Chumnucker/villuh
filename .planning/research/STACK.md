@@ -21,18 +21,19 @@
 
 | Technology | Version | Purpose | Why |
 |------------|---------|---------|-----|
-| Hono | ^4.12.15 | HTTP server, routing, middleware | Constrained choice. Web Standards-based, extremely fast, works on Node.js via `@hono/node-server`. Built-in `hono/client` provides end-to-end type-safe RPC — eliminates need for tRPC in this monorepo setup. Better fit than Express for TypeScript-first codebases. |
-| @hono/node-server | ^2.0.0 | Node.js HTTP adapter for Hono | Required to run Hono on Node.js (Railway). Without this, Hono only targets edge/serverless runtimes. Peer dep: `hono ^4`. |
-| @hono/zod-validator | ^0.7.6 | Request body/query validation middleware | Integrates Zod schemas directly into Hono route definitions. Peer deps: `hono >=3.9.0`, `zod ^3.25.0 || ^4.0.0` — compatible with Zod 4. |
-| tsx | ^4.21.0 | TypeScript runtime for Railway (dev + prod) | Runs `.ts` files directly via esbuild — no compile step needed. Required: Node >=18. Avoids the complexity of maintaining a separate build pipeline for the Hono server. Use `tsx watch` in dev, `tsx src/index.ts` in Railway start command. |
+| Express | ^5.2.1 | HTTP server, routing, middleware | **Canonical.** Live `apps/server` host. Mounts Better Auth, webhooks (`express.raw`), health, and tRPC. Industry-standard pairing with tRPC. |
+| tRPC | ^11.17.0 | Typed RPC procedures + client hooks | **Canonical.** End-to-end type safety via `AppRouter`. Frontends use `@villuh/api` (`createTRPCReact` + TanStack Query). Prefer over hand-rolled REST + `hono/client`. |
+| @trpc/server adapters/express | ^11.17.0 | Mount tRPC on Express at `/trpc` | Official Express adapter used in `apps/server/src/app.ts`. |
+| Zod | (via procedures) | Input validation on tRPC procedures | Validate procedure inputs with Zod; keep schemas next to routers. |
+| tsx | ^4.21.0 | TypeScript runtime for Railway (dev + prod) | Runs `.ts` files directly via esbuild — no separate compile step. Use `tsx watch` in dev. |
+
+**Superseded (do not adopt):** Hono, `@hono/node-server`, `hono/client`, NestJS, GraphQL. Early research preferred Hono; implementation and product decision (2026-08-11) locked **Express + tRPC**.
 
 ### Validation
 
 | Technology | Version | Purpose | Why |
 |------------|---------|---------|-----|
-| Zod | ^4.3.6 | Schema validation, request/response typing | Zod 4 is stable (`latest` tag). Breaking change from v3: `z.string().min()` API is identical but some internal types changed. Use Zod 4 from the start — `@hono/zod-validator` 0.7.6 explicitly supports `^4.0.0`. Do not mix v3 and v4. |
-
-**Note on Zod v3 vs v4:** `@hono/zod-validator@0.7.6` supports both `^3.25.0` and `^4.0.0`. Since this is a greenfield backend, use Zod 4 throughout. Zod 4 is significantly faster and has a smaller bundle, which matters for RSC and API validation.
+| Zod | ^4.x | Schema validation on tRPC inputs | Zod 4 preferred. Use with tRPC `.input(z.…)` — not `@hono/zod-validator`. |
 
 ### Database
 
@@ -43,7 +44,7 @@
 | Drizzle ORM | ^0.45.2 | ORM, schema definition, query builder | Constrained. TypeScript-first, lightweight, no runtime overhead. Drizzle is the correct ORM for this stack because it exposes raw SQL when needed (critical for RLS `SET LOCAL` commands and CDC triggers) while still providing type-safe query building. |
 | drizzle-kit | ^0.31.10 | Migration generation and DB push | CLI companion to Drizzle ORM. Generates SQL migration files. Use `drizzle-kit generate` + `drizzle-kit migrate` pattern (not `push`) in production. |
 
-**On Postgres RLS:** Drizzle 0.45.x supports RLS via `enableRLS()` on table definitions and `.setLocal()` for session-level variables. Use `SET LOCAL app.current_landlord_id = $1` at the start of every transaction, enforced in a Hono middleware that extracts the session. This is the correct pattern for multi-tenant SaaS on Postgres. [MEDIUM confidence — Drizzle RLS API confirmed present in package exports; full API docs require integration testing.]
+**On Postgres RLS:** Use `SET LOCAL app.current_landlord_id = $1` at the start of every tenant transaction via `withTenant()`, enforced from authenticated tRPC context / middleware. App runs as `villuh_app` (non-owner).
 
 ### Authentication
 
@@ -126,8 +127,9 @@
 
 | Category | Recommended | Alternative | Why Not |
 |----------|-------------|-------------|---------|
-| Backend framework | Hono | Express | Express lacks native TypeScript typing, no built-in RPC, worse DX for this stack |
-| Backend framework | Hono | tRPC | tRPC requires a Next.js-native setup; Hono's `hono/client` provides equivalent type-safe RPC with less configuration |
+| Backend framework | Express | Hono | Live code + decision 2026-08-11: Express is tRPC’s standard host; Hono migration churn with no type-safety win |
+| Typed API | tRPC | Hono `hono/client` | tRPC already implemented; first-class TanStack Query hooks via `@villuh/api` |
+| Typed API | tRPC | Nest + GraphQL | Too many layers; poor fit for raw-body webhooks and fixed-workflow SaaS |
 | ORM | Drizzle | Prisma | Prisma's generated client abstracts away raw SQL, making RLS session variable injection awkward; Drizzle exposes `sql` tagged template for full control |
 | ORM | Drizzle | Kysely | Drizzle has better migration tooling and schema-first workflow; both are valid but Drizzle has more active development |
 | Postgres driver | postgres (porsager) | pg | `pg` is callback-based internally, older API, `postgres` is fully modern Promise-based, faster, and preferred in Drizzle docs |
