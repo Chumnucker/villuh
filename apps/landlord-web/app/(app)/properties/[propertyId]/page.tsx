@@ -15,7 +15,9 @@ import {
   useLayout,
 } from "@villuh/ui"
 import { ROUTES } from "@/app/routes"
+import { PropertyGallery } from "@/modules/app/components/properties/property-gallery"
 import { PropertyUnitsSection } from "@/modules/app/components/properties/property-units-section"
+import { TagPicker } from "@/modules/app/components/tags/tag-picker"
 
 export default function PropertyDetailPage() {
   const { propertyId } = useParams<{ propertyId: string }>()
@@ -84,6 +86,7 @@ export default function PropertyDetailPage() {
               {property.phone}
             </div>
           ) : null}
+          <TagPicker propertyId={property.id} />
           {property.notes ? (
             <div
               className="prose prose-sm max-w-none pt-2"
@@ -93,21 +96,7 @@ export default function PropertyDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Gallery shell — upload/reorder/cover UI wired in Plan 07 (D-34–D-38). */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Gallery</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center gap-1 py-12 text-center">
-            <p className="text-sm font-medium text-foreground">No photos yet</p>
-            <p className="text-sm text-muted-foreground">
-              Upload photos to help your team recognize this property. First photo becomes the
-              cover.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <PropertyGallery propertyId={property.id} />
 
       <PropertyUnitsSection propertyId={property.id} units={units} />
     </div>
