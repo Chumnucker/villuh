@@ -1,5 +1,7 @@
 import { router, protectedProcedure, permissionProcedure } from '../../trpc.js'
 import { withOrganization } from '../../db/index.js'
+import { countActiveUnits } from '../../domain/portfolio-counts.js'
+import { syncOrgUnitQuantity } from '../../domain/billing-sync.js'
 import {
   createPropertyInputSchema,
   updatePropertyInputSchema,
@@ -100,6 +102,15 @@ export const propertiesRouter = router({
       const { property, archivedUnitIds } = await withOrganization(organizationId, userId, (tx) =>
         archiveProperty(tx, organizationId, input.propertyId),
       )
+
+      // D-31 cascade archived units too — keep Stripe unit quantity consistent (Pattern 8).
+      if (archivedUnitIds.length > 0) {
+        const activeCount = await withOrganization(organizationId, userId, (tx) =>
+          countActiveUnits(tx, organizationId),
+        )
+        await syncOrgUnitQuantity(organizationId, activeCount)
+      }
+
       return { property, archivedUnitIds }
     }),
 
