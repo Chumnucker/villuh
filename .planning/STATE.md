@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-04-PLAN.md
-last_updated: "2026-08-11T22:22:22.600Z"
+stopped_at: Completed 03-09-PLAN.md
+last_updated: "2026-08-11T22:31:35.466Z"
 last_activity: 2026-08-11
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 27
-  completed_plans: 17
+  completed_plans: 18
   percent: 13
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 ## Current Position
 
 Phase: 03 (properties-units) — EXECUTING
-Plan: 5 of 9
+Plan: 5 of 9 (03-09 completed out of order as Wave 4; 05-08 remain)
 Status: Ready to execute
 Last activity: 2026-08-11
 
-Progress: [██████░░░░] 63%
+Progress: [███████░░░] 67%
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Progress: [██████░░░░] 63%
 | Phase 03 P02 | 45min | 2 tasks | 9 files |
 | Phase 03 P03-03 | 65min | 2 tasks | 15 files |
 | Phase 03 P04 | 40min | 2 tasks | 13 files |
+| Phase 03 P09 | 35min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,7 @@ Recent decisions affecting current work:
 - [Phase 03]: Vitest 4: replaced invalid top-level singleFork with maxWorkers: 1 (kept default isolate so per-file S3 SDK mocks don't leak across test files)
 - [Phase 03]: Gallery images store S3 objectKey only; presigned GET URLs attached to gallery.list responses at read time, never persisted
 - [Phase 03]: syncOrgUnitQuantity extracted to domain/billing-sync.ts (Pattern 8) — units.create/archive and properties.archive cascade call it directly, post-commit, outside any DB transaction
+- [Phase 03]: Tags icon/color enforced via Zod z.enum fixed palette (14 icons / 8 colors) instead of free text — rejects out-of-palette values at the API boundary (D-21, T-03-16)
 
 ### Pending Todos
 
@@ -95,8 +97,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-11T22:21:39.770Z
-Stopped at: Completed 03-04-PLAN.md
+Last session: 2026-08-11T22:31:35.457Z
+Stopped at: Completed 03-09-PLAN.md
 Resume file: None
 
 Phase 1 complete. Next: run `/gsd-plan-phase 2` to plan Phase 2 (Auth & Billing).

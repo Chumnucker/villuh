@@ -20,7 +20,7 @@
 ### Properties
 
 - [x] **PROP-01**: Landlord can create, edit, and delete properties with name, address, phone, notes, and image gallery (S3)
-- [ ] **PROP-02**: Landlord can tag properties with custom labels for organization
+- [x] **PROP-02**: Landlord can tag properties with custom labels for organization
 - [ ] **PROP-03**: Landlord can view a property dashboard showing total units, occupancy, monthly rent total, and alerts
 - [ ] **PROP-04**: Landlord can configure a per-property lease expiry alert threshold (days before expiry)
 - [ ] **PROP-05**: System automatically sends tenant renewal notices via email/SMS when lease expiry threshold is reached
@@ -170,7 +170,7 @@ Core resident portal (login + branded subdomain shell) is now **in v1 scope** vi
 | AUTH-08 | Phase 2 | Pending |
 | AUTH-09 | Phase 2 | Pending |
 | PROP-01 | Phase 3 | Complete |
-| PROP-02 | Phase 3 | Pending |
+| PROP-02 | Phase 3 | Complete |
 | PROP-03 | Phase 3 | Pending |
 | PROP-04 | Phase 3 | Pending |
 | PROP-05 | Phase 3 | Pending |

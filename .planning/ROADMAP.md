@@ -124,7 +124,7 @@ Plans:
 - [ ] 03-06-PLAN.md — Units list/Sheet/detail + UNIT-03/04 stub tabs
 - [ ] 03-07-PLAN.md — Gallery DnD + TagPicker + status catalog UI
 - [ ] 03-08-PLAN.md — Archive confirms + deferred REQ docs + human verify
-- [ ] 03-09-PLAN.md — Tags API + live me.get quotas
+- [x] 03-09-PLAN.md — Tags API + live me.get quotas
 **UI hint**: yes
 
 ### Phase 4: Tenants, Leases & Documents
@@ -199,7 +199,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 |-------|----------------|--------|-----------|
 | 1. Infrastructure Foundation | 6/6 | Complete | All plans done 2026-04-29–30 |
 | 2. Auth & Billing | 0/12 | Not started | - |
-| 3. Properties & Units | 4/9 | In Progress|  |
+| 3. Properties & Units | 5/9 | In Progress|  |
 | 4. Tenants, Leases & Documents | 0/TBD | Not started | - |
 | 5. Onboarding Flow Engine | 0/TBD | Not started | - |
 | 6. Rent Ledger | 0/TBD | Not started | - |
