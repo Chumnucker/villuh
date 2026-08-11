@@ -1,10 +1,11 @@
 ---
 phase: 3
 slug: properties-units
-status: draft
+status: approved
 shadcn_initialized: true
 preset: "radix-luma / zinc / cssVariables"
 created: 2026-08-11
+reviewed_at: 2026-08-11T20:45:00Z
 ---
 
 # Phase 3 — UI Design Contract
