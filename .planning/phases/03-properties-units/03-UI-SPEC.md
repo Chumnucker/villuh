@@ -120,9 +120,9 @@ Preset colors (store as token keys, render as soft badge backgrounds — not fre
 | `violet` | violet soft |
 | `teal` | teal soft |
 
-Preset icons (PlatformIcon names only — 12 fixed):
+Preset icons (PlatformIcon names only — 14 fixed; includes seeded status icons):
 
-`IconBuildings`, `IconDoor`, `IconHomeDoor`, `IconPeople`, `IconStar`, `IconFlag`, `IconKey1`, `IconMapPin`, `IconLeaf`, `IconFlame`, `IconBolt`, `IconHeart`
+`IconBuildings`, `IconDoor`, `IconHomeDoor`, `IconPeople`, `IconStar`, `IconFlag`, `IconKey1`, `IconMapPin`, `IconLeaf`, `IconFlame`, `IconBolt`, `IconHeart`, `IconCircleCheck`, `IconWrench`
 
 Default seeded unit statuses (D-26) visual mapping:
 
@@ -130,7 +130,7 @@ Default seeded unit statuses (D-26) visual mapping:
 |--------|-----------|------|
 | Available | `green` | `IconCircleCheck` |
 | Occupied | `blue` | `IconPeople` |
-| Maintenance | `amber` | `IconWrench` (or nearest PlatformIcon wrench/tool equivalent) |
+| Maintenance | `amber` | `IconWrench` |
 
 Status UI: `Badge` with leading 12px PlatformIcon + label (D-29). Custom statuses pick from the same fixed color/icon sets.
 
@@ -181,7 +181,8 @@ Dark mode: reuse existing `.dark` token counterparts; soft badge fills use `/15`
 **Actions:**
 - Primary create: **Create property** → navigate to property detail (D-08)
 - Primary edit: **Save property**
-- Secondary: **Cancel** → `Button` outline → back to list or detail
+- Secondary create: **Back to properties** → `Button` outline → navigate to `/properties` (no save)
+- Secondary edit: **Discard changes** → `Button` outline → navigate back to property detail (no save)
 
 **States:** Field errors via `Field` + `aria-invalid`; server errors `toast.error`; success `toast.success` then navigate/invalidate.
 
@@ -197,7 +198,7 @@ Dark mode: reuse existing `.dark` token counterparts; soft badge fills use `/15`
 3. **Units** — nested unit list (table or compact rows) + **Add unit** (PlanLimitGate resource=`units`)
 
 **Header actions:**
-- **Edit** — outline → edit page
+- **Edit property** — outline → edit page
 - **Archive property** — ghost-destructive → Archive confirm Dialog (D-30–D-33)
 
 **Gallery interactions:**
@@ -232,7 +233,11 @@ Dark mode: reuse existing `.dark` token counterparts; soft badge fills use `/15`
 - Base rent — required currency Input, prefix `$`
 - Status — Select of org statuses, Badge preview (D-26–D-29); assignment **manual** in Phase 3
 
-**Actions:** **Create unit** / **Save unit** primary; **Cancel** outline closes Sheet.
+**Actions:**
+- Primary create: **Create unit**
+- Primary edit: **Save unit**
+- Secondary create: **Close without saving** — outline → closes Sheet (no save)
+- Secondary edit: **Discard changes** — outline → closes Sheet (no save)
 
 **From property detail:** same Sheet, property prefilled + disabled.
 
@@ -242,7 +247,7 @@ Dark mode: reuse existing `.dark` token counterparts; soft badge fills use `/15`
 
 **Layout:** App shell. Breadcrumbs: Units → {label} (and/or Properties → {property} → {label}).
 
-**Header:** Label (Display) + Status badge + property link + **Edit** + **Archive unit**.
+**Header:** Label (Display) + Status badge + property link + **Edit unit** + **Archive unit**.
 
 **Body tabs** (install shadcn `tabs`):
 1. **Overview** — label, property, sq ft, base rent, status
@@ -310,8 +315,14 @@ Invalidate `me.get` after successful creates/archives that change counts (D-43).
 | Primary CTA (units) | Add unit |
 | Create property submit | Create property |
 | Save property submit | Save property |
+| Create property dismiss | Back to properties |
+| Edit property dismiss | Discard changes |
 | Create unit submit | Create unit |
 | Save unit submit | Save unit |
+| Create unit dismiss | Close without saving |
+| Edit unit dismiss | Discard changes |
+| Edit property header | Edit property |
+| Edit unit header | Edit unit |
 | Properties empty heading | No properties yet |
 | Properties empty body | Add your first property to start organizing units and leases. |
 | Units empty heading | No units yet |
@@ -469,7 +480,7 @@ No hard-delete of properties/units in Phase 3 UI.
 - Nested units: `Table` inside Card with CardHeader actions
 
 ### Sheets
-- Unit form Sheet: side right, width `sm:max-w-md`, padding `p-6`, footer sticky with Cancel + Submit
+- Unit form Sheet: side right, width `sm:max-w-md`, padding `p-6`, footer sticky with **Close without saving** / **Discard changes** (outline) + **Create unit** / **Save unit** (primary) — match create vs edit mode
 
 ### Dialogs
 - Standard `DialogContent` `sm:max-w-md`; archive property may use `sm:max-w-lg` when unit list is long
