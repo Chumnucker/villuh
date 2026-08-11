@@ -7,6 +7,9 @@ function r<T extends string>(path: T): Route<T> {
 export const ROUTES = {
   home: r("/"),
   properties: r("/properties"),
+  propertyNew: r("/properties/new"),
+  propertyDetail: (propertyId: string) => r(`/properties/${propertyId}`),
+  propertyEdit: (propertyId: string) => r(`/properties/${propertyId}/edit`),
   units: r("/units"),
   tenants: r("/tenants"),
   leases: r("/leases"),
