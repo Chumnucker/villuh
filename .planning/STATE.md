@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-09-PLAN.md
-last_updated: "2026-08-11T22:31:35.466Z"
+stopped_at: Completed 03-05-PLAN.md
+last_updated: "2026-08-11T23:03:41.357Z"
 last_activity: 2026-08-11
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 27
-  completed_plans: 18
+  completed_plans: 19
   percent: 13
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 ## Current Position
 
 Phase: 03 (properties-units) — EXECUTING
-Plan: 5 of 9 (03-09 completed out of order as Wave 4; 05-08 remain)
+Plan: 6 of 9 (03-09 completed out of order as Wave 4; 05-08 remain)
 Status: Ready to execute
 Last activity: 2026-08-11
 
-Progress: [███████░░░] 67%
+Progress: [███████░░░] 70%
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Progress: [███████░░░] 67%
 | Phase 03 P03-03 | 65min | 2 tasks | 15 files |
 | Phase 03 P04 | 40min | 2 tasks | 13 files |
 | Phase 03 P09 | 35min | 2 tasks | 6 files |
+| Phase 03 P05 | 55min | 2 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,8 @@ Recent decisions affecting current work:
 - [Phase 03]: Gallery images store S3 objectKey only; presigned GET URLs attached to gallery.list responses at read time, never persisted
 - [Phase 03]: syncOrgUnitQuantity extracted to domain/billing-sync.ts (Pattern 8) — units.create/archive and properties.archive cascade call it directly, post-commit, outside any DB transaction
 - [Phase 03]: Tags icon/color enforced via Zod z.enum fixed palette (14 icons / 8 colors) instead of free text — rejects out-of-palette values at the API boundary (D-21, T-03-16)
+- [Phase 03]: Added unitCount to properties.service.listProperties (grouped count query) since the UI-SPEC card footer requires it and no endpoint exposed it
+- [Phase 03]: Added @tiptap/extension-placeholder@3.30.0 for the NotesEditor 'Add notes...' placeholder (D-16) — no existing dependency covered it
 
 ### Pending Todos
 
@@ -97,8 +100,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-11T22:31:35.457Z
-Stopped at: Completed 03-09-PLAN.md
+Last session: 2026-08-11T23:03:41.348Z
+Stopped at: Completed 03-05-PLAN.md
 Resume file: None
 
 Phase 1 complete. Next: run `/gsd-plan-phase 2` to plan Phase 2 (Auth & Billing).
