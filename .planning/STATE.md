@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-03-PLAN.md
-last_updated: "2026-08-11T22:08:32.431Z"
+stopped_at: Completed 03-04-PLAN.md
+last_updated: "2026-08-11T22:22:22.600Z"
 last_activity: 2026-08-11
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 27
-  completed_plans: 16
+  completed_plans: 17
   percent: 13
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 ## Current Position
 
 Phase: 03 (properties-units) — EXECUTING
-Plan: 4 of 9
+Plan: 5 of 9
 Status: Ready to execute
 Last activity: 2026-08-11
 
-Progress: [██████░░░░] 59%
+Progress: [██████░░░░] 63%
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ Progress: [██████░░░░] 59%
 | Phase 03 P01 | 25min | 2 tasks | 12 files |
 | Phase 03 P02 | 45min | 2 tasks | 9 files |
 | Phase 03 P03-03 | 65min | 2 tasks | 15 files |
+| Phase 03 P04 | 40min | 2 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,7 @@ Recent decisions affecting current work:
 - [Phase 03]: audit_log test cleanup: TRUNCATE (not DELETE) — bypasses immutability trigger blocking the organization cascade delete
 - [Phase 03]: Vitest 4: replaced invalid top-level singleFork with maxWorkers: 1 (kept default isolate so per-file S3 SDK mocks don't leak across test files)
 - [Phase 03]: Gallery images store S3 objectKey only; presigned GET URLs attached to gallery.list responses at read time, never persisted
+- [Phase 03]: syncOrgUnitQuantity extracted to domain/billing-sync.ts (Pattern 8) — units.create/archive and properties.archive cascade call it directly, post-commit, outside any DB transaction
 
 ### Pending Todos
 
@@ -93,8 +95,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-11T22:08:32.420Z
-Stopped at: Completed 03-03-PLAN.md
+Last session: 2026-08-11T22:21:39.770Z
+Stopped at: Completed 03-04-PLAN.md
 Resume file: None
 
 Phase 1 complete. Next: run `/gsd-plan-phase 2` to plan Phase 2 (Auth & Billing).
