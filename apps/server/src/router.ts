@@ -8,6 +8,7 @@ import { propertiesRouter } from './modules/properties/router.js'
 import { uploadsRouter } from './modules/uploads/router.js'
 import { unitsRouter } from './modules/units/router.js'
 import { unitStatusesRouter } from './modules/unit-statuses/router.js'
+import { tagsRouter } from './modules/tags/router.js'
 import { router } from './trpc.js'
 
 export const appRouter = router({
@@ -21,6 +22,7 @@ export const appRouter = router({
   uploads: uploadsRouter,
   units: unitsRouter,
   unitStatuses: unitStatusesRouter,
+  tags: tagsRouter,
 })
 
 export type AppRouter = typeof appRouter
