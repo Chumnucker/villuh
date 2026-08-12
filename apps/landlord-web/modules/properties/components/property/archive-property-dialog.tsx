@@ -18,7 +18,7 @@ import {
 } from "@villuh/ui"
 import { invalidateQueries, trpc } from "@villuh/api"
 import { ROUTES } from "@/app/routes"
-import { StatusBadge } from "@/modules/app/components/units/status-badge"
+import { StatusBadge } from "@/modules/units/components/statuses/status-badge"
 
 /**
  * D-30/D-31/D-33: property archive is a cascade soft-archive of every active unit. The confirm

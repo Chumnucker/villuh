@@ -15,7 +15,7 @@ import type { inferRouterOutputs } from "@trpc/server"
 import type { AppRouter } from "@villuh/server/router"
 import { ROUTES } from "@/app/routes"
 import { getPlanLimitMeta, isPlanLimitError } from "@/modules/app/components/plan-limit/plan-limit-gate"
-import { TagPicker, type TagPickerTag } from "@/modules/app/components/tags/tag-picker"
+import { TagPicker, type TagPickerTag } from "@/modules/properties/components/tags/tag-picker"
 import { AddressFields } from "./address-fields"
 import { NotesEditor } from "./notes-editor"
 

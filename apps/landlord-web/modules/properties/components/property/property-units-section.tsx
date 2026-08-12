@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "@villuh/ui"
 import { PlanLimitGate } from "@/modules/app/components/plan-limit/plan-limit-gate"
-import { UnitFormSheet } from "@/modules/app/components/units/unit-form-sheet"
+import { UnitFormSheet } from "@/modules/units/components/form/unit-form-sheet"
 
 export type PropertyUnitRow = {
   id: string

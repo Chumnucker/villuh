@@ -22,14 +22,14 @@ import { CSS } from "@dnd-kit/utilities"
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, PlatformIcon, cn } from "@villuh/ui"
 import { invalidateQueries, trpc } from "@villuh/api"
 import { useUser } from "@/modules/app/providers/me-provider"
-import { TagIconColorPicker } from "@/modules/app/components/tags/tag-icon-color-picker"
+import { TagIconColorPicker } from "@/modules/properties/components/tags/tag-icon-color-picker"
 import {
   DEFAULT_TAG_COLOR_KEY,
   DEFAULT_TAG_ICON_KEY,
   type TagColorKey,
   type TagIconKey,
-} from "@/modules/app/components/tags/tag-palette"
-import { StatusBadge } from "./status-badge"
+} from "@/modules/properties/components/tags/tag-palette"
+import { StatusBadge } from "@/modules/units/components/statuses/status-badge"
 
 type UnitStatusRow = {
   id: string

@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "@villuh/ui"
 import { ROUTES } from "@/app/routes"
-import { StatusBadge, type StatusBadgeStatus } from "./status-badge"
+import { StatusBadge, type StatusBadgeStatus } from "@/modules/units/components/statuses/status-badge"
 
 export type UnitsTableRow = {
   id: string
