@@ -8,7 +8,8 @@ const inputVariants = cva(
   cn(
     "&::-webkit-outer-spin-button]:appearance-none flex w-full min-w-0 text-base transition-all duration-200 outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none [&_input::-webkit-inner-spin-button]:m-0 [&_input::-webkit-inner-spin-button]:appearance-none [&_input::-webkit-outer-spin-button]:m-0 [&_input::-webkit-outer-spin-button]:appearance-none [&_input[type=number]]:[-moz-appearance:textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&[type=number]]:[-moz-appearance:textfield]",
     "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 data-[disabled=true]:pointer-events-none data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-50",
-    "focus-within:ring-1 focus-within:ring-offset-1 focus-within:ring-offset-background focus-within:ring-ring/35 aria-invalid:ring-1 aria-invalid:ring-offset-1 aria-invalid:ring-offset-background aria-invalid:ring-destructive/45"
+    "focus-within:ring-1 focus-within:ring-offset-1 focus-within:ring-offset-background focus-within:ring-ring/35 aria-invalid:ring-1 aria-invalid:ring-offset-1 aria-invalid:ring-offset-background aria-invalid:ring-destructive/45",
+    "placeholder:text-muted-foreground placeholder:font-normal aria-invalid:placeholder:text-destructive aria-invalid:placeholder:font-normal"
   ),
   {
     variants: {
@@ -29,11 +30,11 @@ const inputVariants = cva(
           "border bg-muted file:text-foreground placeholder:text-muted-foreground",
         
         outline:
-          "border border-border bg-background",
+          "border border-border bg-background placeholder:text-muted-foreground",
         "outline-muted":
-          "border border-border bg-muted",
+          "border border-border bg-muted placeholder:text-muted-foreground",
         "outline-secondary":
-          "border border-border bg-secondary",
+          "border border-border bg-secondary placeholder:text-muted-foreground",
       },
       size: {
         none: "",
@@ -57,20 +58,33 @@ export type InputVariantProps = VariantProps<typeof inputVariants>
 export interface InputProps
   extends
     Omit<React.InputHTMLAttributes<HTMLInputElement>, "size">,
-    VariantProps<typeof inputVariants> {}
+    VariantProps<typeof inputVariants> {
+  /** When set, replaces `placeholder` and marks the control invalid (red placeholder). */
+  error?: string | null
+}
 
 function Input({
   className,
   variant,
   size,
   type,
+  error,
+  placeholder,
+  "aria-invalid": ariaInvalid,
   ...props
 }: Omit<React.ComponentProps<"input">, "size"> &
-  VariantProps<typeof inputVariants>) {
+  VariantProps<typeof inputVariants> & {
+    error?: string | null
+  }) {
+  const invalid =
+    Boolean(error) || ariaInvalid === true || ariaInvalid === "true"
+
   return (
     <input
       type={type}
       data-slot="input"
+      aria-invalid={invalid || undefined}
+      placeholder={error || placeholder}
       className={cn(inputVariants({ className, variant, size }))}
       {...props}
     />

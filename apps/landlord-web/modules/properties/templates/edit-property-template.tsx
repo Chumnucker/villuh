@@ -2,7 +2,13 @@
 
 import { useParams } from "next/navigation"
 import { trpc } from "@villuh/api"
-import { Page, Skeleton } from "@villuh/ui"
+import {
+  Page,
+  SkeletonBox,
+  SkeletonContainer,
+  SkeletonField,
+  SkeletonLabel,
+} from "@villuh/ui"
 import { PropertyForm } from "@/modules/properties/components/form/property-form"
 
 export function EditPropertyTemplate() {
@@ -12,12 +18,17 @@ export function EditPropertyTemplate() {
   if (isLoading || !data) {
     return (
       <Page.Shell>
-        <Page.Header>
-          <Skeleton className="h-9 w-64" />
-        </Page.Header>
-        <Page.Content>
-          <Skeleton className="h-96 max-w-2xl rounded-2xl" />
-        </Page.Content>
+        <SkeletonContainer className="flex-col gap-4">
+          <Page.Header>
+            <SkeletonLabel className="h-9 w-64" />
+          </Page.Header>
+          <Page.Content className="max-w-2xl gap-6">
+            <SkeletonField />
+            <SkeletonField />
+            <SkeletonField showLabel={false} />
+            <SkeletonBox className="h-48 w-full rounded-2xl" />
+          </Page.Content>
+        </SkeletonContainer>
       </Page.Shell>
     )
   }

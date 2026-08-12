@@ -1,9 +1,15 @@
 "use client"
 
 import Link from "next/link"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@villuh/ui"
+import {
+  StatusBadge,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  type StatusBadgeStatus,
+} from "@villuh/ui"
 import { ROUTES } from "@/app/routes"
-import { StatusBadge, type StatusBadgeStatus } from "@/modules/units/components/statuses/status-badge"
 
 export type UnitDetailOverview = {
   label: string

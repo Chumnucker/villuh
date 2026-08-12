@@ -21,6 +21,7 @@ Local ports: landlord `:3000`, resident `:3001`, API `:4000`.
 
 ```bash
 pnpm install
+pnpm db:setup     # Docker Postgres + roles + env files + migrate villuh & villuh_test
 pnpm menu         # interactive developer CLI
 pnpm dev          # turbo run dev (landlord + resident + server)
 pnpm dev:landlord

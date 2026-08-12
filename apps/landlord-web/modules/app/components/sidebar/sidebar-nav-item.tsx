@@ -27,7 +27,7 @@ export function SidebarNavItemLink({ item }: SidebarNavItemLinkProps) {
       )}
       aria-current={active ? "page" : undefined}
     >
-      <PlatformIcon icon={item.icon} size={20} strokeWidth={2} />
+      <PlatformIcon icon={item.icon} />
       {item.label}
     </LinkButton>
   )

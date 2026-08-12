@@ -23,13 +23,13 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
+  StatusBadge,
 } from "@villuh/ui"
 import { invalidateQueries, trpc } from "@villuh/api"
 import { createUnitInputSchema, updateUnitInputSchema } from "@villuh/server/schemas/units"
 import type { inferRouterOutputs } from "@trpc/server"
 import type { AppRouter } from "@villuh/server/router"
 import { getPlanLimitMeta, isPlanLimitError } from "@/modules/app/components/plan-limit/plan-limit-gate"
-import { StatusBadge } from "@/modules/units/components/statuses/status-badge"
 
 type RouterOutput = inferRouterOutputs<AppRouter>
 export type UnitRow = RouterOutput["units"]["list"]["units"][number]

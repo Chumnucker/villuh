@@ -1,9 +1,12 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
+import { TextMorph } from "torph/react"
 
 import { cn } from "./utils"
 import Link, { LinkProps } from "next/link"
+import { PlatformIcon, PlatformIconName } from "./icon"
+import { Check, CircleAlert, Loader2 } from "lucide-react"
 
 const buttonVariants = cva(
   "group/button inline-flex shrink-0 cursor-pointer items-center justify-center rounded-xl border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-background focus-visible:ring-ring/35 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
@@ -107,4 +110,91 @@ function LinkButton<T extends string>({
   )
 }
 
-export { Button, LinkButton, buttonVariants }
+export type SubmitStatus = "idle" | "pending" | "success" | "error"
+
+function IconStatus({
+  status,
+  icons,
+  className,
+}: {
+  status: SubmitStatus
+  icons?: Partial<Record<SubmitStatus, PlatformIconName | "none">>
+  className?: string
+}) {
+  const override = icons?.[status]
+  if (override === "none") return null
+  if (override) {
+    return <PlatformIcon icon={override} className={className} />
+  }
+
+  switch (status) {
+    case "pending":
+      return <Loader2 className={cn("animate-spin", className)} />
+    case "success":
+      return <Check className={className} />
+    case "error":
+      return <CircleAlert className={className} />
+    default:
+      return null // idle
+  }
+}
+
+function SubmitButton({
+  className,
+  variant,
+  size,
+  asChild = false,
+  status,
+  steps = ["Save", "Saving", "Saved", "Error"],
+  icons,
+  iconClassName,
+  children,
+  disabled,
+  ...props
+}: React.ComponentProps<"button"> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean
+    status: SubmitStatus
+    steps?: [string, string, string, string] | "none"
+    icons?: Partial<Record<SubmitStatus, PlatformIconName | "none">>
+    iconClassName?: string
+  }) {
+  const Comp = asChild ? Slot.Root : "button"
+
+  return (
+    <Comp
+      type="submit"
+      data-slot="button"
+      data-variant={variant}
+      data-size={size}
+      data-status={status}
+      className={cn(buttonVariants({ variant, size, className }))}
+      disabled={
+        disabled !== undefined
+          ? disabled
+          : status === "pending" || status === "success"
+      }
+      {...props}
+    >
+      {children}
+      {steps !== "none" && (
+        <TextMorph>
+          {status === "idle"
+            ? steps[0]
+            : status === "pending"
+              ? steps[1]
+              : status === "success"
+                ? steps[2]
+                : steps[3]}
+        </TextMorph>
+      )}
+      <IconStatus
+        status={status}
+        icons={icons}
+        className={cn("size-4", iconClassName)}
+      />
+    </Comp>
+  )
+}
+
+export { Button, LinkButton, buttonVariants, SubmitButton }

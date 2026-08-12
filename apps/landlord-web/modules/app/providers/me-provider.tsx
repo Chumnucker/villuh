@@ -32,14 +32,17 @@ export function UserProvider({
   })
 
   useEffect(() => {
-    if (error) router.replace(ROUTES.auth.login)
-  }, [error, router])
+    // Server already passed requireMe with initialUser. A refetch blip must
+    // not bounce the shell to login (cookie + proxy used to spin on that).
+    if (error && !initialUser) router.replace(ROUTES.auth.login)
+  }, [error, initialUser, router])
 
-  if (error || !user) return null
+  const resolved = user ?? initialUser
+  if (!resolved) return null
 
   return (
     <UserContext.Provider
-      value={{ user, refresh: () => utils.me.get.invalidate() }}
+      value={{ user: resolved, refresh: () => utils.me.get.invalidate() }}
     >
       {children}
     </UserContext.Provider>

@@ -44,7 +44,7 @@
 - `sonner` ^2.0.7 - Toast notification system (`modules/common/ui/sonner.tsx`)
 
 **Icons:**
-- `@central-icons-react/all` ^1.1.215 - Primary icon set via `PlatformIcon` wrapper (`modules/common/ui/icon.tsx`)
+- `@solar-icons/react` ^2.0.0 - Primary icon set (Linear) via `PlatformIcon` wrapper (`packages/ui/src/icon.tsx`)
 - `lucide-react` ^1.11.0 - Secondary icons used directly in UI components
 
 **Shadcn:**

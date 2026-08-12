@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
 import {
-  Badge,
   Button,
   DropdownMenu,
   DropdownMenuContent,
@@ -17,20 +16,22 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  TagBadge,
   cn,
-  type PlatformIconName,
+  inputVariants,
+  isPlatformIconName,
 } from "@villuh/ui"
+import type { VariantProps } from "class-variance-authority"
 import { invalidateQueries, trpc } from "@villuh/api"
+import {
+  TAG_COLOR_KEYS,
+  TAG_ICON_KEYS,
+  type TagColorKey,
+  type TagIconKey,
+} from "@villuh/server/schemas/tags"
 import { useUser } from "@/modules/app/providers/me-provider"
 import { ManageTagsDialog } from "./manage-tags-dialog"
 import { TagIconColorPicker } from "./tag-icon-color-picker"
-import {
-  DEFAULT_TAG_COLOR_KEY,
-  DEFAULT_TAG_ICON_KEY,
-  TAG_BADGE_CLASSES,
-  type TagColorKey,
-  type TagIconKey,
-} from "./tag-palette"
 
 export type TagPickerTag = {
   id: string
@@ -71,10 +72,24 @@ function mapPropertyTagRow(row: {
  */
 export function TagPicker(
   props:
-    | { propertyId: string; value?: undefined; onChange?: undefined }
-    | { propertyId?: undefined; value: TagPickerTag[]; onChange: (tags: TagPickerTag[]) => void }
+    | {
+        propertyId: string
+        value?: undefined
+        onChange?: undefined
+        variant?: VariantProps<typeof inputVariants>["variant"]
+        size?: VariantProps<typeof inputVariants>["size"]
+        className?: string
+      }
+    | {
+        propertyId?: undefined
+        value: TagPickerTag[]
+        onChange: (tags: TagPickerTag[]) => void
+        variant?: VariantProps<typeof inputVariants>["variant"]
+        size?: VariantProps<typeof inputVariants>["size"]
+        className?: string
+      }
 ) {
-  const { propertyId } = props
+  const { propertyId, variant = "default", size = "default", className } = props
   const isLive = !!propertyId
   const { user } = useUser()
   const canWrite = user.org.permissions.write
@@ -84,8 +99,8 @@ export function TagPicker(
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [search, setSearch] = useState("")
   const [creating, setCreating] = useState(false)
-  const [newIcon, setNewIcon] = useState<TagIconKey>(DEFAULT_TAG_ICON_KEY)
-  const [newColor, setNewColor] = useState<TagColorKey>(DEFAULT_TAG_COLOR_KEY)
+  const [newIcon, setNewIcon] = useState<TagIconKey>(TAG_ICON_KEYS[0])
+  const [newColor, setNewColor] = useState<TagColorKey>(TAG_COLOR_KEYS[0])
 
   const { data: catalogData } = trpc.tags.listOrganizationTags.useQuery()
   const catalog: OrganizationTagRow[] = catalogData?.tags ?? []
@@ -135,8 +150,8 @@ export function TagPicker(
   function resetComposer() {
     setSearch("")
     setCreating(false)
-    setNewIcon(DEFAULT_TAG_ICON_KEY)
-    setNewColor(DEFAULT_TAG_COLOR_KEY)
+    setNewIcon(TAG_ICON_KEYS[0])
+    setNewColor(TAG_COLOR_KEYS[0])
   }
 
   function handleAttachCatalog(tag: OrganizationTagRow) {
@@ -195,19 +210,26 @@ export function TagPicker(
 
       <div
         className={cn(
-          "flex min-h-9 flex-wrap items-center gap-1.5 rounded-3xl border border-input/30 bg-input/50 bg-clip-padding px-3 py-1.5"
+          inputVariants({ variant, size }),
+          // Chip field grows with rows; keep Input size as the minimum height.
+          "flex h-auto min-h-9 flex-wrap items-center gap-1.5 py-1.5 px-2",
+          className
         )}
       >
         {tags.map((tag) => (
           <DropdownMenu key={tag.id}>
             <DropdownMenuTrigger asChild>
-              <button type="button" disabled={!canWrite}>
-                <Badge className={cn("cursor-pointer border-transparent", TAG_BADGE_CLASSES[tag.colorKey])}>
-                  <PlatformIcon icon={tag.iconKey as PlatformIconName} size={12} data-icon="inline-start" />
+                <TagBadge variant={tag.colorKey} className="cursor-pointer">
+                  <PlatformIcon icon={tag.iconKey} size={12} data-icon="inline-start" />
                   {tag.label}
-                  {canWrite ? <PlatformIcon icon="IconChevronBottom" size={12} className="ml-1 opacity-70" /> : null}
-                </Badge>
-              </button>
+                  {canWrite ? (
+                    <PlatformIcon
+                      icon="IconChevronBottom"
+                      size={12}
+                      className=" opacity-70"
+                    />
+                  ) : null}
+                </TagBadge>
             </DropdownMenuTrigger>
             {canWrite ? (
               <DropdownMenuContent align="start">
@@ -244,12 +266,13 @@ export function TagPicker(
                 Add tag
               </button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-72">
+            <PopoverContent align="start" className="w-64" sideOffset={14} alignOffset={-8}>
               <div className="flex flex-col gap-3">
                 <Input
                   autoFocus
                   placeholder="Search or create a tag…"
                   value={search}
+                  size="sm"
                   onChange={(e) => setSearch(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && search.trim() && !exactMatch) {
@@ -288,7 +311,9 @@ export function TagPicker(
                           onClick={() => handleAttachCatalog(tag)}
                           className="flex items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm hover:bg-accent"
                         >
-                          <PlatformIcon icon={tag.iconKey as PlatformIconName} size={14} />
+                          {isPlatformIconName(tag.iconKey) ? (
+                            <PlatformIcon icon={tag.iconKey} size={14} />
+                          ) : null}
                           {tag.name}
                         </button>
                       ))

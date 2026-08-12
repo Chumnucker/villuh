@@ -27,7 +27,7 @@ import {
   CardHeader,
   CardTitle,
   Dialog,
-  DialogContent,
+  DialogContainer,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -317,7 +317,7 @@ export function PropertyGallery({ propertyId }: { propertyId: string }) {
       </CardContent>
 
       <Dialog open={!!removeTarget} onOpenChange={(open) => !open && setRemoveTarget(null)}>
-        <DialogContent>
+        <DialogContainer>
           <DialogHeader>
             <DialogTitle>Remove this photo?</DialogTitle>
             <DialogDescription>The file is deleted immediately and cannot be undone.</DialogDescription>
@@ -340,7 +340,7 @@ export function PropertyGallery({ propertyId }: { propertyId: string }) {
               Remove photo
             </Button>
           </DialogFooter>
-        </DialogContent>
+        </DialogContainer>
       </Dialog>
     </Card>
   )

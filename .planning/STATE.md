@@ -76,7 +76,7 @@ Recent decisions affecting current work:
 - [2026-08-11]: **API locked: Express + tRPC** (not Hono / not `hono/client`). Docs updated; older phase plans mentioning Hono are historical
 - [2026-08-11]: UI cache = TanStack Query + `invalidateOnSuccess`/`invalidateQueries`; Postgres = SoT; Redis deferred (ADR-001)
 - [Phase 1]: Audit log: Postgres triggers, full JSONB snapshots (old+new), all tenant tables, SET LOCAL actor, RLS on audit_log, 'system' sentinel, monthly partitioned, immutable via trigger
-- [Phase 1]: Icon library: @central-icons-react/all is sole library; lucide-react removed; all icons through PlatformIcon wrapper
+- [Phase 1]: Icon library: @solar-icons/react (Linear) is sole library via PlatformIcon; lucide-react and @central-icons-react removed
 - [Phase 1]: No CI, no Railway deploy in Phase 1 — local validation only; CI and Railway deferred to Phase 2
 - [Pre-Phase 4]: DocuSign developer account setup is a prerequisite — must be scheduled early (approval process takes time)
 - [Pre-Phase 5]: Flow engine must use a custom `onboarding_session` token (not Better Auth magic link) due to 5-minute expiry incompatibility; snapshot_json must be copied to instance at activation
@@ -92,7 +92,7 @@ Recent decisions affecting current work:
 - [Phase 03]: PropertyUnitsSection owns its own locked UnitFormSheet instance (propertyId prop) rather than an onAddUnit callback — single reusable Sheet shared by /units and the property nested Units section
 - [Phase 03]: units.list/get stay unjoined; landlord UI builds propertyId->property and statusId->status lookup Maps client-side from properties.list/unitStatuses.list rather than adding a backend join
 - [Phase 03]: TagPicker is dual-mode: staged local array during property create, live tRPC mutations once propertyId exists (03-07)
-- [Phase 03]: IconWrench (UI-SPEC fixed icon key) missing from installed @central-icons-react/all; cast to PlatformIconName at render sites, enum itself untouched (03-07)
+- [2026-08-11]: Icon library migrated to @solar-icons/react Linear; PlatformIcon keeps Central-style keys (tag/status DB values) mapped to Solar equivalents; IconWrench → SledgehammerIcon
 
 ### Pending Todos
 

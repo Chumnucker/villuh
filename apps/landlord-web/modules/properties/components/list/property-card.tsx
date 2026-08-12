@@ -1,8 +1,19 @@
 "use client"
 
 import Link from "next/link"
-import { Badge, PlatformIcon } from "@villuh/ui"
+import { Badge, PlatformIcon, TagBadge, toTagBadgeVariant } from "@villuh/ui"
 import { ROUTES } from "@/app/routes"
+
+export const PROPERTY_CARD_GRID_CLASS =
+  "grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4"
+export const PROPERTY_CARD_SKELETON_COUNT = 8
+
+const CARD_SHELL_CLASS =
+  "flex flex-col rounded-4xl bg-card ring-1 ring-foreground/5 dark:ring-foreground/10"
+
+/** Placeholder fills — `bg-muted` vanishes on light `bg-card`; ink alpha keeps shape readable. */
+const SKELETON_COVER_CLASS = "bg-foreground/8"
+const SKELETON_BAR_CLASS = "rounded bg-foreground/12"
 
 export type PropertyCardTag = {
   id: string
@@ -40,11 +51,11 @@ export function PropertyCard({ property }: { property: PropertyCardData }) {
   return (
     <Link
       href={ROUTES.propertyDetail(property.id)}
-      className="group flex flex-col rounded-4xl bg-card ring-1 ring-foreground/5 transition-all hover:ring-foreground/10 dark:ring-foreground/10"
+      className={`group ${CARD_SHELL_CLASS} transition-all hover:ring-foreground/10`}
     >
       <div className="flex h-40 items-center justify-center rounded-t-4xl bg-muted">
         <PlatformIcon
-          icon="IconBuildings"
+          icon="IconHouse"
           size={32}
           className="text-muted-foreground"
         />
@@ -70,14 +81,13 @@ export function PropertyCard({ property }: { property: PropertyCardData }) {
         {visibleTags.length > 0 ? (
           <div className="flex flex-wrap items-center gap-1">
             {visibleTags.map((tag) => (
-              <Badge key={tag.id} variant="outline">
-                <PlatformIcon
-                  icon={tag.icon as never}
-                  size={12}
-                  data-icon="inline-start"
-                />
+              <TagBadge
+                key={tag.id}
+                variant={toTagBadgeVariant(tag.color)}
+                icon={tag.icon}
+              >
                 {tag.name}
-              </Badge>
+              </TagBadge>
             ))}
             {overflowCount > 0 ? (
               <Badge variant="outline">+{overflowCount}</Badge>
@@ -86,5 +96,35 @@ export function PropertyCard({ property }: { property: PropertyCardData }) {
         ) : null}
       </div>
     </Link>
+  )
+}
+
+/** Same geometry as `PropertyCard` (cover + body + lines) so load/empty don't snap.
+ * Shimmer is clipped to the card — never paints into grid gaps. */
+export function PropertyCardSkeleton() {
+  return (
+    <div
+      className={`${CARD_SHELL_CLASS} relative overflow-hidden`}
+      aria-hidden
+    >
+      <div
+        className={`flex h-40 items-center justify-center rounded-t-4xl ${SKELETON_COVER_CLASS}`}
+      >
+        <PlatformIcon
+          icon="IconHouse"
+          size={32}
+          className="text-foreground/20"
+        />
+      </div>
+      <div className="flex flex-col gap-2 p-6">
+        <div className={`h-5 w-2/3 ${SKELETON_BAR_CLASS}`} />
+        <div className="flex h-5 items-center gap-1.5">
+          <div className={`h-3.5 w-28 ${SKELETON_BAR_CLASS}`} />
+          <div className={`size-1 shrink-0 rounded-full bg-foreground/12`} />
+          <div className={`h-3.5 w-14 ${SKELETON_BAR_CLASS}`} />
+        </div>
+      </div>
+      <div className="pointer-events-none absolute inset-0 shimmer shimmer-bg shimmer-color-foreground/20 text-foreground" />
+    </div>
   )
 }

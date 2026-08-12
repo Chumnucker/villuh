@@ -7,15 +7,37 @@ import {
   PopoverTrigger,
   PlatformIcon,
   cn,
-  type PlatformIconName,
 } from "@villuh/ui"
 import {
-  TAG_ICON_KEYS,
   TAG_COLOR_KEYS,
-  TAG_SWATCH_CLASSES,
-  type TagIconKey,
+  TAG_ICON_KEYS,
   type TagColorKey,
-} from "./tag-palette"
+  type TagIconKey,
+} from "@villuh/server/schemas/tags"
+
+/** Solid fills for the color swatch grid. */
+const TAG_SWATCH_CLASSES: Record<TagColorKey, string> = {
+  slate: "bg-slate-500",
+  blue: "bg-blue-500",
+  green: "bg-green-500",
+  amber: "bg-amber-500",
+  orange: "bg-orange-500",
+  red: "bg-red-500",
+  violet: "bg-violet-500",
+  teal: "bg-teal-500",
+}
+
+/** Icon ink matches the picked palette color. */
+const TAG_ICON_COLOR_CLASSES: Record<TagColorKey, string> = {
+  slate: "text-slate-500",
+  blue: "text-blue-500",
+  green: "text-green-500",
+  amber: "text-amber-500",
+  orange: "text-orange-500",
+  red: "text-red-500",
+  violet: "text-violet-500",
+  teal: "text-teal-500",
+}
 
 /**
  * Fixed-palette picker (D-21, T-03-16): only the 14 `icon_key` / 8 `color_key` enum values from
@@ -27,23 +49,33 @@ export function TagIconColorPicker({
   colorKey,
   onChange,
   disabled,
+  size = "default",
+  className,
 }: {
   iconKey: TagIconKey
   colorKey: TagColorKey
   onChange: (next: { iconKey: TagIconKey; colorKey: TagColorKey }) => void
   disabled?: boolean
+  /** `sm` fits InputGroup / badge chips; default matches standalone catalog rows. */
+  size?: "default" | "sm"
+  className?: string
 }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button
           type="button"
-          variant="outline"
-          size="icon"
+          variant="ghost"
+          size={size === "sm" ? "icon-xs" : "icon"}
           disabled={disabled}
-          className={cn("rounded-full border-transparent text-white", TAG_SWATCH_CLASSES[colorKey])}
+          className={cn(
+            "shrink-0",
+            TAG_ICON_COLOR_CLASSES[colorKey],
+            className
+          )}
         >
-          <PlatformIcon icon={iconKey as PlatformIconName} size={16} />
+          <PlatformIcon icon={iconKey} size={size === "sm" ? 14 : 16} />
+          <span className="sr-only">Choose icon and color</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64" align="start">
@@ -58,14 +90,12 @@ export function TagIconColorPicker({
                   onClick={() => onChange({ iconKey: icon, colorKey })}
                   aria-label={icon}
                   className={cn(
-                    "flex size-8 items-center justify-center rounded-xl text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-                    icon === iconKey && "bg-accent text-accent-foreground ring-1 ring-ring/30"
+                    "flex size-8 items-center justify-center rounded-xl hover:bg-accent",
+                    TAG_ICON_COLOR_CLASSES[colorKey],
+                    icon === iconKey && "bg-accent ring-1 ring-ring/35"
                   )}
                 >
-                  {/* IconWrench (a locked D-21 key) is missing from the installed @central-icons-react/all
-                      package (pre-existing gap flagged in Plan 06) — cast keeps the fixed icon_key
-                      palette intact without weakening the type for the other 13 valid keys. */}
-                  <PlatformIcon icon={icon as PlatformIconName} size={16} />
+                  <PlatformIcon icon={icon} size={16} />
                 </button>
               ))}
             </div>

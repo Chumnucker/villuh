@@ -33,7 +33,7 @@ villuh/
 │           ├── dialog.tsx
 │           ├── dropdown-menu.tsx
 │           ├── field.tsx
-│           ├── icon.tsx              # PlatformIcon — wraps @central-icons-react/all
+│           ├── icon.tsx              # PlatformIcon — wraps @solar-icons/react (Linear)
 │           ├── input.tsx             # Input + SearchInput
 │           ├── input-group.tsx
 │           ├── item.tsx

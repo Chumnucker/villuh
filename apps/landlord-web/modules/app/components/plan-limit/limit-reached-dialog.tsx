@@ -3,7 +3,7 @@
 import {
   Button,
   Dialog,
-  DialogContent,
+  DialogContainer,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -36,7 +36,7 @@ export function LimitReachedDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContainer className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>You&apos;ve reached your {resource} limit</DialogTitle>
           <DialogDescription>
@@ -52,7 +52,7 @@ export function LimitReachedDialog({
             View billing plans
           </LinkButton>
         </DialogFooter>
-      </DialogContent>
+      </DialogContainer>
     </Dialog>
   )
 }

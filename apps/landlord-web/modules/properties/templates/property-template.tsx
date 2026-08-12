@@ -12,7 +12,9 @@ import {
   LinkButton,
   Page,
   PlatformIcon,
-  Skeleton,
+  SkeletonBox,
+  SkeletonContainer,
+  SkeletonLabel,
   useLayout,
 } from "@villuh/ui"
 import { ROUTES } from "@/app/routes"
@@ -37,13 +39,15 @@ export function PropertyTemplate() {
   if (isLoading || !data) {
     return (
       <Page.Shell>
-        <Page.Header>
-          <Skeleton className="h-9 w-64" />
-        </Page.Header>
-        <Page.Content>
-          <Skeleton className="h-48 rounded-4xl" />
-          <Skeleton className="h-48 rounded-4xl" />
-        </Page.Content>
+        <SkeletonContainer className="flex-col gap-4">
+          <Page.Header>
+            <SkeletonLabel className="h-9 w-64" />
+          </Page.Header>
+          <Page.Content>
+            <SkeletonBox className="h-48 rounded-4xl" />
+            <SkeletonBox className="h-48 rounded-4xl" />
+          </Page.Content>
+        </SkeletonContainer>
       </Page.Shell>
     )
   }
@@ -109,7 +113,7 @@ export function PropertyTemplate() {
             <TagPicker propertyId={property.id} />
             {property.notes ? (
               <div
-                className="prose prose-sm max-w-none pt-2"
+                className="rich-text-content pt-2"
                 dangerouslySetInnerHTML={{ __html: property.notes }}
               />
             ) : null}

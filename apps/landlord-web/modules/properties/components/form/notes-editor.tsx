@@ -4,7 +4,7 @@ import { useEffect } from "react"
 import { EditorContent, useEditor } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import Placeholder from "@tiptap/extension-placeholder"
-import { Button, PlatformIcon, type PlatformIconName } from "@villuh/ui"
+import { Button, PlatformIcon, cn, type PlatformIconName } from "@villuh/ui"
 
 function ToolbarButton({
   icon,
@@ -67,12 +67,12 @@ export function NotesEditor({
           HTMLAttributes: { rel: "noopener noreferrer nofollow" },
         },
       }),
-      Placeholder.configure({ placeholder: "Add notes…" }),
+      Placeholder.configure({ placeholder: "Enter notes for this property…" }),
     ],
     content: value || "",
     editorProps: {
       attributes: {
-        class: "prose prose-sm min-h-32 max-w-none focus:outline-none",
+        class: "rich-text-content min-h-32 focus:outline-none",
       },
     },
     onUpdate: ({ editor: instance }) => {
@@ -93,8 +93,15 @@ export function NotesEditor({
   if (!editor) return null
 
   return (
-    <div className="rounded-xl border border-border bg-background" data-disabled={disabled || undefined}>
-      <div className="flex items-center gap-1 border-b border-border p-1">
+    <div
+      className={cn(
+        "overflow-hidden rounded-xl bg-input p-2 space-y-2.5",
+        "ring-offset-background focus-within:ring-1 focus-within:ring-ring/35 focus-within:ring-offset-1",
+        "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50"
+      )}
+      data-disabled={disabled || undefined}
+    >
+      <div className="flex items-center gap-1 bg-muted dark:bg-input p-1 rounded-xl">
         <ToolbarButton
           icon="IconBold"
           label="Bold"
@@ -155,7 +162,15 @@ export function NotesEditor({
       </div>
       <EditorContent
         editor={editor}
-        className="px-3 py-2 text-sm [&_.ProseMirror]:min-h-32 [&_.ProseMirror]:outline-none [&_.ProseMirror_p.is-editor-empty:first-child::before]:pointer-events-none [&_.ProseMirror_p.is-editor-empty:first-child::before]:float-left [&_.ProseMirror_p.is-editor-empty:first-child::before]:h-0 [&_.ProseMirror_p.is-editor-empty:first-child::before]:text-muted-foreground [&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]"
+        className={cn(
+          "px-0.75",
+          "[&_.ProseMirror]:min-h-32 [&_.ProseMirror]:outline-none",
+          "[&_.ProseMirror_p.is-editor-empty:first-child::before]:pointer-events-none",
+          "[&_.ProseMirror_p.is-editor-empty:first-child::before]:float-left",
+          "[&_.ProseMirror_p.is-editor-empty:first-child::before]:h-0",
+          "[&_.ProseMirror_p.is-editor-empty:first-child::before]:text-muted-foreground",
+          "[&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]"
+        )}
       />
     </div>
   )

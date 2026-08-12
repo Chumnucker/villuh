@@ -396,7 +396,7 @@ No hard-delete of properties/units in Phase 3 UI.
 |-------|--------|
 | Default | Per component variants |
 | Hover | Existing `hover:` variants; cards gain stronger ring/shadow |
-| Focus-visible | `focus-visible:ring-3 focus-visible:ring-ring/30` |
+| Focus-visible | `focus-visible:ring-3 focus-visible:ring-ring/35` |
 | Loading (button) | Disabled + spinning `PlatformIcon` `IconLoader` 16px; label unchanged (prefer) or established “Saving…” only where profile form already does |
 | Loading (page) | Skeleton grids/tables |
 | Disabled | `disabled:opacity-50 disabled:pointer-events-none` |

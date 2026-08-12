@@ -371,7 +371,7 @@ All interactive elements must implement these states:
 |-------|--------|
 | Default | As described per component |
 | Hover | `hover:` class already in component variants — no new rules needed |
-| Focus-visible | `focus-visible:ring-3 focus-visible:ring-ring/30` — established in buttonVariants |
+| Focus-visible | `focus-visible:ring-3 focus-visible:ring-ring/35` — established in buttonVariants |
 | Loading | `Button` disabled + left icon replaced with spinning `PlatformIcon` ("IconLoader" or equivalent at 16px). Text does not change (no "Loading…" replacement — avoids layout shift). |
 | Disabled | `disabled:opacity-50 disabled:pointer-events-none` — established in buttonVariants and inputVariants |
 | Error (field) | `aria-invalid` on Input triggers `aria-invalid:border-destructive/40` via inputVariants. Helper text via `Field` component in red. |

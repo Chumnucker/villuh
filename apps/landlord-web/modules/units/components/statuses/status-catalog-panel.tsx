@@ -19,17 +19,26 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, PlatformIcon, cn } from "@villuh/ui"
-import { invalidateQueries, trpc } from "@villuh/api"
-import { useUser } from "@/modules/app/providers/me-provider"
-import { TagIconColorPicker } from "@/modules/properties/components/tags/tag-icon-color-picker"
 import {
-  DEFAULT_TAG_COLOR_KEY,
-  DEFAULT_TAG_ICON_KEY,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Input,
+  PlatformIcon,
+  StatusBadge,
+  cn,
+} from "@villuh/ui"
+import { invalidateQueries, trpc } from "@villuh/api"
+import {
+  TAG_COLOR_KEYS,
+  TAG_ICON_KEYS,
   type TagColorKey,
   type TagIconKey,
-} from "@/modules/properties/components/tags/tag-palette"
-import { StatusBadge } from "@/modules/units/components/statuses/status-badge"
+} from "@villuh/server/schemas/tags"
+import { useUser } from "@/modules/app/providers/me-provider"
+import { TagIconColorPicker } from "@/modules/properties/components/tags/tag-icon-color-picker"
 
 type UnitStatusRow = {
   id: string
@@ -118,8 +127,8 @@ export function StatusCatalogPanel() {
 
   const [adding, setAdding] = useState(false)
   const [newName, setNewName] = useState("")
-  const [newIcon, setNewIcon] = useState<TagIconKey>(DEFAULT_TAG_ICON_KEY)
-  const [newColor, setNewColor] = useState<TagColorKey>(DEFAULT_TAG_COLOR_KEY)
+  const [newIcon, setNewIcon] = useState<TagIconKey>(TAG_ICON_KEYS[0])
+  const [newColor, setNewColor] = useState<TagColorKey>(TAG_COLOR_KEYS[0])
 
   const invalidateStatuses = () => invalidateQueries(utils, [(u) => u.unitStatuses.list])
 
@@ -128,8 +137,8 @@ export function StatusCatalogPanel() {
       invalidateStatuses().then(() => {
         setAdding(false)
         setNewName("")
-        setNewIcon(DEFAULT_TAG_ICON_KEY)
-        setNewColor(DEFAULT_TAG_COLOR_KEY)
+        setNewIcon(TAG_ICON_KEYS[0])
+        setNewColor(TAG_COLOR_KEYS[0])
       }),
     onError: (err) => toast.error(err.message || "Could not create status"),
   })

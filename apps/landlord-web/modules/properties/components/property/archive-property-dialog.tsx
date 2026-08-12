@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import {
   Button,
   Dialog,
+  DialogContainer,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -15,10 +16,10 @@ import {
   FieldLabel,
   Input,
   ScrollArea,
+  StatusBadge,
 } from "@villuh/ui"
 import { invalidateQueries, trpc } from "@villuh/api"
 import { ROUTES } from "@/app/routes"
-import { StatusBadge } from "@/modules/units/components/statuses/status-badge"
 
 /**
  * D-30/D-31/D-33: property archive is a cascade soft-archive of every active unit. The confirm
@@ -65,7 +66,7 @@ export function ArchivePropertyDialog({
         onOpenChange(next)
       }}
     >
-      <DialogContent className="sm:max-w-lg">
+      <DialogContainer className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Archive {propertyName}?</DialogTitle>
           <DialogDescription>
@@ -74,36 +75,38 @@ export function ArchivePropertyDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium text-foreground">
-            {units.length > 0 ? "These units will also be archived:" : "This property has no active units."}
-          </p>
-          {units.length > 0 ? (
-            <ScrollArea className="max-h-48">
-              <div className="flex flex-col gap-1.5 pr-3">
-                {units.map((unit) => (
-                  <div
-                    key={unit.id}
-                    className="flex items-center justify-between gap-2 rounded-2xl border border-border px-3 py-2"
-                  >
-                    <span className="text-sm text-foreground">{unit.label}</span>
-                    <StatusBadge status={unit.statusId ? (statusesById.get(unit.statusId) ?? null) : null} />
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          ) : null}
-        </div>
+        <DialogContent>
+          <div className="flex flex-col gap-2">
+            <p className="text-sm font-medium text-foreground">
+              {units.length > 0 ? "These units will also be archived:" : "This property has no active units."}
+            </p>
+            {units.length > 0 ? (
+              <ScrollArea className="max-h-48">
+                <div className="flex flex-col gap-1.5 pr-3">
+                  {units.map((unit) => (
+                    <div
+                      key={unit.id}
+                      className="flex items-center justify-between gap-2 rounded-2xl border border-border px-3 py-2"
+                    >
+                      <span className="text-sm text-foreground">{unit.label}</span>
+                      <StatusBadge status={unit.statusId ? (statusesById.get(unit.statusId) ?? null) : null} />
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            ) : null}
+          </div>
 
-        <Field>
-          <FieldLabel htmlFor="archive-property-confirm-name">Type {propertyName} to confirm</FieldLabel>
-          <Input
-            id="archive-property-confirm-name"
-            value={confirmName}
-            onChange={(e) => setConfirmName(e.target.value)}
-            autoComplete="off"
-          />
-        </Field>
+          <Field>
+            <FieldLabel htmlFor="archive-property-confirm-name">Type {propertyName} to confirm</FieldLabel>
+            <Input
+              id="archive-property-confirm-name"
+              value={confirmName}
+              onChange={(e) => setConfirmName(e.target.value)}
+              autoComplete="off"
+            />
+          </Field>
+        </DialogContent>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -117,7 +120,7 @@ export function ArchivePropertyDialog({
             Archive property
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </DialogContainer>
     </Dialog>
   )
 }

@@ -8,15 +8,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   PlatformIcon,
+  StatusBadge,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
+  type StatusBadgeStatus,
 } from "@villuh/ui"
 import { ROUTES } from "@/app/routes"
-import { StatusBadge, type StatusBadgeStatus } from "@/modules/units/components/statuses/status-badge"
 
 export type UnitsTableRow = {
   id: string

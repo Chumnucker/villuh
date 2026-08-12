@@ -1,10 +1,10 @@
-import { sql } from 'drizzle-orm'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { organization } from 'better-auth/plugins'
 import { stripe } from '@better-auth/stripe'
 import { dash } from '@better-auth/infra'
 import { db } from '../../db/index.js'
+import { resolveFirstOrganizationId } from './active-organization.js'
 import * as authSchema from '../../schema/auth.js'
 import {
   sendVerificationEmail,
@@ -41,7 +41,6 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 30,
     updateAge: 60 * 60 * 24,
-    // Signed short-lived session cookie — avoids a DB hit on most getSession reads
     cookieCache: {
       enabled: true,
       maxAge: 5 * 60,
@@ -69,22 +68,20 @@ export const auth = betterAuth({
   databaseHooks: {
     session: {
       create: {
-        after: async (session) => {
-          // Auto-activate the user's first org on every new session so /api/me works immediately.
-          // Better Auth doesn't set activeOrganizationId on sign-in — we do it here.
-          if ((session as { activeOrganizationId?: string }).activeOrganizationId) return
-          try {
-            const rows = await db.execute(
-              sql`SELECT organization_id FROM "member" WHERE user_id = ${session.userId} LIMIT 1`
-            ) as unknown as { organization_id: string }[]
-            const orgId = rows[0]?.organization_id
-            if (orgId) {
-              await db.execute(
-                sql`UPDATE "session" SET active_organization_id = ${orgId} WHERE id = ${session.id}`
-              )
-            }
-          } catch (err) {
-            console.error('[auth] Failed to auto-set active org on session', session.id, err)
+        // Better Auth will not pick an active org for us (multi-org by design).
+        // Stamp it onto the row *before* insert so the session cookie has it
+        // on first login the same as every later login.
+        before: async (session) => {
+          if ((session as { activeOrganizationId?: string }).activeOrganizationId) {
+            return { data: session }
+          }
+          const orgId = await resolveFirstOrganizationId(session.userId)
+          if (!orgId) return { data: session }
+          return {
+            data: {
+              ...session,
+              activeOrganizationId: orgId,
+            },
           }
         },
       },

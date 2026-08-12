@@ -20,9 +20,9 @@ export function createAuthProxy(routes: AuthProxyRoutes) {
     const isAuthPath = pathname.startsWith("/auth")
     const sessionCookie = getSessionCookie(request)
 
-    if (sessionCookie && isAuthPath) {
-      return NextResponse.redirect(new URL(routes.home, request.url))
-    }
+    // Do not bounce /auth/* → home on cookie presence alone. requireMe() is the
+    // real gate; a session cookie without a usable org/session used to fight
+    // that redirect and spin (home → login → home).
 
     if (!sessionCookie && !isAuthPath) {
       const login = new URL(routes.login, request.url)

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useForm } from "@tanstack/react-form"
 import { toast } from "sonner"
-import { Button, Field, FieldError, FieldLabel, Input, LinkButton } from "@villuh/ui"
+import { SubmitButton, type SubmitStatus, Field, FieldLabel, Input, LinkButton, PhoneInput, PlatformIcon } from "@villuh/ui"
 import { invalidateQueries, trpc } from "@villuh/api"
 import {
   createPropertyInputSchema,
@@ -18,6 +18,30 @@ import { getPlanLimitMeta, isPlanLimitError } from "@/modules/app/components/pla
 import { TagPicker, type TagPickerTag } from "@/modules/properties/components/tags/tag-picker"
 import { AddressFields } from "./address-fields"
 import { NotesEditor } from "./notes-editor"
+
+/** First validation message when the field has been touched and is invalid. */
+function fieldError(
+  meta: { isTouched: boolean; isValid: boolean; errors: unknown[] }
+): string | undefined {
+  if (!(meta.isTouched && !meta.isValid)) return undefined
+  const err = meta.errors[0]
+  if (err == null) return undefined
+  if (typeof err === "string") return err
+  if (typeof err === "object" && "message" in err && typeof err.message === "string") {
+    return err.message
+  }
+  return undefined
+}
+
+function submitStatus(
+  isSubmitting: boolean,
+  isPending: boolean,
+  isError: boolean
+): SubmitStatus {
+  if (isError) return "error"
+  if (isSubmitting || isPending) return "pending"
+  return "idle"
+}
 
 type RouterOutput = inferRouterOutputs<AppRouter>
 export type PropertyDetail = RouterOutput["properties"]["get"]["property"]
@@ -133,6 +157,7 @@ export function PropertyForm({
   })
 
   const isPending = createProperty.isPending || updateProperty.isPending
+  const isSubmitError = createProperty.isError || updateProperty.isError
 
   const form = usePropertyFormInstance(toFormValues(property), async (value) => {
     if (mode === "create") {
@@ -146,7 +171,7 @@ export function PropertyForm({
 
   return (
     <form
-      className="flex max-w-2xl flex-col gap-6"
+      className="grid grid-cols-2 max-w-2xl gap-7"
       onSubmit={(e) => {
         e.preventDefault()
         e.stopPropagation()
@@ -161,9 +186,9 @@ export function PropertyForm({
         }}
       >
         {(field) => {
-          const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
+          const error = fieldError(field.state.meta)
           return (
-            <Field data-invalid={isInvalid || undefined}>
+            <Field data-invalid={error ? true : undefined}>
               <FieldLabel htmlFor={field.name}>Name</FieldLabel>
               <Input
                 id={field.name}
@@ -171,15 +196,9 @@ export function PropertyForm({
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
-                aria-invalid={isInvalid || undefined}
+                placeholder="Enter property name"
+                error={error}
               />
-              {isInvalid ? (
-                <FieldError
-                  errors={field.state.meta.errors.map((err) =>
-                    typeof err === "string" ? { message: err } : { message: err?.message }
-                  )}
-                />
-              ) : null}
             </Field>
           )
         }}
@@ -191,56 +210,62 @@ export function PropertyForm({
         {(field) => (
           <Field>
             <FieldLabel htmlFor={field.name}>Phone</FieldLabel>
-            <Input
-              id={field.name}
-              name={field.name}
-              type="tel"
-              autoComplete="tel"
+            <PhoneInput
               value={field.state.value ?? ""}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
+              onChange={(value) => field.handleChange(value ?? "")}
+              placeholder="Phone number"
+              numberInputProps={{
+                id: field.name,
+                name: field.name,
+                onBlur: field.handleBlur,
+                autoComplete: "tel",
+              }}
             />
           </Field>
         )}
       </form.Field>
 
+      <div className="col-span-full">
       {mode === "edit" && property ? (
         <TagPicker propertyId={property.id} />
       ) : (
         <TagPicker value={stagedTags} onChange={setStagedTags} />
       )}
+      </div>
 
       <form.Field name="notes">
         {(field) => (
-          <Field>
+          <Field className="col-span-full">
             <FieldLabel htmlFor={field.name}>Notes</FieldLabel>
             <NotesEditor value={field.state.value ?? ""} onChange={field.handleChange} />
           </Field>
         )}
       </form.Field>
 
-      <div className="flex items-center gap-2">
-        <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting] as const}>
-          {([canSubmit, isSubmitting]) => (
-            <Button type="submit" disabled={!canSubmit || isSubmitting || isPending}>
-              {isSubmitting || isPending
-                ? "Saving…"
-                : mode === "create"
-                  ? "Create property"
-                  : "Save property"}
-            </Button>
-          )}
-        </form.Subscribe>
-
+      <div className="flex items-center justify-between gap-2 col-span-full">
         {mode === "create" ? (
-          <LinkButton href={ROUTES.properties} variant="outline">
-            Back to properties
+          <LinkButton href={ROUTES.properties} variant="secondary" size="icon">
+            <PlatformIcon icon="IconArrowLeft" />
           </LinkButton>
         ) : property ? (
           <LinkButton href={ROUTES.propertyDetail(property.id)} variant="outline">
             Discard changes
           </LinkButton>
         ) : null}
+
+        <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting] as const}>
+          {([canSubmit, isSubmitting]) => (
+            <SubmitButton
+              status={submitStatus(isSubmitting, isPending, isSubmitError)}
+              disabled={!canSubmit || isSubmitting || isPending}
+              steps={
+                mode === "create"
+                  ? ["Create Property", "Creating…", "Created", "Error"]
+                  : ["Save Property", "Saving…", "Saved", "Error"]
+              }
+            />
+          )}
+        </form.Subscribe>
       </div>
     </form>
   )

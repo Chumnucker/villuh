@@ -6,7 +6,7 @@ import { z } from 'zod'
  * keys. Shared by `tags.*` mutations and the landlord TagPicker UI (Plan 07).
  */
 export const TAG_ICON_KEYS = [
-  'IconBuildings',
+  'IconHouse',
   'IconDoor',
   'IconHomeDoor',
   'IconPeople',

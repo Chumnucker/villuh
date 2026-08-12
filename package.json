@@ -14,6 +14,9 @@
     "test": "turbo run test",
     "migrate": "turbo run migrate --filter=@villuh/server",
     "generate": "turbo run generate --filter=@villuh/server",
+    "db:setup": "node scripts/setup-local-db.mjs",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
     "start": "turbo run start"
   },
   "devDependencies": {

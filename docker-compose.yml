@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: villuh-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: chum
+      POSTGRES_PASSWORD: chum_local_dev
+      POSTGRES_DB: villuh
+    volumes:
+      - villuh_pgdata:/var/lib/postgresql/data
+      - ./apps/server/scripts/docker-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chum -d villuh"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+
+volumes:
+  villuh_pgdata:

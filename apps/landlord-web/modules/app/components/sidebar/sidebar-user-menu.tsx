@@ -93,7 +93,7 @@ export function SidebarUserMenu() {
           variant="destructive"
           onSelect={() => void handleSignOut()}
         >
-          <PlatformIcon icon="IconDoor" size={16} />
+          <PlatformIcon icon="IconLogout" size={16} />
           Log out
         </DropdownMenuItem>
       </DropdownMenuContent>

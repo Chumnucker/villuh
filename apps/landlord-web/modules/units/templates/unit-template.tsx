@@ -4,11 +4,19 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { trpc } from "@villuh/api"
-import { Button, Page, PlatformIcon, Skeleton, useLayout } from "@villuh/ui"
+import {
+  Button,
+  Page,
+  PlatformIcon,
+  SkeletonBox,
+  SkeletonContainer,
+  SkeletonLabel,
+  StatusBadge,
+  useLayout,
+} from "@villuh/ui"
 import { ROUTES } from "@/app/routes"
 import { ArchiveUnitDialog } from "@/modules/units/components/archive-unit-dialog"
 import { UnitFormSheet } from "@/modules/units/components/form/unit-form-sheet"
-import { StatusBadge } from "@/modules/units/components/statuses/status-badge"
 import { UnitDetailTabs } from "@/modules/units/components/unit/unit-detail-tabs"
 
 export function UnitTemplate() {
@@ -31,12 +39,14 @@ export function UnitTemplate() {
   if (isLoading || !data) {
     return (
       <Page.Shell>
-        <Page.Header>
-          <Skeleton className="h-9 w-64" />
-        </Page.Header>
-        <Page.Content>
-          <Skeleton className="h-64 rounded-4xl" />
-        </Page.Content>
+        <SkeletonContainer className="flex-col gap-4">
+          <Page.Header>
+            <SkeletonLabel className="h-9 w-64" />
+          </Page.Header>
+          <Page.Content>
+            <SkeletonBox className="h-64 rounded-4xl" />
+          </Page.Content>
+        </SkeletonContainer>
       </Page.Shell>
     )
   }

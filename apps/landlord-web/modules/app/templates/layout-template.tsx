@@ -1,4 +1,4 @@
-import { NavigationBreadcrumbs, SearchInput } from "@villuh/ui"
+import { NavigationBreadcrumbs, ScrollArea, SearchInput } from "@villuh/ui"
 import { AppSidebar } from "@/modules/app/components/sidebar"
 
 type SidebarTemplateProps = {
@@ -17,10 +17,10 @@ export function LayoutTemplate({
   appName = "Villuh",
 }: SidebarTemplateProps) {
   return (
-    <div className="flex min-h-svh bg-background">
+    <div className="flex min-h-svh bg-background max-h-svh">
       <AppSidebar appName={appName} />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col max-h-svh overflow-hidden">
         <header className="flex h-navbar shrink-0 items-center gap-4 border-b bg-card px-page [view-transition-name:app-topbar]">
           <NavigationBreadcrumbs />
           <SearchInput
@@ -29,8 +29,10 @@ export function LayoutTemplate({
           />
         </header>
 
-        <main className="flex-1 overflow-auto">{children}</main>
-      </div>
+        <ScrollArea className="min-h-0 flex-1" constrainContentWidth>
+          {children}
+        </ScrollArea>
+       </div>
     </div>
   )
 }

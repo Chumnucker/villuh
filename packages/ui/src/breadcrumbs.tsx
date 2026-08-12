@@ -2,7 +2,7 @@
 
 import { cn } from "./utils"
 import { PlatformIcon } from "./icon"
-import { Skeleton } from "./skeleton"
+import { SkeletonLabel } from "./skeleton"
 import clsx from "clsx"
 import Link from "next/link"
 import type { Route } from "next"
@@ -101,7 +101,7 @@ export function NavigationBreadcrumbs({
             className="flex items-center gap-1.5 capitalize"
           >
             {crumb.uuid && !crumb.custom ? (
-              <Skeleton className="h-4 w-32" />
+              <SkeletonLabel className="h-4 w-32" />
             ) : (
               <Link
                 href={crumb.href as Route}

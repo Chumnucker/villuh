@@ -5,7 +5,7 @@ import { toast } from "sonner"
 import {
   Button,
   Dialog,
-  DialogContent,
+  DialogContainer,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -52,7 +52,7 @@ export function ArchiveUnitDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContainer>
         <DialogHeader>
           <DialogTitle>Archive {unitLabel}?</DialogTitle>
           <DialogDescription>
@@ -71,7 +71,7 @@ export function ArchiveUnitDialog({
             Archive unit
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </DialogContainer>
     </Dialog>
   )
 }

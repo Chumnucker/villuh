@@ -16,7 +16,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Skeleton,
+  SkeletonBox,
+  SkeletonContainer,
 } from "@villuh/ui"
 import { ROUTES } from "@/app/routes"
 import { PlanLimitGate } from "@/modules/app/components/plan-limit/plan-limit-gate"
@@ -139,11 +140,11 @@ export function UnitsListTemplate() {
         ) : null}
 
         {isLoading ? (
-          <div className="flex flex-col gap-2">
+          <SkeletonContainer className="flex-col gap-2">
             {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 rounded-2xl" />
+              <SkeletonBox key={i} className="h-12 w-full rounded-2xl" />
             ))}
-          </div>
+          </SkeletonContainer>
         ) : rows.length > 0 ? (
           <UnitsTable units={rows} onEdit={openEdit} onArchive={openArchive} />
         ) : (
