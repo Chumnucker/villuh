@@ -205,7 +205,7 @@ const CountrySelect = ({
         <SelectValue />
       </SelectTrigger>
 
-      <SelectContent position="popper" align="start" className="w-[300px]">
+      <SelectContent position="popper" align="start" className="w-[300px] rounded-2xl" sideOffset={7}>
         <div
           className="border-b border-border p-1.5"
           onPointerDown={(event) => event.preventDefault()}

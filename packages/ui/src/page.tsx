@@ -17,7 +17,7 @@ function PageShell({
       className={cn(
         "flex min-h-full flex-1 flex-col gap-8 p-content pb-0",
         centered &&
-          "mx-auto px-content py-16 w-full max-w-3xl sm:max-w-4xl lg:max-w-2xl xl:max-w-3xl 2xl:max-w-4xl",
+          "mx-auto px-content py-16 w-full max-w-3xl sm:max-w-4xl lg:max-w-2xl xl:max-w-3xl",
         className,
       )}
       {...props}

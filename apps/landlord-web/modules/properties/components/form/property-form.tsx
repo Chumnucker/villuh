@@ -171,7 +171,7 @@ export function PropertyForm({
 
   return (
     <form
-      className="grid grid-cols-2 max-w-2xl gap-7"
+      className="grid grid-cols-2 gap-7"
       onSubmit={(e) => {
         e.preventDefault()
         e.stopPropagation()
