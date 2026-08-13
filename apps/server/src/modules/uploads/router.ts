@@ -3,9 +3,14 @@ import { and, eq, sql } from 'drizzle-orm'
 import { router, permissionProcedure } from '../../trpc.js'
 import { withOrganization } from '../../db/index.js'
 import { properties, propertyImages } from '../../schema/properties.js'
+import { floorPlans, floorPlanImages } from '../../schema/floor-plans.js'
 import { badRequest, notFound } from '../../domain/index.js'
 import { presignPut } from './s3.js'
-import { presignPropertyImageInputSchema, MAX_GALLERY_IMAGES } from './schemas.js'
+import {
+  presignPropertyImageInputSchema,
+  presignFloorPlanImageInputSchema,
+  MAX_GALLERY_IMAGES,
+} from './schemas.js'
 
 const EXTENSION_BY_CONTENT_TYPE: Record<string, string> = {
   'image/jpeg': 'jpg',
@@ -44,6 +49,43 @@ export const uploadsRouter = router({
 
         const ext = EXTENSION_BY_CONTENT_TYPE[input.contentType] ?? 'bin'
         const objectKey = `${organizationId}/properties/${input.propertyId}/gallery/${randomUUID()}.${ext}`
+        const uploadUrl = await presignPut({ objectKey, contentType: input.contentType })
+        return { uploadUrl, objectKey }
+      })
+    }),
+
+  presignFloorPlanImage: permissionProcedure('write')
+    .input(presignFloorPlanImageInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { organizationId, userId } = ctx
+
+      return withOrganization(organizationId, userId, async (tx) => {
+        // Load the plan in-org to resolve its parent property for the S3 key (D-16).
+        const floorPlanRows = await tx
+          .select({ id: floorPlans.id, propertyId: floorPlans.propertyId })
+          .from(floorPlans)
+          .where(and(eq(floorPlans.id, input.floorPlanId), eq(floorPlans.organizationId, organizationId)))
+          .limit(1)
+        const floorPlan = floorPlanRows[0]
+        if (!floorPlan) notFound('Floor plan not found')
+
+        const countRows = await tx
+          .select({ count: sql<number>`count(*)::int` })
+          .from(floorPlanImages)
+          .where(
+            and(
+              eq(floorPlanImages.floorPlanId, input.floorPlanId),
+              eq(floorPlanImages.organizationId, organizationId),
+            ),
+          )
+        const current = countRows[0]?.count ?? 0
+        // Double-enforced cap (presign + add) — reject the 26th image (D-14).
+        if (current >= MAX_GALLERY_IMAGES) {
+          badRequest(`Gallery limit reached (max ${MAX_GALLERY_IMAGES} images)`)
+        }
+
+        const ext = EXTENSION_BY_CONTENT_TYPE[input.contentType] ?? 'bin'
+        const objectKey = `${organizationId}/properties/${floorPlan.propertyId}/floor-plans/${input.floorPlanId}/gallery/${randomUUID()}.${ext}`
         const uploadUrl = await presignPut({ objectKey, contentType: input.contentType })
         return { uploadUrl, objectKey }
       })
