@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useParams } from "next/navigation"
 import { useForm } from "@tanstack/react-form"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -13,6 +13,7 @@ import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
+  OverlayBody,
   Select,
   SelectContent,
   SelectItem,
@@ -23,7 +24,10 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
+  SkeletonBox,
+  SkeletonLabel,
   StatusBadge,
+  type OverlayHandle,
 } from "@villuh/ui"
 import { invalidateQueries, trpc } from "@villuh/api"
 import { createUnitInputSchema, updateUnitInputSchema } from "@villuh/server/schemas/units"
@@ -64,25 +68,91 @@ function toFormValues(unit: UnitRow | undefined, lockedPropertyId: string | unde
 }
 
 /**
- * Dual-entry create/edit Sheet (Screen 5, D-10). `lockedPropertyId` is set only when opened
- * from `PropertyUnitsSection`'s "Add unit" — the property Select is prefilled + disabled there;
- * global create (`/units`) and edit (row action / unit detail) leave it editable.
+ * Dual-entry create/edit Sheet (Screen 5, D-10), driven entirely by an overlay
+ * handle (D-06, D-09). The param value is the payload — an id for edit, the
+ * literal `"new"` for create — so no parent ever hands this component a row
+ * object. It fetches its own unit, gated on `isOpen` (D-36).
  */
-export function UnitFormSheet({
-  open,
-  onOpenChange,
-  mode,
+export function UnitFormSheet({ overlay }: { overlay: OverlayHandle }) {
+  // D-38: OPTIONAL generic. This overlay is reachable from /units (no
+  // propertyId), /properties/[propertyId]/units, and /units/[unitId].
+  // Declaring `{ propertyId: string }` here would be a lie on two of the three.
+  const { propertyId } = useParams<{ propertyId?: string }>()
+
+  // D-05: the param value is the payload — an id for edit, the literal "new"
+  // for create. D-06: no parent ever hands this overlay a row object.
+  const unitId = overlay.value && overlay.value !== "new" ? overlay.value : null
+
+  // D-36: gated. Ungated, this fires on EVERY authenticated page load, because
+  // <AppOverlays> keeps the component mounted app-wide.
+  const unitQuery = trpc.units.get.useQuery(
+    { unitId: unitId ?? "" },
+    { enabled: overlay.isOpen && unitId !== null }
+  )
+
+  return (
+    <Sheet {...overlay.dialogProps}>
+      <SheetContent className="sm:max-w-md">
+        <SheetHeader>
+          <SheetTitle>{unitId ? "Edit unit" : "Create unit"}</SheetTitle>
+        </SheetHeader>
+        {unitId === null ? (
+          <UnitFormBody
+            key="create"
+            unit={undefined}
+            // D-14: mount context comes from the route, not a prop. On the
+            // property Units tab the Select is prefilled and disabled; on
+            // /units it is free. Edit mode never locks it — reassigning a unit
+            // to another property stays possible.
+            lockedPropertyId={propertyId}
+            onClose={overlay.close}
+          />
+        ) : (
+          <OverlayBody query={unitQuery} pending={<UnitFormSkeleton />}>
+            {({ unit }) => (
+              <UnitFormBody key={unit.id} unit={unit} onClose={overlay.close} />
+            )}
+          </OverlayBody>
+        )}
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+function UnitFormSkeleton() {
+  return (
+    <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-6">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="flex flex-col gap-2">
+          <SkeletonLabel className="h-4 w-24" />
+          <SkeletonBox className="h-9 w-full rounded-md" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * The form body. Keyed by the shell (`key="create"` / `key={unit.id}`) so it
+ * mounts fresh for each target — `defaultValues` is correct at mount and there
+ * is no reset effect to keep in sync (that effect and its eslint disable are
+ * gone). `mode` is derived from `unit`, the single source of truth.
+ */
+function UnitFormBody({
   unit,
   lockedPropertyId,
+  onClose,
 }: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  mode: "create" | "edit"
-  /** Required for edit mode — prefills fields and targets the update mutation. */
   unit?: UnitRow
   lockedPropertyId?: string
+  onClose: () => void
 }) {
+  const mode = unit ? "edit" : "create"
   const utils = trpc.useUtils()
+
+  // No `enabled` flag: <SheetContent> renders nothing while the sheet is
+  // closed, so these never fire until the sheet is open. Do NOT hoist them into
+  // the shell above — there they would run app-wide, ungated (D-36).
   const { data: propertiesData } = trpc.properties.list.useQuery()
   const { data: statusesData } = trpc.unitStatuses.list.useQuery()
 
@@ -90,7 +160,7 @@ export function UnitFormSheet({
     onSuccess: () =>
       invalidateQueries(utils, [(u) => u.units.list, (u) => u.properties.get, (u) => u.me.get]).then(() => {
         toast.success("Unit created")
-        onOpenChange(false)
+        onClose()
       }),
     onError: (err) => {
       if (isPlanLimitError(err)) {
@@ -110,7 +180,7 @@ export function UnitFormSheet({
     onSuccess: () =>
       invalidateQueries(utils, [(u) => u.units.list, (u) => u.units.get, (u) => u.properties.get]).then(() => {
         toast.success("Unit saved")
-        onOpenChange(false)
+        onClose()
       }),
     onError: (err) => {
       toast.error(err.message || "Could not save unit")
@@ -147,183 +217,172 @@ export function UnitFormSheet({
     },
   })
 
-  // Sheet stays mounted across opens — reset to the (possibly different) unit/lock each time it opens.
-  useEffect(() => {
-    if (open) form.reset(toFormValues(unit, lockedPropertyId))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, unit?.id, lockedPropertyId])
-
   const properties = propertiesData?.properties ?? []
   const statuses = statusesData?.statuses ?? []
   const propertyLocked = Boolean(lockedPropertyId)
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-md">
-        <SheetHeader>
-          <SheetTitle>{mode === "create" ? "Create unit" : "Edit unit"}</SheetTitle>
-        </SheetHeader>
-        <form
-          className="flex flex-1 flex-col gap-4 overflow-y-auto px-6"
-          onSubmit={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            void form.handleSubmit()
+    <>
+      <form
+        className="flex flex-1 flex-col gap-4 overflow-y-auto px-6"
+        onSubmit={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          void form.handleSubmit()
+        }}
+      >
+        <form.Field
+          name="propertyId"
+          validators={{
+            onChange: ({ value }) => (value ? undefined : "Property is required"),
+            onBlur: ({ value }) => (value ? undefined : "Property is required"),
           }}
         >
-          <form.Field
-            name="propertyId"
-            validators={{
-              onChange: ({ value }) => (value ? undefined : "Property is required"),
-              onBlur: ({ value }) => (value ? undefined : "Property is required"),
-            }}
-          >
-            {(field) => {
-              const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
-              return (
-                <Field data-invalid={isInvalid || undefined}>
-                  <FieldLabel htmlFor={field.name}>Property</FieldLabel>
-                  <Select value={field.state.value} onValueChange={field.handleChange} disabled={propertyLocked}>
-                    <SelectTrigger id={field.name} className="w-full" aria-invalid={isInvalid || undefined}>
-                      <SelectValue placeholder="Select a property" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {properties.map((property) => (
-                        <SelectItem key={property.id} value={property.id}>
-                          {property.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {isInvalid ? (
-                    <FieldError
-                      errors={field.state.meta.errors.map((err) => ({
-                        message: typeof err === "string" ? err : String(err),
-                      }))}
-                    />
-                  ) : null}
-                </Field>
-              )
-            }}
-          </form.Field>
-
-          <form.Field
-            name="label"
-            validators={{
-              onChange: createUnitInputSchema.shape.label,
-              onBlur: createUnitInputSchema.shape.label,
-            }}
-          >
-            {(field) => {
-              const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
-              return (
-                <Field data-invalid={isInvalid || undefined}>
-                  <FieldLabel htmlFor={field.name}>Label</FieldLabel>
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    aria-invalid={isInvalid || undefined}
+          {(field) => {
+            const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
+            return (
+              <Field data-invalid={isInvalid || undefined}>
+                <FieldLabel htmlFor={field.name}>Property</FieldLabel>
+                <Select value={field.state.value} onValueChange={field.handleChange} disabled={propertyLocked}>
+                  <SelectTrigger id={field.name} className="w-full" aria-invalid={isInvalid || undefined}>
+                    <SelectValue placeholder="Select a property" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {properties.map((property) => (
+                      <SelectItem key={property.id} value={property.id}>
+                        {property.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {isInvalid ? (
+                  <FieldError
+                    errors={field.state.meta.errors.map((err) => ({
+                      message: typeof err === "string" ? err : String(err),
+                    }))}
                   />
-                  {isInvalid ? (
-                    <FieldError
-                      errors={field.state.meta.errors.map((err) =>
-                        typeof err === "string" ? { message: err } : { message: err?.message }
-                      )}
-                    />
-                  ) : null}
-                </Field>
-              )
-            }}
-          </form.Field>
+                ) : null}
+              </Field>
+            )
+          }}
+        </form.Field>
 
-          <form.Field name="squareFootage">
-            {(field) => (
-              <Field>
-                <FieldLabel htmlFor={field.name}>Square footage</FieldLabel>
+        <form.Field
+          name="label"
+          validators={{
+            onChange: createUnitInputSchema.shape.label,
+            onBlur: createUnitInputSchema.shape.label,
+          }}
+        >
+          {(field) => {
+            const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
+            return (
+              <Field data-invalid={isInvalid || undefined}>
+                <FieldLabel htmlFor={field.name}>Label</FieldLabel>
                 <Input
+                  id={field.name}
+                  name={field.name}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  aria-invalid={isInvalid || undefined}
+                />
+                {isInvalid ? (
+                  <FieldError
+                    errors={field.state.meta.errors.map((err) =>
+                      typeof err === "string" ? { message: err } : { message: err?.message }
+                    )}
+                  />
+                ) : null}
+              </Field>
+            )
+          }}
+        </form.Field>
+
+        <form.Field name="squareFootage">
+          {(field) => (
+            <Field>
+              <FieldLabel htmlFor={field.name}>Square footage</FieldLabel>
+              <Input
+                id={field.name}
+                name={field.name}
+                type="number"
+                min={0}
+                inputMode="numeric"
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+              />
+            </Field>
+          )}
+        </form.Field>
+
+        <form.Field name="baseRent">
+          {(field) => (
+            <Field>
+              <FieldLabel htmlFor={field.name}>Base rent</FieldLabel>
+              <InputGroup>
+                <InputGroupAddon>$</InputGroupAddon>
+                <InputGroupInput
                   id={field.name}
                   name={field.name}
                   type="number"
                   min={0}
-                  inputMode="numeric"
+                  step="0.01"
+                  inputMode="decimal"
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
                 />
-              </Field>
-            )}
-          </form.Field>
+              </InputGroup>
+            </Field>
+          )}
+        </form.Field>
 
-          <form.Field name="baseRent">
-            {(field) => (
+        <form.Field name="statusId">
+          {(field) => {
+            const selected = statuses.find((status) => status.id === field.state.value)
+            return (
               <Field>
-                <FieldLabel htmlFor={field.name}>Base rent</FieldLabel>
-                <InputGroup>
-                  <InputGroupAddon>$</InputGroupAddon>
-                  <InputGroupInput
-                    id={field.name}
-                    name={field.name}
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    inputMode="decimal"
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                  />
-                </InputGroup>
+                <FieldLabel htmlFor={field.name}>Status</FieldLabel>
+                <div className="flex items-center gap-3">
+                  <Select value={field.state.value} onValueChange={field.handleChange}>
+                    <SelectTrigger id={field.name} className="w-full">
+                      <SelectValue placeholder="Unassigned" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={UNASSIGNED_STATUS}>Unassigned</SelectItem>
+                      {statuses.map((status) => (
+                        <SelectItem key={status.id} value={status.id}>
+                          {status.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <StatusBadge status={selected ?? null} />
+                </div>
               </Field>
-            )}
-          </form.Field>
+            )
+          }}
+        </form.Field>
+      </form>
 
-          <form.Field name="statusId">
-            {(field) => {
-              const selected = statuses.find((status) => status.id === field.state.value)
-              return (
-                <Field>
-                  <FieldLabel htmlFor={field.name}>Status</FieldLabel>
-                  <div className="flex items-center gap-3">
-                    <Select value={field.state.value} onValueChange={field.handleChange}>
-                      <SelectTrigger id={field.name} className="w-full">
-                        <SelectValue placeholder="Unassigned" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={UNASSIGNED_STATUS}>Unassigned</SelectItem>
-                        {statuses.map((status) => (
-                          <SelectItem key={status.id} value={status.id}>
-                            {status.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <StatusBadge status={selected ?? null} />
-                  </div>
-                </Field>
-              )
-            }}
-          </form.Field>
-        </form>
-
-        <SheetFooter className="flex-row justify-end gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {mode === "create" ? "Close without saving" : "Discard changes"}
-          </Button>
-          <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting] as const}>
-            {([canSubmit, isSubmitting]) => (
-              <Button
-                type="button"
-                disabled={!canSubmit || isSubmitting || isPending}
-                onClick={() => void form.handleSubmit()}
-              >
-                {isSubmitting || isPending ? "Saving…" : mode === "create" ? "Create unit" : "Save unit"}
-              </Button>
-            )}
-          </form.Subscribe>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+      <SheetFooter className="flex-row justify-end gap-2">
+        <Button variant="outline" onClick={() => onClose()}>
+          {mode === "create" ? "Close without saving" : "Discard changes"}
+        </Button>
+        <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting] as const}>
+          {([canSubmit, isSubmitting]) => (
+            <Button
+              type="button"
+              disabled={!canSubmit || isSubmitting || isPending}
+              onClick={() => void form.handleSubmit()}
+            >
+              {isSubmitting || isPending ? "Saving…" : mode === "create" ? "Create unit" : "Save unit"}
+            </Button>
+          )}
+        </form.Subscribe>
+      </SheetFooter>
+    </>
   )
 }

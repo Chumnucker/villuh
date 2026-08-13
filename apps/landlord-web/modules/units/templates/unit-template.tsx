@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { trpc } from "@villuh/api"
@@ -15,14 +14,12 @@ import {
   useBreadcrumbLabel,
 } from "@villuh/ui"
 import { ROUTES } from "@/app/routes"
-import { ArchiveUnitDialog } from "@/modules/units/components/archive-unit-dialog"
-import { UnitFormSheet } from "@/modules/units/components/form/unit-form-sheet"
+import { unitOverlays } from "@/modules/units/lib/units.overlays"
 import { UnitDetailTabs } from "@/modules/units/components/unit/unit-detail-tabs"
 
 export function UnitTemplate() {
   const { unitId } = useParams<{ unitId: string }>()
-  const [editOpen, setEditOpen] = useState(false)
-  const [archiveOpen, setArchiveOpen] = useState(false)
+  const { form, archive } = unitOverlays.useGroup()
 
   const unitQuery = trpc.units.get.useQuery({ unitId })
 
@@ -58,12 +55,12 @@ export function UnitTemplate() {
                 </Page.Description>
                 <Page.Actions>
                   <StatusBadge status={status} />
-                  <Button variant="outline" onClick={() => setEditOpen(true)}>
+                  <Button variant="outline" onClick={() => form.open(unit.id)}>
                     Edit unit
                   </Button>
                   <Button
                     variant="ghost-destructive"
-                    onClick={() => setArchiveOpen(true)}
+                    onClick={() => archive.open(unit.id)}
                   >
                     Archive unit
                   </Button>
@@ -73,20 +70,6 @@ export function UnitTemplate() {
               <Page.Content>
                 <UnitDetailTabs unit={unit} property={property} status={status} />
               </Page.Content>
-
-              <UnitFormSheet
-                open={editOpen}
-                onOpenChange={setEditOpen}
-                mode="edit"
-                unit={unit}
-              />
-              <ArchiveUnitDialog
-                open={archiveOpen}
-                onOpenChange={setArchiveOpen}
-                unitId={unit.id}
-                unitLabel={unit.label}
-                propertyId={property.id}
-              />
             </>
         )}
       </Page.Boundary>

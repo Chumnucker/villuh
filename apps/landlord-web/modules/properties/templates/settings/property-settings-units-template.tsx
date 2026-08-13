@@ -1,9 +1,8 @@
 "use client"
 
-import { useState } from "react"
 import { Button, EmptyState, Page } from "@villuh/ui"
 import { SettingsSection } from "@/modules/properties/components/settings/section"
-import { ManageUnitStatusesDialog } from "@/modules/units/components/statuses/manage-unit-statuses-dialog"
+import { unitOverlays } from "@/modules/units/lib/units.overlays"
 
 /**
  * Unit-level configuration for this property. Both sections are placeholders —
@@ -11,7 +10,7 @@ import { ManageUnitStatusesDialog } from "@/modules/units/components/statuses/ma
  * the units themselves are still managed from the property's Units tab.
  */
 export function PropertySettingsUnitsTemplate() {
-  const [statusesOpen, setStatusesOpen] = useState(false)
+  const statuses = unitOverlays.use("statuses")
 
   return (
     <Page.Content className="gap-10">
@@ -38,7 +37,7 @@ export function PropertySettingsUnitsTemplate() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setStatusesOpen(true)}
+            onClick={() => statuses.open()}
           >
             Unit statuses
           </Button>
@@ -51,11 +50,6 @@ export function PropertySettingsUnitsTemplate() {
           className="rounded-2xl border border-dashed border-border py-12"
         />
       </SettingsSection>
-
-      <ManageUnitStatusesDialog
-        open={statusesOpen}
-        onOpenChange={setStatusesOpen}
-      />
     </Page.Content>
   )
 }
