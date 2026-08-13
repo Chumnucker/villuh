@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 03-07-PLAN.md
-last_updated: "2026-08-11T23:35:22.700Z"
-last_activity: 2026-08-11
+status: planned
+stopped_at: Phase 03.1 planning complete — 8 plans approved by plan-checker (pass 3)
+last_updated: "2026-08-13T09:45:00.000Z"
+last_activity: 2026-08-13
 progress:
   total_phases: 8
   completed_phases: 1
@@ -21,16 +21,48 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-29)
 
 **Core value:** A landlord can onboard a tenant from zero to signed lease in one structured flow — without touching email, a spreadsheet, or a separate e-sign tool.
-**Current focus:** Phase 03 — properties-units
+**Current focus:** Phase 03.1 — URL query state (nuqs)
 
 ## Current Position
 
-Phase: 03 (properties-units) — EXECUTING
-Plan: 8 of 9 (03-09 completed out of order as Wave 4; 05-08 remain)
-Status: Ready to execute
-Last activity: 2026-08-11
+Phase: 03.1 (url-query-state) — PLANNED, ready to execute
+Plans: 8, across waves 0–6. Approved by gsd-plan-checker on pass 3 of the revision loop.
+Status: Ready to execute — `/gsd-execute-phase 03.1`
+Last activity: 2026-08-13
+
+Phase 03 (properties-units) remains at plan 8 of 9 (03-09 completed out of order as Wave 4; 05-08 remain).
 
 Progress: [████████░░] 78%
+
+### Phase 03.1 planning notes
+
+Three verification passes were needed, and all three found defects in the same
+layer: the acceptance criteria's shell commands, never the plans' substance
+(dependency graph, decision coverage, wiring and scope were approved on pass 1
+and unchanged since).
+
+The root cause is worth carrying forward. This machine's shell is Windows
+PowerShell 5.1 with no `grep`, no working `bash`, and no `&&` operator, so the
+POSIX criteria the planner produced could not run. Fixing that by textual
+translation instead of by execution introduced a second generation of defects
+that were worse than the first, because they *looked* correct and returned
+plausible exit codes:
+
+- `rg -qE` — `-E` is ripgrep's `--encoding`, so the command exits 2, which
+  satisfies any "returns non-zero" criterion. One gate could not fail.
+- `rg` takes a regex, so literal patterns containing `(`, `)`, `[`, `]`, `$`
+  matched the wrong text rather than erroring.
+- grep's BRE `\|` is a literal pipe in rg, so alternation criteria matched
+  nothing and read as passes.
+- The `&&` → `;` rule leaked into patterns quoting TypeScript source.
+- PowerShell strips inner double quotes before a native exe sees them.
+- Four criteria were gated by tokens their own task mandates in comments,
+  making them unsatisfiable — and the cheapest escape reintroduced a real bug.
+
+D-49 now encodes all of this, and every plan carries a `<shell_contract>`
+block. The operative rule: **run every command before recording its result,
+especially the ones expected to return non-zero** — a malformed command, an
+unknown flag, and a genuine pass are indistinguishable by exit code alone.
 
 ## Performance Metrics
 
@@ -93,6 +125,11 @@ Recent decisions affecting current work:
 - [Phase 03]: units.list/get stay unjoined; landlord UI builds propertyId->property and statusId->status lookup Maps client-side from properties.list/unitStatuses.list rather than adding a backend join
 - [Phase 03]: TagPicker is dual-mode: staged local array during property create, live tRPC mutations once propertyId exists (03-07)
 - [2026-08-11]: Icon library migrated to @solar-icons/react Linear; PlatformIcon keeps Central-style keys (tag/status DB values) mapped to Solar equivalents; IconWrench → SledgehammerIcon
+- [Phase 03.1]: URL state = nuqs, **not** Next.js intercepting/parallel routes (D-01, D-02). Intercepting routes' only unique capability is an SSR'd full-page twin no Villuh surface needs, and they cannot express two overlays at once or compose with table state in one shareable link
+- [Phase 03.1]: Overlays are declared per module via `createOverlays(namespace, …)` and auto-mounted globally by `<AppOverlays>`; overlays with a non-serializable dependency (the gallery lightbox's `originRef`) use `pageEntity()` and stay locally placed (D-08, D-31, D-32, D-47)
+- [Phase 03.1]: Table filter/sort/page state = one readable query param per field via `defineTable(name, namespace, …)`; `name` is the definition-unique key-registry owner, `namespace` is the URL prefix — the two cannot be the same value or the collision guard never fires for two unprefixed tables on one page (D-21, D-29)
+- [Phase 03.1]: Filter value escaping is `~~`/`~c`/`~s` with a **single left-to-right decode scan**. Three sequential `.replace` passes are not bijective — `"~c"` encodes to `"~~c"` and decodes to `"~:"` (D-45)
+- [Phase 03.1]: All plan verification commands must be Windows PowerShell 5.1 and must be **executed** before being recorded, especially the ones expected to return non-zero (D-49). No `grep`, no POSIX `find`/`diff`, no `&&`, no `rg -E` (that is `--encoding`), no glob in a path argument
 
 ### Pending Todos
 
