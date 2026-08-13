@@ -82,13 +82,12 @@ export function PropertyForm() {
         setIsPersistingGallery(true)
         try {
           await persistStagedGallery({
-            propertyId,
             items: galleryItems,
             removedExistingIds: [],
-            presign: (input) => presign.mutateAsync(input),
-            add: (input) => addImage.mutateAsync(input),
-            remove: (input) => removeImage.mutateAsync(input),
-            reorder: (input) => reorderImages.mutateAsync(input),
+            presign: (input) => presign.mutateAsync({ propertyId, ...input }),
+            add: (input) => addImage.mutateAsync({ propertyId, ...input }),
+            remove: (input) => removeImage.mutateAsync({ propertyId, ...input }),
+            reorder: (input) => reorderImages.mutateAsync({ propertyId, ...input }),
           })
         } catch {
           toast.error("Property created, but some photos could not be saved")

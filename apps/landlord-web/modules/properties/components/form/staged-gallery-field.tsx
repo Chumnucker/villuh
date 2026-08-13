@@ -136,17 +136,25 @@ export type StagedGalleryFieldProps = {
   onChange: (items: StagedGalleryItem[]) => void
   onRemoveExisting: (imageId: string) => void
   disabled?: boolean
+  /** Empty-state heading. Defaults to the property-form copy (Resolved #1). */
+  emptyTitle?: string
+  /** Empty-state body. Defaults to the property-form copy (Resolved #1). */
+  emptyDescription?: string
 }
 
 /**
- * Local-only gallery editor for the property form. Files stay in memory until
- * save; existing removals are tracked by the parent for hard-delete on persist.
+ * Local-only gallery editor for the property form and the floor-plan wizard.
+ * Files stay in memory until save; existing removals are tracked by the parent
+ * for hard-delete on persist. `emptyTitle`/`emptyDescription` let a consumer
+ * override the empty-state copy without changing behaviour (Resolved #1).
  */
 export function StagedGalleryField({
   items,
   onChange,
   onRemoveExisting,
   disabled,
+  emptyTitle = "No photos yet",
+  emptyDescription = "Drop in property photos — they upload when you save.",
 }: StagedGalleryFieldProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -250,10 +258,8 @@ export function StagedGalleryField({
           onClick={() => fileInputRef.current?.click()}
           className="flex w-full flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-border py-12 text-center transition-colors hover:bg-muted/40 disabled:pointer-events-none disabled:opacity-50"
         >
-          <p className="text-sm font-medium text-foreground">No photos yet</p>
-          <p className="text-sm text-muted-foreground">
-            Drop in property photos — they upload when you save.
-          </p>
+          <p className="text-sm font-medium text-foreground">{emptyTitle}</p>
+          <p className="text-sm text-muted-foreground">{emptyDescription}</p>
         </button>
       ) : (
         <DndContext

@@ -27,34 +27,30 @@ export function stagedItemPreviewUrl(item: StagedGalleryItem): string {
 }
 
 type PersistDeps = {
-  propertyId: string
   items: StagedGalleryItem[]
   removedExistingIds: string[]
   presign: (input: {
-    propertyId: string
     contentType: (typeof ALLOWED_IMAGE_CONTENT_TYPES)[number]
     byteLength: number
     filename?: string
   }) => Promise<{ uploadUrl: string; objectKey: string }>
   add: (input: {
-    propertyId: string
     objectKey: string
     contentType: string
     byteLength: number
   }) => Promise<{ image: { id: string } }>
-  remove: (input: { propertyId: string; imageId: string }) => Promise<unknown>
-  reorder: (input: {
-    propertyId: string
-    imageIds: string[]
-  }) => Promise<unknown>
+  remove: (input: { imageId: string }) => Promise<unknown>
+  reorder: (input: { imageIds: string[] }) => Promise<unknown>
 }
 
 /**
- * Apply staged gallery diffs after the property row is saved:
- * hard-delete removed existing images, upload new local files, then reorder.
+ * Apply staged gallery diffs after the owner row (property or floor plan) is
+ * saved: hard-delete removed existing images, upload new local files, then
+ * reorder. Owner-agnostic (D-43) — the injected `presign`/`add`/`remove`/
+ * `reorder` callbacks already close over the owner id, so this helper never
+ * threads a `propertyId`/`floorPlanId` through.
  */
 export async function persistStagedGallery({
-  propertyId,
   items,
   removedExistingIds,
   presign,
@@ -63,7 +59,7 @@ export async function persistStagedGallery({
   reorder,
 }: PersistDeps): Promise<void> {
   for (const imageId of removedExistingIds) {
-    await remove({ propertyId, imageId })
+    await remove({ imageId })
   }
 
   const finalIds: string[] = []
@@ -75,7 +71,6 @@ export async function persistStagedGallery({
     }
 
     const { uploadUrl, objectKey } = await presign({
-      propertyId,
       contentType: item.contentType,
       byteLength: item.file.size,
       filename: item.file.name,
@@ -84,7 +79,6 @@ export async function persistStagedGallery({
       contentType: item.contentType,
     })
     const { image } = await add({
-      propertyId,
       objectKey,
       contentType: item.contentType,
       byteLength: item.file.size,
@@ -93,7 +87,7 @@ export async function persistStagedGallery({
   }
 
   if (finalIds.length > 0) {
-    await reorder({ propertyId, imageIds: finalIds })
+    await reorder({ imageIds: finalIds })
   }
 }
 
