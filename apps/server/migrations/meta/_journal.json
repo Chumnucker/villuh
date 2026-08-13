@@ -120,6 +120,13 @@
       "when": 1786924800000,
       "tag": "0016_enum_types",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1786985160000,
+      "tag": "0017_floor_plans",
+      "breakpoints": true
     }
   ]
 }
