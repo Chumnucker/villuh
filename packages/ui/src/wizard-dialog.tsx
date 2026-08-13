@@ -10,6 +10,7 @@ import {
   DialogFooter,
   DialogTitle,
 } from "./dialog"
+import { PlatformIcon } from "./icon"
 
 export type WizardStep = { id: string; label: string }
 export type WizardMode = "linear" | "free"
@@ -316,6 +317,102 @@ function WizardDialogFooter(props: React.ComponentProps<typeof DialogFooter>) {
   return <DialogFooter {...props} />
 }
 
+/**
+ * Vertical stepper, built from `PlatformIcon` + Tailwind only — no new
+ * dependency and no new `PLATFORM_ICONS` key (D-36). Renders the five states of
+ * UI-SPEC §1.3 with an `sr-only` state word so color is never the only signal.
+ * Hidden below `sm`, where the compact sidebar line carries the count (D-32).
+ */
+function WizardDialogSteps({
+  className,
+  ...props
+}: React.ComponentProps<"nav">) {
+  const { steps, step: activeId, visited, isReachable, goTo } =
+    useWizardContext()
+
+  return (
+    <nav
+      aria-label="Wizard steps"
+      data-slot="wizard-dialog-steps"
+      className={cn("mt-4 hidden sm:block", className)}
+      {...props}
+    >
+      <ol className="flex flex-col">
+        {steps.map((s, index) => {
+          const isCurrent = s.id === activeId
+          const isCompleted = visited.has(s.id) && !isCurrent
+          const reachable = isReachable(s.id)
+          const isLastStep = index === steps.length - 1
+
+          const stateWord = isCompleted
+            ? "Completed"
+            : isCurrent
+              ? "Current step"
+              : "Not started"
+
+          return (
+            <li key={s.id} className="relative pb-6 last:pb-0">
+              {!isLastStep && (
+                <span
+                  aria-hidden
+                  className={cn(
+                    "absolute left-3 top-6 h-6 w-px -translate-x-1/2",
+                    isCompleted ? "bg-primary" : "bg-border"
+                  )}
+                />
+              )}
+              <button
+                type="button"
+                onClick={() => goTo(s.id)}
+                aria-current={isCurrent ? "step" : undefined}
+                disabled={!reachable}
+                className="group flex w-full items-center gap-3 rounded-lg text-left focus-visible:ring-1 focus-visible:ring-ring/35 focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50"
+              >
+                <span
+                  className={cn(
+                    "flex size-6 shrink-0 items-center justify-center rounded-full",
+                    isCompleted &&
+                      "border border-primary bg-primary text-primary-foreground",
+                    isCurrent && "border-2 border-primary bg-background",
+                    !isCompleted &&
+                      !isCurrent &&
+                      "border border-border bg-background"
+                  )}
+                >
+                  {isCompleted ? (
+                    <PlatformIcon
+                      icon="IconCheckmark1"
+                      size={12}
+                      strokeWidth={3}
+                    />
+                  ) : isCurrent ? (
+                    <span className="size-2 rounded-full bg-primary" />
+                  ) : (
+                    <span className="size-2 rounded-full bg-muted-foreground/40" />
+                  )}
+                </span>
+                <span
+                  className={cn(
+                    "text-sm",
+                    isCompleted && "text-foreground",
+                    isCurrent && "font-medium text-foreground",
+                    !isCompleted &&
+                      !isCurrent &&
+                      "text-muted-foreground group-hover:text-foreground"
+                  )}
+                >
+                  {s.label}
+                </span>
+                <span className="sr-only">{stateWord}</span>
+              </button>
+            </li>
+          )
+        })}
+      </ol>
+    </nav>
+  )
+}
+
 export {
   WizardDialog,
   WizardDialogBody,
@@ -324,5 +421,6 @@ export {
   WizardDialogFooter,
   WizardDialogPanel,
   WizardDialogSidebar,
+  WizardDialogSteps,
   WizardDialogTitle,
 }
