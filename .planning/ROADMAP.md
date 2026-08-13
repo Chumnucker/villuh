@@ -204,7 +204,7 @@ Plans:
 - [ ] 03.2-02-PLAN.md — floorPlans module (CRUD + nested gallery) + uploads.presignFloorPlanImage + registration
 - [ ] 03.2-03-PLAN.md — units input widening + D-27a property immutability + cross-property rejection
 - [ ] 03.2-04-PLAN.md — floor-plans.test.ts (D-48 integration suite)
-- [ ] 03.2-05-PLAN.md — `WizardDialog` primitive in `@villuh/ui` (composes dialog.tsx, zero-byte diff)
+- [x] 03.2-05-PLAN.md — `WizardDialog` primitive in `@villuh/ui` (composes dialog.tsx, zero-byte diff)
 - [ ] 03.2-06-PLAN.md — floor plan wizard components + display lib + staged-gallery retarget *(GATED on 3.1)*
 - [ ] 03.2-07-PLAN.md — FloorPlansSection + card + archive + overlay registration + template *(GATED on 3.1, checkpoint)*
 - [ ] 03.2-08-PLAN.md — floor plan resolver + unit form assignment + units table columns *(GATED on 3.1, checkpoint)*
@@ -307,7 +307,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 3.2 → 3.3 → 4 →
 | 2. Auth & Billing | 0/12 | Not started | - |
 | 3. Properties & Units | 8/9 | In Progress|  |
 | 3.1 URL Query State (nuqs) | 0/TBD | Context ready | - |
-| 3.2 Floor Plans | 1/8 | In Progress|  |
+| 3.2 Floor Plans | 2/8 | In Progress|  |
 | 3.3 Amenities | 0/TBD | Spec approved | - |
 | 4. Tenants, Leases & Documents | 0/TBD | Not started | - |
 | 5. Onboarding Flow Engine | 0/TBD | Not started | - |

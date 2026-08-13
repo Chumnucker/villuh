@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed 03.1-03-PLAN.md
-last_updated: "2026-08-13T18:55:53.735Z"
+last_updated: "2026-08-13T19:04:43.697Z"
 last_activity: 2026-08-13
 progress:
   total_phases: 11
   completed_phases: 1
   total_plans: 43
-  completed_plans: 28
+  completed_plans: 30
   percent: 9
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 ## Current Position
 
 Phase: 03.2 (floor-plans) — EXECUTING
-Plan: 2 of 8
+Plan: 3 of 8
 Plans: 8, across waves 0–6. Approved by gsd-plan-checker on pass 3 of the revision loop.
 Status: Ready to execute
 URL state via `defineTable` + `useDataTableQueryState`, human-verify checkpoint
@@ -36,7 +36,7 @@ Last activity: 2026-08-13
 
 Phase 03 (properties-units) remains at plan 8 of 9 (03-09 completed out of order as Wave 4; 05-08 remain).
 
-Progress: [███████░░░] 65%
+Progress: [███████░░░] 70%
 
 ### Phase 03.1 planning notes
 
@@ -104,6 +104,7 @@ unknown flag, and a genuine pass are indistinguishable by exit code alone.
 | Phase 03.1 P04 | 20min | 3 tasks | 5 files |
 | Phase 03.1 P03 | 25min | 3 tasks | 5 files |
 | Phase 03.2 P01 | 15min | 2 tasks | 5 files |
+| Phase 03.2 P05 | 20min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -159,6 +160,7 @@ Recent decisions affecting current work:
 - [Phase 03.2]: The server test suite is **red at baseline** — 27 pre-existing failures (billing/plan-limit/permissions/audit/org/wizard, all Phase 2 territory). `properties`, `units`, `gallery` pass. Every server-test acceptance criterion must target one file (`pnpm --filter @villuh/server exec vitest run src/__tests__/floor-plans.test.ts`), never `turbo run test --filter=@villuh/server`, which can never exit 0
 - [Phase ?]: [Phase 03.2-01]: 0017 floor-plans migration hand-authored (not drizzle-kit generate) — generate is blocked by a pre-existing corrupt snapshot chain (0012_snapshot.json.id = all-zeros collides with 0000 as root) and a stale baseline (0013 is last; 0014-0016 hand-written with no snapshots). Migrator reads journal + .sql only; baseline repair deferred as tech debt
 - [Phase ?]: [Phase 03.2-01]: schema migrations must be applied to BOTH the dev DB (DATABASE_URL) and the villuh_test DB (DATABASE_OWNER_TEST_URL) — the server test suites run against villuh_test, so a dev-only migrate leaves them red with missing-column errors
+- [Phase 03.2-05]: `WizardDialog` composes `DialogContainer`/`DialogFooter`/`DialogTitle` via `cn()` re-exports (class strings byte-identical by construction) with a zero-byte `dialog.tsx` diff (D-29). The right-column `<form>` is owned by the consumer (`FloorPlanWizard`, plans 06/07) since D-30's export list has no `form` member and the consumer owns the `@tanstack/react-form` instance — the primitive exposes `next()`/`isLast` via `useWizardDialog()` so the consumer's `onSubmit` implements the Enter-must-not-submit contract
 
 ### Roadmap Evolution
 
@@ -183,7 +185,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-13T18:55:23.972Z
+Last session: 2026-08-13T19:04:43.686Z
 Stopped at: Completed 03.1-03-PLAN.md
 Resume file: None
 
