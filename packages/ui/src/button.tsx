@@ -3,24 +3,25 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
 import { TextMorph } from "torph/react"
 
-import { cn } from "./utils"
+import { cn } from "../utils"
 import Link, { LinkProps } from "next/link"
 import { PlatformIcon, PlatformIconName } from "./icon"
 import { Check, CircleAlert, Loader2 } from "lucide-react"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 cursor-pointer items-center justify-center rounded-xl border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-background focus-visible:ring-ring/35 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 cursor-pointer items-center justify-center rounded-2xl border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-background focus-visible:ring-ring/35 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/85",
+        background: "bg-background text-foreground hover:bg-background/80",
         muted: "bg-muted text-muted-foreground hover:bg-muted/80",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         success:
           "bg-success text-success-foreground hover:bg-success/80",
         destructive:
-          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
+          "bg-destructive/10 text-destructive hover:bg-destructive/15 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
 
         "text-foreground":
@@ -40,15 +41,15 @@ const buttonVariants = cva(
           "text-muted-foreground hover:bg-destructive/20 hover:text-destructive focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
         
         outline:
-          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:bg-transparent dark:hover:bg-input/30",
+          "border-border bg-background hover:bg-background/75 hover:text-foreground aria-expanded:bg-background/75 aria-expanded:text-foreground dark:bg-transparent dark:hover:bg-background/50",
         "outline-muted":
-          "border border-muted-foreground hover:bg-muted hover:text-foreground focus-visible:bg-muted focus-visible:text-foreground",
+          "border border-border hover:bg-muted hover:text-foreground focus-visible:bg-muted focus-visible:text-foreground",
         "outline-success":
-          "border border-success hover:bg-success/20 hover:text-success focus-visible:ring-success/20 dark:focus-visible:ring-success/40",
+          "border border-border hover:bg-success/20 hover:text-success focus-visible:ring-success/20 dark:focus-visible:ring-success/40",
         "outline-destructive":
-          "border border-destructive hover:bg-destructive/20 hover:text-destructive focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
+          "border border-red-400/50 hover:bg-destructive/20 hover:text-destructive focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
         "outline-secondary":
-          "border border-secondary hover:bg-secondary/20 hover:text-secondary focus-visible:ring-secondary/20 dark:focus-visible:ring-secondary/40",
+          "border border-border hover:bg-secondary/20 hover:text-secondary focus-visible:ring-secondary/20 dark:focus-visible:ring-secondary/40",
       },
       size: {
         default:

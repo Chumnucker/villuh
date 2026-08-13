@@ -9,6 +9,11 @@ export const ROUTES = {
   properties: r("/properties"),
   propertyNew: r("/properties/new"),
   propertyDetail: (propertyId: string) => r(`/properties/${propertyId}`),
+  propertyUnits: (propertyId: string) => r(`/properties/${propertyId}/units`),
+  propertyGallery: (propertyId: string) => r(`/properties/${propertyId}/gallery`),
+  propertyTenants: (propertyId: string) => r(`/properties/${propertyId}/tenants`),
+  propertyAnalytics: (propertyId: string) =>
+    r(`/properties/${propertyId}/analytics`),
   propertyEdit: (propertyId: string) => r(`/properties/${propertyId}/edit`),
   units: r("/units"),
   unitDetail: (unitId: string) => r(`/units/${unitId}`),

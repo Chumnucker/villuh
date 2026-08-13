@@ -1,7 +1,14 @@
 "use client"
 
 import { trpc } from "@villuh/api"
-import { ButtonVariants, LinkButton, Page, PlatformIcon, SkeletonContainer, cn } from "@villuh/ui"
+import {
+  ButtonVariants,
+  LinkButton,
+  Page,
+  PlatformIcon,
+  SkeletonContainer,
+  cn,
+} from "@villuh/ui"
 import { ROUTES } from "@/app/routes"
 import { PlanLimitGate } from "@/modules/app/components/plan-limit/plan-limit-gate"
 import {
@@ -11,10 +18,7 @@ import {
   PropertyCardSkeleton,
 } from "@/modules/properties/components/list/property-card"
 
-function PropertyCardGrid({
-  children,
-  ...props
-}: React.ComponentProps<"div">) {
+function PropertyCardGrid({ children, ...props }: React.ComponentProps<"div">) {
   return (
     <div className={PROPERTY_CARD_GRID_CLASS} {...props}>
       {children}
@@ -29,7 +33,7 @@ function PropertySkeletonGrid({ className }: { className?: string }) {
       syncOffsets
       className={cn(
         PROPERTY_CARD_GRID_CLASS,
-        "shimmer-speed-1200 shimmer-repeat-delay-2200",
+        "shimmer-repeat-delay-2200 shimmer-speed-1200",
         className
       )}
       aria-hidden
@@ -41,15 +45,39 @@ function PropertySkeletonGrid({ className }: { className?: string }) {
   )
 }
 
-function AddPropertyButton({ size = "default" }: { size?: ButtonVariants["size"] }) {
+/**
+ * Skeleton grid pinned behind the content area — full-strength while
+ * loading, dimmed as a backdrop for the empty-state overlay.
+ */
+function PropertySkeletonScaffold({
+  dimmed = false,
+  children,
+}: {
+  dimmed?: boolean
+  children?: React.ReactNode
+}) {
+  return (
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      <div
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+        aria-hidden
+      >
+        <PropertySkeletonGrid className={dimmed ? "opacity-30" : undefined} />
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function AddPropertyButton({
+  size = "default",
+}: {
+  size?: ButtonVariants["size"]
+}) {
   return (
     <PlanLimitGate resource="properties">
       <LinkButton href={ROUTES.propertyNew} size={size}>
-        <PlatformIcon
-          icon="IconPlusSmall"
-          size={16}
-          data-icon="inline-start"
-        />
+        <PlatformIcon icon="IconPlusSmall" size={16} data-icon="inline-start" />
         Add Property
       </LinkButton>
     </PlanLimitGate>
@@ -57,9 +85,7 @@ function AddPropertyButton({ size = "default" }: { size?: ButtonVariants["size"]
 }
 
 export function PropertiesListTemplate() {
-  const { data, isLoading } = trpc.properties.list.useQuery()
-  const properties = data?.properties ?? []
-  const isEmpty = !isLoading && properties.length === 0
+  const propertiesQuery = trpc.properties.list.useQuery()
 
   return (
     <Page.Shell>
@@ -71,19 +97,16 @@ export function PropertiesListTemplate() {
       </Page.Header>
 
       <Page.Content>
-        {isLoading || isEmpty ? (
-          <div className="relative flex min-h-0 flex-1 flex-col">
-            <div
-              className="pointer-events-none absolute inset-0 overflow-hidden"
-              aria-hidden
-            >
-              <PropertySkeletonGrid className={isEmpty ? "opacity-30" : undefined} />
-            </div>
-            {isEmpty ? (
+        <Page.Boundary
+          query={propertiesQuery}
+          pending={<PropertySkeletonScaffold />}
+          isEmpty={(data) => data.properties.length === 0}
+          empty={
+            <PropertySkeletonScaffold dimmed>
               <div className="relative z-10 flex flex-1 flex-col items-center justify-center">
                 <div className="flex max-w-md flex-col items-center gap-4 rounded-full px-12 py-12 text-center">
                   <div className="space-y-2">
-                    <p className="text-2xl font-mono font-medium text-foreground">
+                    <p className="font-mono text-2xl font-medium text-foreground">
                       No properties yet
                     </p>
                     <p className="text-lg text-muted-foreground">
@@ -94,15 +117,17 @@ export function PropertiesListTemplate() {
                   <AddPropertyButton size="sm" />
                 </div>
               </div>
-            ) : null}
-          </div>
-        ) : (
-          <PropertyCardGrid>
-            {properties.map((property) => (
-              <PropertyCard key={property.id} property={property} />
-            ))}
-          </PropertyCardGrid>
-        )}
+            </PropertySkeletonScaffold>
+          }
+        >
+          {({ properties }) => (
+            <PropertyCardGrid>
+              {properties.map((property) => (
+                <PropertyCard key={property.id} property={property} />
+              ))}
+            </PropertyCardGrid>
+          )}
+        </Page.Boundary>
       </Page.Content>
     </Page.Shell>
   )

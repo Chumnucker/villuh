@@ -20,10 +20,17 @@ export const properties = pgTable('properties', {
   // Nullable — only populated for Mapbox-sourced addresses (D-23); manual entry omits these.
   latitude: numeric('latitude', { precision: 9, scale: 7 }),
   longitude: numeric('longitude', { precision: 10, scale: 7 }),
+  // Fixed option sets validated at the Zod layer (PROPERTY_TYPES / PARKING_TYPES in
+  // modules/properties/schemas.ts) rather than a Postgres enum — consistent with how
+  // unit statuses use a catalog table instead of pgEnum elsewhere in this schema.
+  propertyType: text('property_type'),
+  yearBuilt: integer('year_built'),
+  parkingType: text('parking_type'),
+  parkingSpaces: integer('parking_spaces'),
   archivedAt: timestamp('archived_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-}, (t) => [
+}, () => [
   pgPolicy('organization_isolation', {
     as: 'permissive',
     for: 'all',
@@ -48,7 +55,7 @@ export const propertyImages = pgTable('property_images', {
   byteLength: integer('byte_length').notNull(),
   sortOrder: integer('sort_order').notNull().default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-}, (t) => [
+}, () => [
   pgPolicy('organization_isolation', {
     as: 'permissive',
     for: 'all',

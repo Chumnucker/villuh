@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Dialog as SheetPrimitive } from "radix-ui"
 
-import { cn } from "./utils"
+import { cn } from "../utils"
 import { Button } from "./button"
 import { PlatformIcon } from "./icon"
 

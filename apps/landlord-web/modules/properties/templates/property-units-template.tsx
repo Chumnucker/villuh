@@ -21,24 +21,27 @@ export function PropertyUnitsTemplate() {
 
   return (
     <Page.Content>
-      <div className="flex justify-end">
-        <PlanLimitGate resource="units" action="Adding a unit">
-          <Button
-            size="sm"
-            onClick={() => {
-              setEditingUnit(undefined)
-              setSheetOpen(true)
-            }}
-          >
-            <PlatformIcon icon="IconPlusSmall" size={16} data-icon="inline-start" />
-            Add unit
-          </Button>
-        </PlanLimitGate>
-      </div>
-
       <UnitsList
         lockedPropertyId={propertyId}
         filterDisplay="compact"
+        toolbarAction={
+          <PlanLimitGate resource="units" action="Adding a unit">
+            <Button
+              size="sm"
+              onClick={() => {
+                setEditingUnit(undefined)
+                setSheetOpen(true)
+              }}
+            >
+              <PlatformIcon
+                icon="IconPlusSmall"
+                size={16}
+                data-icon="inline-start"
+              />
+              Add unit
+            </Button>
+          </PlanLimitGate>
+        }
         onEdit={(unit) => {
           setEditingUnit(unit)
           setSheetOpen(true)

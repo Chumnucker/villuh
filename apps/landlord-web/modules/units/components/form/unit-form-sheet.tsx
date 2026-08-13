@@ -32,7 +32,7 @@ import type { AppRouter } from "@villuh/server/router"
 import { getPlanLimitMeta, isPlanLimitError } from "@/modules/app/components/plan-limit/plan-limit-gate"
 
 type RouterOutput = inferRouterOutputs<AppRouter>
-export type UnitRow = RouterOutput["units"]["list"]["units"][number]
+export type UnitRow = RouterOutput["units"]["get"]["unit"]
 
 const UNASSIGNED_STATUS = "__unassigned__"
 

@@ -3,7 +3,7 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "./utils";
+import { cn } from "../utils";
 
 /**
  * Shared shimmer backgrounds for loading placeholders (tw-shimmer).

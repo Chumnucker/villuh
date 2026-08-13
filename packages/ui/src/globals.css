@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "tw-shimmer";
 @import "shadcn/tailwind.css";
 
 /* Scan shared packages for class names (Tailwind v4 does not walk workspace packages by default). */
@@ -51,12 +52,43 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --color-invert-foreground: var(--invert-foreground);
+  --color-invert: var(--invert);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning: var(--warning);
+  --color-info-foreground: var(--info-foreground);
+  --color-info: var(--info);
+  --color-success-foreground: var(--success-foreground);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-chart-scale-pattern-color: var(--chart-scale-pattern-color);
+  --color-chart-scale-05: var(--chart-scale-05);
+  --color-chart-scale-04: var(--chart-scale-04);
+  --color-chart-scale-03: var(--chart-scale-03);
+  --color-chart-scale-02: var(--chart-scale-02);
+  --color-chart-scale-01: var(--chart-scale-01);
+  --color-chart-label: var(--chart-label);
+  --color-chart-marker-foreground: var(--chart-marker-foreground);
+  --color-chart-marker-border: var(--chart-marker-border);
+  --color-chart-marker-background: var(--chart-marker-background);
+  --color-chart-tooltip-muted: var(--chart-tooltip-muted);
+  --color-chart-tooltip-foreground: var(--chart-tooltip-foreground);
+  --color-chart-tooltip-background: var(--chart-tooltip-background);
+  --chart-brush-border: var(--chart-brush-border);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-crosshair: var(--chart-crosshair);
+  --chart-line-secondary: var(--chart-line-secondary);
+  --chart-line-primary: var(--chart-line-primary);
+  --color-chart-foreground-muted: var(--chart-foreground-muted);
+  --color-chart-foreground: var(--chart-foreground);
+  --color-chart-background: var(--chart-background);
 }
 
 @theme {
   --spacing-navbar: 3.75rem;
   --spacing-page: var(--page-padding);
   --spacing-content: var(--content-padding);
+  --breakpoint-3xl: 130rem;
+  --breakpoint-4xl: 160rem;
 }
 
 :root {
@@ -64,24 +96,24 @@
   --solar-size: 16px;
   --solar-stroke-width: 1.5;
   --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
+  --foreground: oklch(0.141 0 0);
   --contrast: var(--foreground);
   --card: oklch(0.987 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
+  --card-foreground: oklch(0.141 0 0);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
+  --popover-foreground: oklch(0.141 0 0);
   --primary: oklch(0.21 0.006 285.885);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.96 0 0);
-  --secondary-foreground: oklch(0.44 0.01 285.92);
+  --secondary-foreground: oklch(0.44 0 0);
   --muted: oklch(0.94 0 0);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
+  --muted-foreground: oklch(0.552 0 0);
+  --accent: oklch(0.967 0 0);
+  --accent-foreground: oklch(0.21 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --success: oklch(0.46 0.15 141.3);
   --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.96 0 0);
+  --input: oklch(0.965 0 0);
   --ring: oklch(0.705 0.015 286.067);
   --chart-1: oklch(0.871 0.006 286.286);
   --chart-2: oklch(0.552 0.016 285.938);
@@ -100,6 +132,35 @@
 
   --page-padding: 1rem;
   --content-padding: 2rem;
+  --destructive-foreground: var(--color-red-800);
+  --success-foreground: var(--color-emerald-900);
+  --info: var(--color-violet-500);
+  --info-foreground: var(--color-violet-900);
+  --warning: var(--color-yellow-500);
+  --warning-foreground: var(--color-yellow-900);
+  --invert: var(--color-zinc-900);
+  --invert-foreground: var(--color-zinc-50);
+  --chart-background: oklch(1 0 0);
+  --chart-foreground: oklch(0.145 0.004 285);
+  --chart-foreground-muted: oklch(0.55 0.014 260);
+  --chart-line-primary: var(--chart-1);
+  --chart-line-secondary: var(--chart-2);
+  --chart-crosshair: oklch(0.4 0.1828 274.34);
+  --chart-grid: oklch(0.9 0 0);
+  --chart-brush-border: var(--chart-grid);
+  --chart-tooltip-background: oklch(0.21 0.006 285 / 0.8);
+  --chart-tooltip-foreground: oklch(0.985 0 0);
+  --chart-tooltip-muted: oklch(0.65 0.01 260);
+  --chart-marker-background: oklch(0.97 0.005 260);
+  --chart-marker-border: oklch(0.85 0.01 260);
+  --chart-marker-foreground: oklch(0.3 0.01 260);
+  --chart-label: oklch(0.45 0.01 260);
+  --chart-scale-01: oklch(0.98 0.003 106);
+  --chart-scale-02: oklch(0.92 0.008 106);
+  --chart-scale-03: oklch(0.82 0.015 106);
+  --chart-scale-04: oklch(0.68 0.02 106);
+  --chart-scale-05: oklch(0.55 0.025 106);
+  --chart-scale-pattern-color: oklch(0.96 0.005 106);
 }
 
 .solar {
@@ -116,17 +177,17 @@
   --popover: oklch(0.18 0 0);
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.92 0.004 286.32);
-  --primary-foreground: oklch(0.21 0.006 285.885);
-  --secondary: oklch(0.22 0 0);
+  --primary-foreground: oklch(0.21 0 0);
+  --secondary: oklch(0.21 0 0);
   --secondary-foreground: oklch(0.90 0 0);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
+  --muted: oklch(0.23 0 0);
+  --muted-foreground: oklch(0.705 0 0);
+  --accent: oklch(0.26 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --success: oklch(0.82 0.22 143.05);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 6%);
+  --border: oklch(0.2799 0 0);
+  --input: oklch(0.2221 0 0);
   --ring: oklch(0.552 0.016 285.938);
   --chart-1: oklch(0.871 0.006 286.286);
   --chart-2: oklch(0.552 0.016 285.938);
@@ -139,8 +200,42 @@
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.274 0.006 286.033);
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-border: oklch(0.2799 0 0);
   --sidebar-ring: oklch(0.552 0.016 285.938);
+  --destructive-foreground: var(--color-red-600);
+  --success-foreground: var(--color-emerald-600);
+  --info: var(--color-violet-500);
+  --info-foreground: var(--color-violet-600);
+  --warning: var(--color-yellow-500);
+  --warning-foreground: var(--color-yellow-600);
+  --invert: var(--color-zinc-700);
+  --invert-foreground: var(--color-zinc-50);
+  --chart-background: oklch(0.145 0 0);
+  --chart-foreground: oklch(0.45 0 0);
+  --chart-foreground-muted: oklch(0.65 0.01 260);
+  --chart-crosshair: oklch(0.45 0 0);
+  --chart-grid: oklch(0.25 0 0);
+  --chart-brush-border: var(--chart-grid);
+  --chart-marker-background: oklch(0.25 0.01 260);
+  --chart-marker-border: oklch(0.4 0.01 260);
+  --chart-marker-foreground: oklch(0.9 0 0);
+  --chart-label: oklch(0.75 0.01 260);
+  --chart-scale-01: oklch(0.28 0.03 270);
+  --chart-scale-02: oklch(0.38 0.04 270);
+  --chart-scale-03: oklch(0.48 0.05 270);
+  --chart-scale-04: oklch(0.58 0.06 270);
+  --chart-scale-05: oklch(0.68 0.07 270);
+  --chart-scale-pattern-color: oklch(0.145 0 0);
+}
+
+@layer utilities {
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    transition: background-color 5000s;
+    -webkit-text-fill-color: var(--foreground) !important;
+  }
 }
 
 @layer base {

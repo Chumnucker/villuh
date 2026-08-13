@@ -2,6 +2,7 @@ import { requireMe } from "@villuh/api/require-me"
 import { UserProvider } from "@/modules/app/providers/me-provider"
 import { LayoutTemplate } from "@/modules/app/templates/layout-template"
 import { ROUTES } from "@/app/routes"
+import { PageTransition } from "./page-transition"
 
 export default async function AppLayout({
   children,
@@ -14,7 +15,9 @@ export default async function AppLayout({
 
   return (
     <UserProvider initialUser={me}>
-      <LayoutTemplate>{children}</LayoutTemplate>
+      <LayoutTemplate>
+        <PageTransition>{children}</PageTransition>
+      </LayoutTemplate>
     </UserProvider>
   )
 }

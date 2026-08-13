@@ -17,7 +17,7 @@ export const testOrganizationData = pgTable('test_organization_data', {
   organizationId: text('organization_id').notNull(),
   data: text('data'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-}, (t) => [
+}, () => [
   pgPolicy('organization_isolation', {
     as: 'permissive',
     for: 'all',

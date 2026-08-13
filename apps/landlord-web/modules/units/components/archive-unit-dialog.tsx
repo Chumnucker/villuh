@@ -6,6 +6,7 @@ import {
   Button,
   Dialog,
   DialogContainer,
+  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -45,23 +46,28 @@ export function ArchiveUnitDialog({
       ]).then(() => {
         toast.success("Unit archived")
         onOpenChange(false)
-        router.push(propertyId ? ROUTES.propertyDetail(propertyId) : ROUTES.units)
+        router.push(
+          propertyId ? ROUTES.propertyDetail(propertyId) : ROUTES.units
+        )
       }),
     onError: (err) => toast.error(err.message || "Could not archive unit"),
   })
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContainer>
+      <DialogContainer className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Archive {unitLabel}?</DialogTitle>
-          <DialogDescription>
-            Archiving hides this unit from active lists. Data is kept for history.
-          </DialogDescription>
         </DialogHeader>
+        <DialogContent>
+          <DialogDescription>
+            Archiving hides this unit from active lists. Data is kept for
+            history.
+          </DialogDescription>
+        </DialogContent>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Keep unit
+            Cancel
           </Button>
           <Button
             variant="destructive"

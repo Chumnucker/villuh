@@ -1,5 +1,47 @@
 import { z } from 'zod'
 
+/** Fixed option set — validated here rather than a Postgres enum (see schema/properties.ts). */
+export const PROPERTY_TYPES = [
+  'single_family',
+  'duplex',
+  'triplex',
+  'fourplex',
+  'apartment_complex',
+  'condo',
+  'townhouse',
+  'manufactured',
+  'commercial',
+  'other',
+] as const
+export type PropertyType = (typeof PROPERTY_TYPES)[number]
+
+export const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
+  single_family: 'Single-family',
+  duplex: 'Duplex',
+  triplex: 'Triplex',
+  fourplex: 'Fourplex',
+  apartment_complex: 'Apartment complex',
+  condo: 'Condo',
+  townhouse: 'Townhouse',
+  manufactured: 'Manufactured / mobile home',
+  commercial: 'Commercial',
+  other: 'Other',
+}
+
+export const PARKING_TYPES = ['none', 'street', 'driveway', 'garage', 'carport', 'assigned_lot'] as const
+export type ParkingType = (typeof PARKING_TYPES)[number]
+
+export const PARKING_TYPE_LABELS: Record<ParkingType, string> = {
+  none: 'No parking',
+  street: 'Street parking',
+  driveway: 'Driveway',
+  garage: 'Garage',
+  carport: 'Carport',
+  assigned_lot: 'Assigned lot',
+}
+
+const currentYear = new Date().getFullYear()
+
 /** Shared by tRPC `properties.create` and the landlord create-property form. */
 export const createPropertyInputSchema = z.object({
   name: z.string().trim().min(1, 'Property name is required').max(200, 'Name must be at most 200 characters'),
@@ -17,6 +59,10 @@ export const createPropertyInputSchema = z.object({
   // Populated only for Mapbox-sourced addresses (D-23); nullable for manual entry.
   latitude: z.number().min(-90).max(90).optional(),
   longitude: z.number().min(-180).max(180).optional(),
+  propertyType: z.enum(PROPERTY_TYPES).optional(),
+  yearBuilt: z.number().int().min(1800).max(currentYear + 1).optional(),
+  parkingType: z.enum(PARKING_TYPES).optional(),
+  parkingSpaces: z.number().int().min(0).max(999).optional(),
 })
 
 export type CreatePropertyInput = z.infer<typeof createPropertyInputSchema>

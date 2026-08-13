@@ -1,6 +1,6 @@
 "use client"
 
-import { cn } from "./utils"
+import { cn } from "../utils"
 import { PlatformIcon } from "./icon"
 import { SkeletonLabel } from "./skeleton"
 import clsx from "clsx"
@@ -11,11 +11,21 @@ import { useMemo } from "react"
 import { useLayout } from "./layout-provider"
 
 const STATIC_LABELS: Record<string, string> = {
+  // Pathname `/` is normalized to a single part `"/"` whose href becomes `//`.
   ["//"]: "Home",
-  ["/organization"]: "Organization",
-  ["/organization/settings"]: "Settings",
-  ["/jobs"]: "Jobs",
-  ["/search"]: "Talent Search",
+  ["/properties"]: "Properties",
+  ["/properties/new"]: "New",
+  ["/units"]: "Units",
+  ["/tenants"]: "Tenants",
+  ["/leases"]: "Leases",
+  ["/onboarding"]: "Onboarding",
+  ["/documents"]: "Documents",
+  ["/rent"]: "Rent",
+  ["/inbox"]: "Inbox",
+  ["/members"]: "Members",
+  ["/billing"]: "Billing",
+  ["/settings"]: "Settings",
+  ["/settings/unit-statuses"]: "Unit statuses",
 }
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -47,12 +57,6 @@ export function NavigationBreadcrumbs({
   const { breadcrumbs } = useLayout()
   const crumbs: PathPart[] = useMemo(() => {
     const parts = pathname.split("/").filter(Boolean)
-    if (parts.length > 1) {
-      const last = parts[parts.length - 1]
-      // if (!UUID_REGEX.test(last)) {
-      //   parts.pop();
-      // }
-    }
     if (parts.length === 0) parts.push("/")
     return parts.map((part) => {
       let href = `/${parts.slice(0, parts.indexOf(part) + 1).join("/")}`

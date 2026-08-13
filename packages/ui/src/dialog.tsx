@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Dialog as DialogPrimitive } from "radix-ui"
 
-import { cn } from "./utils"
+import { cn } from "../utils"
 import { Button } from "./button"
 import { PlatformIcon } from "./icon"
 
@@ -71,7 +71,7 @@ function DialogContainer({
           <DialogPrimitive.Close data-slot="dialog-close" asChild>
             <Button
               variant="ghost"
-              className="absolute top-4 right-4"
+              className="absolute top-2 right-2"
               size="icon-sm"
             >
               <PlatformIcon icon="IconCrossLarge" size={16} />
@@ -89,7 +89,7 @@ function DialogContent({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-content"
-      className={cn("flex flex-col gap-4 p-6", className)}
+      className={cn("flex flex-col gap-4 px-4 py-6", className)}
       {...props}
     />
   )
@@ -100,7 +100,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="dialog-header"
       className={cn(
-        "flex flex-col gap-2.5 border-b bg-secondary p-6",
+        "flex flex-col gap-2.5 border-b bg-secondary px-4 py-4",
         className
       )}
       {...props}
@@ -120,7 +120,7 @@ function DialogFooter({
     <div
       data-slot="dialog-footer"
       className={cn(
-        "flex flex-col-reverse gap-2 border-t p-6 sm:flex-row sm:justify-end",
+        "flex flex-col-reverse gap-2 bg-secondary border-t px-4 py-2.5 sm:flex-row sm:justify-end",
         className
       )}
       {...props}

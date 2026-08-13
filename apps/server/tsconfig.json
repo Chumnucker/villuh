@@ -1,6 +1,7 @@
 {
   "extends": "@villuh/typescript-config/node.json",
   "compilerOptions": {
+    "rootDir": "./src",
     "outDir": "./dist",
     "noEmit": true
   },

@@ -14,6 +14,11 @@ function getClient(): S3Client {
   if (!client) {
     client = new S3Client({
       region: process.env.AWS_REGION,
+      // AWS SDK v3 defaults to flexible checksums on PutObject. Those land on
+      // presigned URLs as x-amz-checksum-* query params the browser never sends,
+      // and R2 error responses then surface in Chrome as a CORS failure.
+      requestChecksumCalculation: 'WHEN_REQUIRED',
+      responseChecksumValidation: 'WHEN_REQUIRED',
       ...(process.env.S3_ENDPOINT
         ? { endpoint: process.env.S3_ENDPOINT, forcePathStyle: true }
         : {}),
@@ -38,7 +43,11 @@ export async function presignPut(opts: {
     Key: opts.objectKey,
     ContentType: opts.contentType,
   })
-  return getSignedUrl(getClient(), command, { expiresIn: opts.expiresIn ?? 900 })
+  // Browser PUT sends Content-Type; it must be part of the signature or R2 rejects.
+  return getSignedUrl(getClient(), command, {
+    expiresIn: opts.expiresIn ?? 900,
+    signableHeaders: new Set(['content-type']),
+  })
 }
 
 export async function presignGet(opts: { objectKey: string; expiresIn?: number }): Promise<string> {

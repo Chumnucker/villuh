@@ -16,6 +16,7 @@
     "./schema/billing-plans": "./src/schema/billing-plans.ts",
     "./domain": "./src/domain/index.ts",
     "./schemas": "./src/schemas/index.ts",
+    "./schemas/filters": "./src/schemas/filters.ts",
     "./schemas/account": "./src/modules/account/schemas.ts",
     "./schemas/members": "./src/modules/members/schemas.ts",
     "./schemas/permissions": "./src/modules/permissions/schemas.ts",

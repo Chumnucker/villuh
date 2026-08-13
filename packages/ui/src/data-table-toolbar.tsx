@@ -22,6 +22,12 @@ export type DataTableToolbarProps = {
   showSearch?: boolean
   /** Filters presentation: inline chips (default) or compact in-dropdown management. */
   filterDisplay?: "inline" | "compact"
+  /**
+   * Pinned to the right of the toolbar (e.g. an "Add unit" button) —
+   * independent of search/filters, and keeps the toolbar rendered even if
+   * both `showSearch` is false and there are no `filterFields`.
+   */
+  action?: React.ReactNode
 }
 
 export function DataTableToolbar({
@@ -32,6 +38,7 @@ export function DataTableToolbar({
   debounceMs = DEFAULT_DEBOUNCE_MS,
   showSearch = true,
   filterDisplay,
+  action,
 }: DataTableToolbarProps) {
   const [searchInput, setSearchInput] = React.useState(query.search)
   const queryRef = React.useRef(query)
@@ -54,47 +61,51 @@ export function DataTableToolbar({
   const hasFilters = Boolean(filterFields && filterFields.length > 0)
   const hasActive = hasActiveDataTableQuery(query)
 
-  if (!showSearch && !hasFilters) return null
+  if (!showSearch && !hasFilters && !action) return null
 
   return (
-    <div className="flex flex-wrap items-start gap-2.5">
-      {showSearch ? (
-        <SearchInput
-          placeholder={searchPlaceholder}
-          value={searchInput}
-          onChange={(event) => setSearchInput(event.target.value)}
-          className="w-56"
-          size="sm"
-        />
-      ) : null}
-
-      {hasFilters ? (
-        <div className="flex min-w-0 flex-1 flex-wrap items-start gap-2.5">
-          <Filters
-            filters={query.filters}
-            fields={filterFields!}
+    <div className="flex flex-wrap items-start justify-between gap-2.5">
+      <div className="flex min-w-0 flex-1 flex-wrap items-start gap-2.5">
+        {showSearch ? (
+          <SearchInput
+            placeholder={searchPlaceholder}
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            className="w-56 border"
             size="sm"
-            display={filterDisplay}
-            enableShortcut
-            onChange={(filters) => onQueryChange({ ...query, filters })}
           />
+        ) : null}
 
-          {hasActive ? (
-            <Button
-              variant="outline"
+        {hasFilters ? (
+          <div className="flex min-w-0 flex-1 flex-wrap items-start gap-2.5">
+            <Filters
+              filters={query.filters}
+              fields={filterFields!}
               size="sm"
-              className="bg-input hover:bg-input/80 dark:bg-input"
-              onClick={() => {
-                setSearchInput("")
-                onQueryChange({ ...query, search: "", filters: [] })
-              }}
-            >
-              <PlatformIcon icon="IconCrossLarge" size={16} />
-              Clear
-            </Button>
-          ) : null}
-        </div>
-      ) : null}
+              display={filterDisplay}
+              enableShortcut
+              onChange={(filters) => onQueryChange({ ...query, filters })}
+            />
+
+            {hasActive ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-input hover:bg-input/80 dark:bg-input"
+                onClick={() => {
+                  setSearchInput("")
+                  onQueryChange({ ...query, search: "", filters: [] })
+                }}
+              >
+                <PlatformIcon icon="IconCrossLarge" size={16} />
+                Clear
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+
+      {action ? <div className="shrink-0">{action}</div> : null}
     </div>
   )
 }

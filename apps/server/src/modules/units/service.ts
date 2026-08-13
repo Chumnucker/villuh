@@ -1,14 +1,27 @@
-import { and, asc, eq, isNull } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
+import type { PgColumn } from 'drizzle-orm/pg-core'
 import { units, unitStatuses } from '../../schema/units.js'
 import { properties } from '../../schema/properties.js'
+import { idFilter, listWhere, numericFilter, searchCondition } from '../../lib/filter-sql.js'
+import { resolveListQuery, runListQuery } from '../../lib/list-query.js'
 import { ensureDefaultUnitStatuses } from '../../domain/unit-statuses.js'
 import { assertPlanLimit } from '../../domain/plan-limit.js'
 import { countActiveUnits } from '../../domain/portfolio-counts.js'
 import { notFound } from '../../domain/index.js'
 import type { OrganizationTx } from '../../db/index.js'
-import type { CreateUnitInput, UpdateUnitInput } from './schemas.js'
+import type { CreateUnitInput, ListUnitsInput, UpdateUnitInput } from './schemas.js'
 
 export type UnitRow = typeof units.$inferSelect
+
+export type UnitListItem = UnitRow & {
+  propertyName: string
+  status: {
+    id: string
+    name: string
+    iconKey: string
+    colorKey: string
+  } | null
+}
 
 async function requireProperty(tx: OrganizationTx, organizationId: string, propertyId: string): Promise<void> {
   const rows = await tx
@@ -39,22 +52,124 @@ async function requireUnit(tx: OrganizationTx, organizationId: string, unitId: s
   return unit
 }
 
+/** `sortBy` keys → SQL columns. The satisfies check enforces coverage of `UNIT_SORT_KEYS`. */
+const UNIT_SORT_COLUMNS = {
+  label: units.label,
+  propertyName: properties.name,
+  status: unitStatuses.name,
+  baseRent: units.baseRent,
+  squareFootage: units.squareFootage,
+} satisfies Record<NonNullable<ListUnitsInput['sortBy']>, PgColumn>
+
 export async function listUnits(
   tx: OrganizationTx,
   organizationId: string,
-  propertyId?: string,
-): Promise<UnitRow[]> {
-  const conditions = [eq(units.organizationId, organizationId), isNull(units.archivedAt)]
-  if (propertyId) conditions.push(eq(units.propertyId, propertyId))
-  return tx
-    .select()
-    .from(units)
-    .where(and(...conditions))
-    .orderBy(asc(units.createdAt))
+  input?: ListUnitsInput,
+): Promise<{ units: UnitListItem[]; total: number }> {
+  const where = listWhere(
+    eq(units.organizationId, organizationId),
+    isNull(units.archivedAt),
+    idFilter(units.propertyId, {
+      include: input?.propertyIds,
+      exclude: input?.excludePropertyIds,
+    }),
+    idFilter(units.statusId, {
+      include: input?.statusIds,
+      exclude: input?.excludeStatusIds,
+      empty: input?.statusEmpty,
+    }),
+    numericFilter(units.baseRent, input?.baseRentCents, { trunc: true }),
+    numericFilter(units.squareFootage, input?.squareFootage, {
+      trunc: true,
+      empty: input?.squareFootageEmpty,
+    }),
+    searchCondition(input?.search, [units.label, properties.name]),
+  )
+
+  const { items, total } = await runListQuery({
+    tx,
+    query: resolveListQuery(input, {
+      columns: UNIT_SORT_COLUMNS,
+      tiebreaker: units.createdAt,
+    }),
+    base: () =>
+      tx
+        .select({
+          unit: units,
+          propertyName: properties.name,
+          statusId: unitStatuses.id,
+          statusName: unitStatuses.name,
+          statusIconKey: unitStatuses.iconKey,
+          statusColorKey: unitStatuses.colorKey,
+        })
+        .from(units)
+        .innerJoin(properties, eq(units.propertyId, properties.id))
+        .leftJoin(unitStatuses, eq(units.statusId, unitStatuses.id))
+        .where(where)
+        .$dynamic(),
+  })
+
+  return {
+    total,
+    units: items.map((row) => ({
+      ...row.unit,
+      propertyName: row.propertyName,
+      status:
+        row.statusId && row.statusName && row.statusIconKey && row.statusColorKey
+          ? {
+              id: row.statusId,
+              name: row.statusName,
+              iconKey: row.statusIconKey,
+              colorKey: row.statusColorKey,
+            }
+          : null,
+    })),
+  }
 }
 
-export async function getUnit(tx: OrganizationTx, organizationId: string, unitId: string): Promise<UnitRow> {
-  return requireUnit(tx, organizationId, unitId)
+export type UnitDetail = {
+  unit: UnitRow
+  property: { id: string; name: string }
+  status: UnitListItem['status']
+}
+
+/**
+ * Single-unit fetch with its property and status resolved in one query —
+ * detail screens must not have to download the whole properties/statuses
+ * lists just to label one unit.
+ */
+export async function getUnit(tx: OrganizationTx, organizationId: string, unitId: string): Promise<UnitDetail> {
+  const rows = await tx
+    .select({
+      unit: units,
+      propertyId: properties.id,
+      propertyName: properties.name,
+      statusId: unitStatuses.id,
+      statusName: unitStatuses.name,
+      statusIconKey: unitStatuses.iconKey,
+      statusColorKey: unitStatuses.colorKey,
+    })
+    .from(units)
+    .innerJoin(properties, eq(units.propertyId, properties.id))
+    .leftJoin(unitStatuses, eq(units.statusId, unitStatuses.id))
+    .where(and(eq(units.id, unitId), eq(units.organizationId, organizationId)))
+    .limit(1)
+  const row = rows[0]
+  if (!row) notFound('Unit not found')
+
+  return {
+    unit: row.unit,
+    property: { id: row.propertyId, name: row.propertyName },
+    status:
+      row.statusId && row.statusName && row.statusIconKey && row.statusColorKey
+        ? {
+            id: row.statusId,
+            name: row.statusName,
+            iconKey: row.statusIconKey,
+            colorKey: row.statusColorKey,
+          }
+        : null,
+  }
 }
 
 export async function createUnit(

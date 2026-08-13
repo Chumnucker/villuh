@@ -19,7 +19,7 @@ import {
 } from "./select"
 import { PlatformIcon } from "./icon"
 import { ScrollArea } from "./scroll-area"
-import { cn } from "./utils"
+import { cn } from "../utils"
 
 type PhoneInputProps = Omit<
   React.ComponentProps<"input">,
@@ -51,14 +51,30 @@ const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> =
       },
       ref
     ) => {
+      // react-phone-number-input only displays E.164 reliably. National digits
+      // (e.g. "8643814654") need a default-country parse before they show.
+      const normalizedValue = React.useMemo(() => {
+        if (!value) return undefined
+        const raw = String(value)
+        const international = parsePhoneNumberFromString(raw)
+        if (international?.number) return international.number as RPNInput.Value
+        const withDefault = parsePhoneNumberFromString(
+          raw,
+          defaultCountry as CountryCode
+        )
+        return (withDefault?.number ?? raw) as RPNInput.Value
+      }, [value, defaultCountry])
+
       const parsed = React.useMemo(() => {
-        if (!value) return null
-        return parsePhoneNumberFromString(String(value))
-      }, [value])
+        if (!normalizedValue) return null
+        return parsePhoneNumberFromString(String(normalizedValue))
+      }, [normalizedValue])
 
       const showValidationState =
-        !suffix && !!value && String(value).length > 3
-      const isValid = value ? (parsed?.isValid() ?? false) : null
+        !suffix && !!normalizedValue && String(normalizedValue).length > 3
+      const displayIsValid = normalizedValue
+        ? (parsed?.isValid() ?? false)
+        : null
       const mergedNumberInputProps =
         numberInputPropsProp as React.ComponentPropsWithoutRef<"input"> | undefined
 
@@ -76,7 +92,7 @@ const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> =
             countrySelectComponent={CountrySelect}
             smartCaret={false}
             defaultCountry={defaultCountry}
-            value={value || undefined}
+            value={normalizedValue}
             countrySelectProps={{
               size,
               className: countrySelectClassName,
@@ -105,9 +121,9 @@ const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> =
             </div>
           )}
 
-          {showValidationState && isValid !== null && (
+          {showValidationState && displayIsValid !== null && (
             <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-              {isValid ? (
+              {displayIsValid ? (
                 <div className="flex size-4.5 items-center justify-center rounded-full bg-emerald-500/20">
                   <PlatformIcon
                     icon="IconCheckmark1"
@@ -132,6 +148,7 @@ const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> =
   )
 PhoneInput.displayName = "PhoneInput"
 export { PhoneInput }
+export { formatPhoneNumber } from "../utils"
 
 type CountryEntry = { label: string; value: RPNInput.Country | undefined }
 

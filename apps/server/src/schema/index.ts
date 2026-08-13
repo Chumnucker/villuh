@@ -1,3 +1,7 @@
+/**
+ * Drizzle table definitions (database schema).
+ * Not Zod — for Zod tRPC inputs see `src/schemas/` / `@villuh/server/schemas/*`.
+ */
 export * from './rls.js'
 export * from './auth.js'
 export * from './role-permissions.js'

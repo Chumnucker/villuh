@@ -21,7 +21,7 @@ function toLatLng(value: number | undefined): string | null | undefined {
 export async function listProperties(
   tx: OrganizationTx,
   organizationId: string,
-): Promise<(PropertyRow & { unitCount: number })[]> {
+): Promise<(PropertyRow & { unitCount: number; coverImageUrl: string | null })[]> {
   const rows = await tx
     .select()
     .from(properties)
@@ -39,7 +39,29 @@ export async function listProperties(
     .groupBy(units.propertyId)
   const countByProperty = new Map(countRows.map((row) => [row.propertyId, row.count]))
 
-  return rows.map((row) => ({ ...row, unitCount: countByProperty.get(row.id) ?? 0 }))
+  // Cover photo = lowest sort_order image per property (D-35) — one grouped query, then
+  // presigned GET URLs generated at read time only (never stored, per S3 rule).
+  const coverRows = await tx
+    .selectDistinctOn([propertyImages.propertyId], {
+      propertyId: propertyImages.propertyId,
+      objectKey: propertyImages.objectKey,
+    })
+    .from(propertyImages)
+    .where(eq(propertyImages.organizationId, organizationId))
+    .orderBy(asc(propertyImages.propertyId), asc(propertyImages.sortOrder))
+  const coverUrlByProperty = new Map(
+    await Promise.all(
+      coverRows.map(
+        async (row) => [row.propertyId, await presignGet({ objectKey: row.objectKey })] as const,
+      ),
+    ),
+  )
+
+  return rows.map((row) => ({
+    ...row,
+    unitCount: countByProperty.get(row.id) ?? 0,
+    coverImageUrl: coverUrlByProperty.get(row.id) ?? null,
+  }))
 }
 
 async function requireProperty(
@@ -61,7 +83,10 @@ export async function getPropertyWithUnits(
   tx: OrganizationTx,
   organizationId: string,
   propertyId: string,
-): Promise<{ property: PropertyRow; units: (typeof units.$inferSelect)[] }> {
+): Promise<{
+  property: PropertyRow & { coverImageUrl: string | null }
+  units: (typeof units.$inferSelect)[]
+}> {
   const property = await requireProperty(tx, organizationId, propertyId)
   // D-33: property archive confirm UX lists every affected unit — surfaced here on get.
   const unitRows = await tx
@@ -74,7 +99,22 @@ export async function getPropertyWithUnits(
         isNull(units.archivedAt),
       ),
     )
-  return { property, units: unitRows }
+
+  // Cover photo = lowest sort_order image (D-35), same as `listProperties` — fetched
+  // alongside the property row instead of a separate `gallery.list` round-trip the
+  // detail page used to make just to grab the first image (which also presigned
+  // every gallery image, not just the one actually needed for the hero backdrop).
+  const [coverRow] = await tx
+    .select({ objectKey: propertyImages.objectKey })
+    .from(propertyImages)
+    .where(
+      and(eq(propertyImages.propertyId, propertyId), eq(propertyImages.organizationId, organizationId)),
+    )
+    .orderBy(asc(propertyImages.sortOrder))
+    .limit(1)
+  const coverImageUrl = coverRow ? await presignGet({ objectKey: coverRow.objectKey }) : null
+
+  return { property: { ...property, coverImageUrl }, units: unitRows }
 }
 
 export async function createProperty(
@@ -100,6 +140,10 @@ export async function createProperty(
       country: input.country || null,
       latitude: toLatLng(input.latitude) ?? null,
       longitude: toLatLng(input.longitude) ?? null,
+      propertyType: input.propertyType ?? null,
+      yearBuilt: input.yearBuilt ?? null,
+      parkingType: input.parkingType ?? null,
+      parkingSpaces: input.parkingSpaces ?? null,
     })
     .returning()
   return row
@@ -125,6 +169,10 @@ export async function updateProperty(
   if (rest.country !== undefined) patch.country = rest.country || null
   if (rest.latitude !== undefined) patch.latitude = toLatLng(rest.latitude) ?? null
   if (rest.longitude !== undefined) patch.longitude = toLatLng(rest.longitude) ?? null
+  if (rest.propertyType !== undefined) patch.propertyType = rest.propertyType || null
+  if (rest.yearBuilt !== undefined) patch.yearBuilt = rest.yearBuilt ?? null
+  if (rest.parkingType !== undefined) patch.parkingType = rest.parkingType || null
+  if (rest.parkingSpaces !== undefined) patch.parkingSpaces = rest.parkingSpaces ?? null
 
   const [row] = await tx
     .update(properties)

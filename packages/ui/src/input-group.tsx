@@ -3,7 +3,7 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 
-import { cn } from "./utils"
+import { cn } from "../utils"
 import { Button } from "./button"
 import { Input, inputVariants } from "./input"
 import { Textarea } from "./textarea"
@@ -14,7 +14,7 @@ function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="input-group"
       role="group"
       className={cn(
-        "group/input-group relative flex h-9 w-full min-w-0 items-center rounded-4xl border border-transparent bg-input/50 bg-clip-padding transition-[color,box-shadow,background-color] outline-none",
+        "group/input-group relative flex h-9 w-full min-w-0 items-center rounded-4xl border border-transparent bg-input bg-clip-padding transition-[color,box-shadow,background-color] outline-none",
         // Match `Input` focus treatment (ring + offset on the group, not the inner control).
         "focus-within:ring-1 focus-within:ring-offset-2 focus-within:ring-offset-background focus-within:ring-ring/35",
         "has-[[data-slot][aria-invalid=true]]:ring-1 has-[[data-slot][aria-invalid=true]]:ring-offset-2 has-[[data-slot][aria-invalid=true]]:ring-offset-background has-[[data-slot][aria-invalid=true]]:ring-destructive/45 dark:has-[[data-slot][aria-invalid=true]]:ring-destructive/40",

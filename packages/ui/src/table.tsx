@@ -2,7 +2,7 @@
 
 import * as React from "react"
 
-import { cn } from "./utils"
+import { cn } from "../utils"
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
@@ -12,7 +12,10 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
     >
       <table
         data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
+        className={cn(
+          "w-full caption-bottom border-separate border-spacing-y-1 text-sm",
+          className
+        )}
         {...props}
       />
     </div>
@@ -23,7 +26,11 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
       data-slot="table-header"
-      className={cn("[&_tr]:border-b", className)}
+      className={cn(
+        "[&_tr]:border-b-0 [&_th]:bg-secondary",
+        "[&_th:first-child]:rounded-l-2xl [&_th:last-child]:rounded-r-2xl",
+        className
+      )}
       {...props}
     />
   )
@@ -33,7 +40,7 @@ function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
   return (
     <tbody
       data-slot="table-body"
-      className={cn("[&_tr:last-child]:border-0", className)}
+      className={cn(className)}
       {...props}
     />
   )
@@ -57,7 +64,9 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "border-b transition-colors hover:bg-muted/50 has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted",
+        "border-b-0 transition-colors",
+        "[&_td:first-child]:rounded-l-2xl [&_td:last-child]:rounded-r-2xl",
+        "hover:[&_td]:bg-muted/25 has-aria-expanded:[&_td]:bg-muted/25 data-[state=selected]:[&_td]:bg-muted",
         className
       )}
       {...props}

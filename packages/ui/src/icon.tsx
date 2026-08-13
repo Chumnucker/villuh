@@ -8,6 +8,8 @@ import { ArchiveIcon } from "@solar-icons/react/linear/archive"
 import { BellIcon } from "@solar-icons/react/linear/bell"
 import { BoltIcon } from "@solar-icons/react/linear/bolt"
 import { Buildings2Icon } from "@solar-icons/react/linear/buildings-2"
+import { CalendarIcon } from "@solar-icons/react/linear/calendar"
+import { CopyIcon } from "@solar-icons/react/linear/copy"
 import { CardIcon } from "@solar-icons/react/linear/card"
 import { ClipboardListIcon } from "@solar-icons/react/linear/clipboard-list"
 import { CloudUploadIcon } from "@solar-icons/react/linear/cloud-upload"
@@ -18,6 +20,7 @@ import { EyeIcon } from "@solar-icons/react/linear/eye"
 import { FileTextIcon } from "@solar-icons/react/linear/file-text"
 import { FlagIcon } from "@solar-icons/react/linear/flag"
 import { FlameIcon } from "@solar-icons/react/linear/flame"
+import { GarageIcon } from "@solar-icons/react/linear/garage"
 import { HeartIcon } from "@solar-icons/react/linear/heart"
 import { Home2Icon } from "@solar-icons/react/linear/home-2"
 import { HomeSmileIcon } from "@solar-icons/react/linear/home-smile"
@@ -38,6 +41,7 @@ import { PenIcon } from "@solar-icons/react/linear/pen"
 import { PhoneIcon } from "@solar-icons/react/linear/phone"
 import { RefreshIcon } from "@solar-icons/react/linear/refresh"
 import { ReorderIcon } from "@solar-icons/react/linear/reorder"
+import { RulerIcon } from "@solar-icons/react/linear/ruler"
 import { SettingsIcon } from "@solar-icons/react/linear/settings"
 import { SledgehammerIcon } from "@solar-icons/react/linear/sledgehammer"
 import { SortVerticalIcon } from "@solar-icons/react/linear/sort-vertical"
@@ -110,6 +114,9 @@ const PLATFORM_ICONS = {
   IconHomeDoor: HomeSmileIcon,
   IconBuildings: Buildings2Icon,
   IconDoor: Home2Icon,
+  IconCalendar: CalendarIcon,
+  IconGarage: GarageIcon,
+  IconRuler: RulerIcon,
   IconPeople: UsersGroupTwoRoundedIcon,
   IconStar: StarIcon,
   IconFlag: FlagIcon,
@@ -165,6 +172,7 @@ const PLATFORM_ICONS = {
   IconArrowLeft: AltArrowLeftIcon,
   IconArrowRight: AltArrowRightIcon,
   IconGoogle: GoogleIcon,
+  IconCopy: CopyIcon,
 } as const satisfies Record<string, SolarIcon>
 
 export type PlatformIconName = keyof typeof PLATFORM_ICONS

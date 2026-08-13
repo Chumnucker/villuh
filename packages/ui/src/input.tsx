@@ -1,4 +1,4 @@
-import { cn } from "./utils"
+import { cn } from "../utils"
 import { cva, type VariantProps } from "class-variance-authority"
 import * as React from "react"
 import { Button } from "./button"
@@ -145,7 +145,7 @@ function PasswordInput({
 
 function SearchInput({
   className,
-  variant = "muted",
+  variant,
   onChange,
   value,
   size,
@@ -165,9 +165,9 @@ function SearchInput({
       {...props}
     >
       <PlatformIcon
-        className="min-w-4 text-muted-foreground"
+        className="text-muted-foreground"
         icon="IconMagnifyingGlass"
-        size={18}
+        size={14}
         stroke="2"
       />
 

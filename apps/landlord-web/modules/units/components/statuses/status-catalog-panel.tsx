@@ -130,7 +130,14 @@ export function StatusCatalogPanel() {
   const [newIcon, setNewIcon] = useState<TagIconKey>(TAG_ICON_KEYS[0])
   const [newColor, setNewColor] = useState<TagColorKey>(TAG_COLOR_KEYS[0])
 
-  const invalidateStatuses = () => invalidateQueries(utils, [(u) => u.unitStatuses.list])
+  // Unit queries join status name/icon/color server-side, so catalog edits
+  // make them stale too — not just the catalog list itself.
+  const invalidateStatuses = () =>
+    invalidateQueries(utils, [
+      (u) => u.unitStatuses.list,
+      (u) => u.units.list,
+      (u) => u.units.get,
+    ])
 
   const createStatus = trpc.unitStatuses.create.useMutation({
     onSuccess: () =>

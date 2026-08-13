@@ -1,5 +1,3 @@
 /* Shared design tokens + Tailwind live in @villuh/ui.
-   Relative path: PostCSS/Tailwind resolve package CSS exports unreliably.
-   tw-shimmer must load after Tailwind (inside ui globals), not before. */
+   Relative path: PostCSS/Tailwind resolve package CSS exports unreliably. */
 @import "../../../packages/ui/src/globals.css";
-@import "tw-shimmer";

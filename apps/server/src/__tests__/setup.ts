@@ -82,12 +82,15 @@ export function createAppClient() {
   return { db: drizzle({ client, schema }), end: () => client.end() }
 }
 
+type TestDb = ReturnType<typeof createAppClient>['db']
+export type TestTx = Parameters<Parameters<TestDb['transaction']>[0]>[0]
+
 // Replicate withOrganization from src/db/organization.ts (avoid circular import in tests)
 export async function withTestOrganization<T>(
-  appDb: ReturnType<typeof createAppClient>['db'],
+  appDb: TestDb,
   organizationId: string,
   actorId: string = 'system',
-  fn: (tx: any) => Promise<T>
+  fn: (tx: TestTx) => Promise<T>
 ): Promise<T> {
   return appDb.transaction(async (tx) => {
     await tx.execute(sql`SELECT set_config('app.current_organization_id', ${organizationId}, TRUE)`)
@@ -171,10 +174,10 @@ export async function createTrpcCaller(cookie: string) {
   const headers = new Headers({ cookie })
   const session = await auth.api.getSession({ headers })
   const { appRouter } = await import('../router.js')
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // req/res are unused by the procedures under test — empty stubs are fine.
   return appRouter.createCaller({
-    req: {} as any,
-    res: {} as any,
+    req: {} as unknown as import('express').Request,
+    res: {} as unknown as import('express').Response,
     headers,
     user: session?.user ?? null,
     session: session?.session ?? null,

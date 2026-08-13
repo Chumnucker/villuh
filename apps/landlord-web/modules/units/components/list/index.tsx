@@ -17,6 +17,8 @@ export type UnitsListProps = {
   lockedPropertyId?: string
   /** Filters presentation for the toolbar — use "compact" in narrow layouts. */
   filterDisplay?: "inline" | "compact"
+  /** Rendered pinned to the right of the toolbar (e.g. an "Add unit" button). */
+  toolbarAction?: React.ReactNode
 }
 
 export function UnitsList({
@@ -24,6 +26,7 @@ export function UnitsList({
   onArchive,
   lockedPropertyId,
   filterDisplay,
+  toolbarAction,
 }: UnitsListProps) {
   const { data: propertiesData } = trpc.properties.list.useQuery(undefined, {
     enabled: !lockedPropertyId,
@@ -65,6 +68,7 @@ export function UnitsList({
       onQueryChange={setQuery}
       filterFields={filterFields}
       filterDisplay={filterDisplay}
+      toolbarAction={toolbarAction}
       searchPlaceholder="Search units..."
       empty={{
         title: "No units yet",

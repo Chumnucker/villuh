@@ -129,9 +129,13 @@ export function AddressFields({ form }: { form: PropertyFormApi }) {
         <form.Field name="country">
           {(field) => (
             <Field>
-              <FieldLabel htmlFor={field.name}>Country</FieldLabel>
+              <FieldLabel htmlFor="property-country-search">Country</FieldLabel>
               <SearchableSelect
-                id={field.name}
+                id="property-country-search"
+                // Nonsense name + OTP autocomplete: Chrome ignores autocomplete=off
+                // when this sits next to street/city/postal address fields.
+                name="villuh-meta-country"
+                autoComplete="one-time-code"
                 value={field.state.value ?? ""}
                 onValueChange={field.handleChange}
                 onBlur={field.handleBlur}
@@ -150,10 +154,14 @@ export function AddressFields({ form }: { form: PropertyFormApi }) {
               <form.Field name="region">
                 {(field) => (
                   <Field>
-                    <FieldLabel htmlFor={field.name}>State / Region</FieldLabel>
+                    <FieldLabel htmlFor="property-region-search">
+                      State / Region
+                    </FieldLabel>
                     {regionOptions.length > 0 ? (
                       <SearchableSelect
-                        id={field.name}
+                        id="property-region-search"
+                        name="villuh-meta-region"
+                        autoComplete="one-time-code"
                         value={field.state.value ?? ""}
                         onValueChange={field.handleChange}
                         onBlur={field.handleBlur}
@@ -163,9 +171,11 @@ export function AddressFields({ form }: { form: PropertyFormApi }) {
                       />
                     ) : (
                       <Input
-                        id={field.name}
-                        name={field.name}
-                        autoComplete="address-level1"
+                        id="property-region-search"
+                        name="villuh-meta-region"
+                        autoComplete="one-time-code"
+                        data-1p-ignore=""
+                        data-lpignore="true"
                         value={field.state.value ?? ""}
                         onBlur={field.handleBlur}
                         onChange={(e) => field.handleChange(e.target.value)}

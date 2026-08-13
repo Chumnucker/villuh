@@ -2,9 +2,13 @@
   "extends": "@villuh/typescript-config/react-library.json",
   "compilerOptions": {
     "paths": {
-      "@villuh/ui/*": ["./src/*"]
+      "@/*": ["./*"],
+      "@villuh/ui": ["./src/index.ts"],
+      "@villuh/ui/*": ["./src/*"],
+      "@villuh/ui/utils": ["./utils/index.ts"],
+      "@villuh/ui/utils/*": ["./utils/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "utils/**/*.ts"],
   "exclude": ["node_modules"]
 }

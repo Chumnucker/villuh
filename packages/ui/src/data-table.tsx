@@ -78,6 +78,12 @@ export type DataTableProps<TData extends object> = {
   searchPlaceholder?: string
   debounceMs?: number
   showSearch?: boolean
+  /**
+   * Pinned to the right of the toolbar (e.g. an "Add unit" button) —
+   * independent of search/filters, so it stays fixed in place even as
+   * filter chips wrap or grow.
+   */
+  toolbarAction?: React.ReactNode
   empty?: DataTableEmptyContent
   emptyFiltered?: DataTableEmptyContent
   /** Defaults to `row.id` when present, else the row index. */
@@ -120,6 +126,7 @@ export function DataTable<TData extends object>({
   searchPlaceholder,
   debounceMs,
   showSearch = true,
+  toolbarAction,
   empty = {
     title: "No results",
     description: "Nothing to show yet.",
@@ -239,6 +246,7 @@ export function DataTable<TData extends object>({
         searchPlaceholder={searchPlaceholder}
         debounceMs={debounceMs}
         showSearch={showSearch}
+        action={toolbarAction}
       />
 
       <DataGrid

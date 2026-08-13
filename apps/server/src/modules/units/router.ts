@@ -8,16 +8,13 @@ import { listUnits, getUnit, createUnit, updateUnit, archiveUnit } from './servi
 export const unitsRouter = router({
   list: protectedProcedure.input(listUnitsInputSchema).query(async ({ ctx, input }) => {
     const { organizationId, userId } = ctx
-    return withOrganization(organizationId, userId, async (tx) => ({
-      units: await listUnits(tx, organizationId, input?.propertyId),
-    }))
+    return withOrganization(organizationId, userId, (tx) => listUnits(tx, organizationId, input))
   }),
 
   get: protectedProcedure.input(unitIdInputSchema).query(async ({ ctx, input }) => {
     const { organizationId, userId } = ctx
-    return withOrganization(organizationId, userId, async (tx) => ({
-      unit: await getUnit(tx, organizationId, input.unitId),
-    }))
+    // Returns { unit, property, status } — property/status are joined server-side.
+    return withOrganization(organizationId, userId, (tx) => getUnit(tx, organizationId, input.unitId))
   }),
 
   create: permissionProcedure('write')

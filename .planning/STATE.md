@@ -98,6 +98,12 @@ Recent decisions affecting current work:
 
 None yet.
 
+### Quick Tasks Completed
+
+| Date | Slug | Summary |
+|------|------|---------|
+| 2026-08-12 | property-detail-tabs | Property detail page split into 5 route-backed tabs (About/Units/Gallery/Tenants/Analytics); ported metric-card + bklit charts + lightbox into `@villuh/ui`; new Base UI tabs primitive. See `.planning/quick/20260812-property-detail-tabs/` |
+
 ### Blockers/Concerns
 
 - DocuSign developer account not yet set up — required before Phase 4 begins; schedule account creation early

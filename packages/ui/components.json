@@ -12,14 +12,18 @@
   },
   "iconLibrary": "lucide",
   "rtl": false,
-  "aliases": {
-    "components": "@villuh/ui",
-    "utils": "@villuh/ui/utils",
-    "ui": "@villuh/ui",
-    "lib": "@villuh/ui",
-    "hooks": "@/hooks"
-  },
   "menuColor": "default",
   "menuAccent": "subtle",
-  "registries": {}
+  "aliases": {
+    "components": "@/src",
+    "utils": "@/utils",
+    "ui": "@/src",
+    "lib": "@/utils",
+    "hooks": "@/src"
+  },
+  "registries": {
+    "@reui": "https://reui.io/r/{style}/{name}.json",
+    "@coss": "https://coss.com/ui/r/{name}.json",
+    "@bklit": "https://ui.bklit.com/r/{name}.json"
+  }
 }

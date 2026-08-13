@@ -41,7 +41,7 @@ export const propertyTag = pgTable('property_tag', {
   iconKey: text('icon_key').notNull(),
   colorKey: text('color_key').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-}, (t) => [
+}, () => [
   pgPolicy('organization_isolation', {
     as: 'permissive',
     for: 'all',

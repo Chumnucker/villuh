@@ -5,11 +5,11 @@ import { Badge, PlatformIcon, TagBadge, toTagBadgeVariant } from "@villuh/ui"
 import { ROUTES } from "@/app/routes"
 
 export const PROPERTY_CARD_GRID_CLASS =
-  "grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4"
+  "grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 4xl:grid-cols-6"
 export const PROPERTY_CARD_SKELETON_COUNT = 8
 
 const CARD_SHELL_CLASS =
-  "flex flex-col rounded-4xl bg-card ring-1 ring-foreground/5 dark:ring-foreground/10"
+  "flex flex-col rounded-4xl bg-card border dark:ring-foreground/10"
 
 /** Placeholder fills — `bg-muted` vanishes on light `bg-card`; ink alpha keeps shape readable. */
 const SKELETON_COVER_CLASS = "bg-foreground/8"
@@ -29,6 +29,8 @@ export type PropertyCardData = {
   region: string | null
   street: string | null
   unitCount: number
+  /** Presigned GET URL for the first (lowest sort_order) gallery image, if any. */
+  coverImageUrl?: string | null
   /** Empty until Plan 07 wires TagPicker + the tags catalog into this list payload. */
   tags?: PropertyCardTag[]
 }
@@ -53,12 +55,21 @@ export function PropertyCard({ property }: { property: PropertyCardData }) {
       href={ROUTES.propertyDetail(property.id)}
       className={`group ${CARD_SHELL_CLASS} transition-all hover:ring-foreground/10`}
     >
-      <div className="flex h-40 items-center justify-center rounded-t-4xl bg-muted">
-        <PlatformIcon
-          icon="IconHouse"
-          size={32}
-          className="text-muted-foreground"
-        />
+      <div className="relative flex h-48 items-center justify-center overflow-hidden rounded-t-4xl bg-muted">
+        {property.coverImageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs are short-lived and per-org; not worth Next/Image remote-pattern config.
+          <img
+            src={property.coverImageUrl}
+            alt=""
+            className="size-full object-cover"
+          />
+        ) : (
+          <PlatformIcon
+            icon="IconHouse"
+            size={32}
+            className="text-muted-foreground"
+          />
+        )}
       </div>
 
       <div className="flex flex-col gap-2 p-6">
@@ -103,16 +114,13 @@ export function PropertyCard({ property }: { property: PropertyCardData }) {
  * Shimmer is clipped to the card — never paints into grid gaps. */
 export function PropertyCardSkeleton() {
   return (
-    <div
-      className={`${CARD_SHELL_CLASS} relative overflow-hidden`}
-      aria-hidden
-    >
+    <div className={`${CARD_SHELL_CLASS} relative overflow-hidden`} aria-hidden>
       <div
-        className={`flex h-40 items-center justify-center rounded-t-4xl ${SKELETON_COVER_CLASS}`}
+        className={`flex h-48 items-center justify-center rounded-t-4xl ${SKELETON_COVER_CLASS}`}
       >
         <PlatformIcon
           icon="IconHouse"
-          size={32}
+          size={38}
           className="text-foreground/20"
         />
       </div>
@@ -124,7 +132,7 @@ export function PropertyCardSkeleton() {
           <div className={`h-3.5 w-14 ${SKELETON_BAR_CLASS}`} />
         </div>
       </div>
-      <div className="pointer-events-none absolute inset-0 shimmer shimmer-bg shimmer-color-foreground/20 text-foreground" />
+      <div className="pointer-events-none absolute inset-0 shimmer text-foreground shimmer-bg shimmer-color-foreground/20" />
     </div>
   )
 }
