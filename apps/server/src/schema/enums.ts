@@ -4,6 +4,7 @@ import { PLAN_RESOURCES } from '../domain/billing.js'
 import { ROLES } from '../domain/roles.js'
 import { PARKING_TYPES, PROPERTY_TYPES } from '../modules/properties/schemas.js'
 import { TAG_COLOR_KEYS, TAG_ICON_KEYS } from '../modules/tags/schemas.js'
+import { TENANCY_STATUSES } from '../modules/tenants/schemas.js'
 
 /**
  * Postgres enum types for the closed option sets this app owns end-to-end.
@@ -39,6 +40,6 @@ export const planResourceEnum = pgEnum('plan_resource', PLAN_RESOURCES)
 export const tagColorEnum = pgEnum('tag_color', TAG_COLOR_KEYS)
 export const tagIconEnum = pgEnum('tag_icon', TAG_ICON_KEYS)
 
-/** Tenancy lifecycle (tenant slice). pending → active → ended. */
-export const TENANCY_STATUSES = ['pending', 'active', 'ended'] as const
+/** Tenancy lifecycle (tenant slice). pending → active → ended. Array lives in
+ * the tenants schema module (source of truth); imported here to build the enum. */
 export const tenancyStatusEnum = pgEnum('tenancy_status', TENANCY_STATUSES)

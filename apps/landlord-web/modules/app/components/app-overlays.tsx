@@ -2,6 +2,7 @@
 
 import { AppOverlays } from "@villuh/ui"
 import { propertyOverlays } from "@/modules/properties/lib/properties.overlays"
+import { tenantOverlays } from "@/modules/tenants/lib/tenants.overlays"
 import { unitOverlays } from "@/modules/units/lib/units.overlays"
 
 /**
@@ -13,9 +14,9 @@ import { unitOverlays } from "@/modules/units/lib/units.overlays"
  * directly to Client Components"). Holding the module list here keeps the
  * layout's JSX prop-free.
  *
- * Registering a module is one line in MODULES (D-08).
+ * Registering a module is one line in MODULES.
  */
-const MODULES = [unitOverlays, propertyOverlays]
+const MODULES = [unitOverlays, propertyOverlays, tenantOverlays]
 
 export function LandlordOverlays() {
   return <AppOverlays modules={MODULES} />

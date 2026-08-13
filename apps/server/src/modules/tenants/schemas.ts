@@ -1,6 +1,11 @@
 import { z } from 'zod'
 import { listQueryFields, listSearchSchema, filterIdListSchema, filterEmptyFlagSchema } from '@villuh/server/schemas/filters'
-import { TENANCY_STATUSES } from '../../schema/enums.js'
+
+/** Tenancy lifecycle (tenant slice). pending → active → ended. Source of truth
+ * for the `tenancy_status` Postgres enum (see schema/enums.ts) — adding an
+ * option needs a migration. Defined here (not in enums.ts) so this
+ * frontend-exposed schema module doesn't pull drizzle into the client bundle. */
+export const TENANCY_STATUSES = ['pending', 'active', 'ended'] as const
 
 export const createTenantInputSchema = z.object({
   firstName: z.string().trim().min(1, 'First name is required').max(100),
