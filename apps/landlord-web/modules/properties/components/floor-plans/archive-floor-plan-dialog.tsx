@@ -47,8 +47,8 @@ export function ArchiveFloorPlanDialog({
 
   function handleArchived() {
     // D-47 checklist: the plan list + detail go stale, and the property's
-    // settings tab reads the plan set. Floor plans are uncapped, so me.get is
-    // NOT invalidated (D-28) — they carry no org quota.
+    // settings tab reads the plan set. Floor plans are uncapped, so the
+    // current-user quota query is NOT invalidated (D-28) — they carry no org quota.
     void invalidateQueries(utils, [
       (u) => u.floorPlans.list,
       (u) => u.floorPlans.get,

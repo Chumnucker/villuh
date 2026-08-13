@@ -1,32 +1,23 @@
 "use client"
 
+import { useParams } from "next/navigation"
 import { Button, EmptyState, Page } from "@villuh/ui"
+import { FloorPlansSection } from "@/modules/properties/components/floor-plans/floor-plans-section"
 import { SettingsSection } from "@/modules/properties/components/settings/section"
 import { unitOverlays } from "@/modules/units/lib/units.overlays"
 
 /**
- * Unit-level configuration for this property. Both sections are placeholders —
- * floor plans and property-scoped unit defaults have no backing tables yet, so
- * the units themselves are still managed from the property's Units tab.
+ * Unit-level configuration for this property. Floor plans are live (D-38); the
+ * "Unit defaults" section is still a placeholder — property-scoped unit defaults
+ * have no backing table yet.
  */
 export function PropertySettingsUnitsTemplate() {
+  const { propertyId } = useParams<{ propertyId: string }>()
   const statuses = unitOverlays.use("statuses")
 
   return (
     <Page.Content className="gap-10">
-      <SettingsSection
-        title="Floor plans"
-        icon="IconRuler"
-        description="Reusable unit layouts — bed/bath counts, square footage, and rent, applied to every unit that shares the plan."
-        className="grid-cols-1 sm:grid-cols-1"
-      >
-        <EmptyState
-          icon="IconRuler"
-          title="Floor plans coming soon"
-          description="Define a layout once and assign it to matching units instead of re-entering the same details per unit."
-          className="rounded-2xl border border-dashed border-border py-12"
-        />
-      </SettingsSection>
+      <FloorPlansSection propertyId={propertyId} />
 
       <SettingsSection
         title="Unit defaults"
