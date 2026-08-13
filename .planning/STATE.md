@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planned
-stopped_at: Phase 03.1 planning complete — 8 plans approved by plan-checker (pass 3)
-last_updated: "2026-08-13T09:45:00.000Z"
+status: in_progress
+stopped_at: Completed 03.1-01-PLAN.md (Wave 0 — nuqs deps, vitest harness, key registry, type contracts)
+last_updated: "2026-08-13T16:38:52.000Z"
 last_activity: 2026-08-13
 progress:
   total_phases: 8
   completed_phases: 1
-  total_plans: 27
-  completed_plans: 21
+  total_plans: 35
+  completed_plans: 22
   percent: 13
 ---
 
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 
 ## Current Position
 
-Phase: 03.1 (url-query-state) — PLANNED, ready to execute
+Phase: 03.1 (url-query-state) — IN PROGRESS, Wave 0 complete
 Plans: 8, across waves 0–6. Approved by gsd-plan-checker on pass 3 of the revision loop.
-Status: Ready to execute — `/gsd-execute-phase 03.1`
+Status: 03.1-01 (Wave 0) complete. Wave 1 unblocked — 03.1-02 and 03.1-04 can run in parallel.
 Last activity: 2026-08-13
 
 Phase 03 (properties-units) remains at plan 8 of 9 (03-09 completed out of order as Wave 4; 05-08 remain).
@@ -92,6 +92,7 @@ unknown flag, and a genuine pass are indistinguishable by exit code alone.
 | Phase 03 P05 | 55min | 2 tasks | 13 files |
 | Phase 03 P06 | 65min | 2 tasks | 9 files |
 | Phase 03 P07 | 70min | 2 tasks | 10 files |
+| Phase 03.1 P01 | 22min | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -130,6 +131,8 @@ Recent decisions affecting current work:
 - [Phase 03.1]: Table filter/sort/page state = one readable query param per field via `defineTable(name, namespace, …)`; `name` is the definition-unique key-registry owner, `namespace` is the URL prefix — the two cannot be the same value or the collision guard never fires for two unprefixed tables on one page (D-21, D-29)
 - [Phase 03.1]: Filter value escaping is `~~`/`~c`/`~s` with a **single left-to-right decode scan**. Three sequential `.replace` passes are not bijective — `"~c"` encodes to `"~~c"` and decodes to `"~:"` (D-45)
 - [Phase 03.1]: All plan verification commands must be Windows PowerShell 5.1 and must be **executed** before being recorded, especially the ones expected to return non-zero (D-49). No `grep`, no POSIX `find`/`diff`, no `&&`, no `rg -E` (that is `--encoding`), no glob in a path argument
+- [Phase 03.1-01]: `packages/ui` vitest keeps `passWithNoTests` at its default `false` — a zero-match run must stay red, or a mis-scoped `include` glob reports green forever
+- [Phase 03.1-01]: The phase gate `pnpm turbo run lint test typecheck` cannot exit 0 monorepo-wide due to three pre-existing unrelated failures; plans 02–08 must use the scoped substitution recorded in `.planning/phases/03.1-url-query-state/deferred-items.md`
 
 ### Pending Todos
 
@@ -143,16 +146,15 @@ None yet.
 
 ### Blockers/Concerns
 
+- `pnpm turbo run lint` fails monorepo-wide on pre-existing defects unrelated to any active phase: `@villuh/auth` and `@villuh/api` declare a `lint` script but have neither `eslint` nor an `eslint.config.*`; `apps/landlord-web/modules/properties/components/view/header.tsx:52` has one `react-hooks/set-state-in-effect` error. `apps/server`'s billing tests also need live Stripe credentials. See `.planning/phases/03.1-url-query-state/deferred-items.md`
 - DocuSign developer account not yet set up — required before Phase 4 begins; schedule account creation early
 - Railway PgBouncer mode: confirm transaction-mode pooling (not session mode) for `set_config` compatibility before Phase 1 ships
 - Inbound message routing (Twilio/Resend) architecture is TBD — needs dedicated research at Phase 7 start
 
 ## Session Continuity
 
-Last session: 2026-08-11T23:35:22.690Z
-Stopped at: Completed 03-07-PLAN.md
+Last session: 2026-08-13T16:38:52.000Z
+Stopped at: Completed 03.1-01-PLAN.md
 Resume file: None
 
-Phase 1 complete. Next: run `/gsd-plan-phase 2` to plan Phase 2 (Auth & Billing).
-
-**Planned Phase:** 2 (Auth & Billing) — 12 plans — 2026-05-01T02:40:34.952Z
+Wave 0 of Phase 03.1 is complete. Next: Wave 1 — 03.1-02 (filter/sort/page parsers + `<NuqsAdapter>` mounts) and 03.1-04 (overlay primitives) can execute in parallel.
