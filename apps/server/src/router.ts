@@ -10,6 +10,7 @@ import { uploadsRouter } from './modules/uploads/router.js'
 import { unitsRouter } from './modules/units/router.js'
 import { unitStatusesRouter } from './modules/unit-statuses/router.js'
 import { tagsRouter } from './modules/tags/router.js'
+import { tenantsRouter } from './modules/tenants/router.js'
 import { router } from './trpc.js'
 
 export const appRouter = router({
@@ -25,6 +26,7 @@ export const appRouter = router({
   units: unitsRouter,
   unitStatuses: unitStatusesRouter,
   tags: tagsRouter,
+  tenants: tenantsRouter,
 })
 
 export type AppRouter = typeof appRouter

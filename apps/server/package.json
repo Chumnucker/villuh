@@ -26,6 +26,7 @@
     "./schemas/floor-plans": "./src/modules/floor-plans/schemas.ts",
     "./schemas/uploads": "./src/modules/uploads/schemas.ts",
     "./schemas/units": "./src/modules/units/schemas.ts",
+    "./schemas/tenants": "./src/modules/tenants/schemas.ts",
     "./schemas/unit-statuses": "./src/modules/unit-statuses/schemas.ts",
     "./schemas/tags": "./src/modules/tags/schemas.ts"
   },
