@@ -26,6 +26,7 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
@@ -1704,11 +1705,32 @@ export function Filters<T = unknown>({
     )
   }, [selectableFields, menuSearchInput])
 
+  // Compact mode: active filter instances shown at the top of the root menu.
+  // Search-filtered by field label so the menu search stays coherent.
+  const activeEntries = useMemo(() => {
+    if (display !== "compact") return []
+    return filters
+      .map((filter) => ({ filter, field: fieldsMap[filter.field] }))
+      .filter(
+        (entry): entry is { filter: Filter<T>; field: FilterFieldConfig<T> } =>
+          Boolean(entry.field)
+      )
+      .filter(
+        (entry) =>
+          !menuSearchInput ||
+          entry.field.label
+            ?.toLowerCase()
+            .includes(menuSearchInput.toLowerCase())
+      )
+  }, [display, filters, fieldsMap, menuSearchInput])
+
+  const navigableCount = activeEntries.length + filteredFields.length
+
   useEffect(() => {
-    if (addFilterOpen && filteredFields.length > 0) {
+    if (addFilterOpen && navigableCount > 0) {
       setHighlightedIndex(0)
     }
-  }, [addFilterOpen, filteredFields.length])
+  }, [addFilterOpen, navigableCount])
 
   const contextValue = useMemo<FilterContextValue>(
     () => ({ variant, size, i18n: mergedI18n }),
@@ -1791,30 +1813,43 @@ export function Filters<T = unknown>({
                       onKeyDown={(e) => {
                         if (e.key === "ArrowDown") {
                           e.preventDefault()
-                          if (filteredFields.length > 0) {
+                          if (navigableCount > 0) {
                             setHighlightedIndex((prev) =>
-                              prev < filteredFields.length - 1 ? prev + 1 : 0
+                              prev < navigableCount - 1 ? prev + 1 : 0
                             )
                           }
                         } else if (e.key === "ArrowUp") {
                           e.preventDefault()
-                          if (filteredFields.length > 0) {
+                          if (navigableCount > 0) {
                             setHighlightedIndex((prev) =>
-                              prev > 0 ? prev - 1 : filteredFields.length - 1
+                              prev > 0 ? prev - 1 : navigableCount - 1
                             )
                           }
                         } else if (
                           (e.key === "ArrowRight" || e.key === "ArrowLeft") &&
                           highlightedIndex >= 0
                         ) {
-                          const field = filteredFields[highlightedIndex]
+                          const activeEntry =
+                            highlightedIndex >= 0 &&
+                            highlightedIndex < activeEntries.length
+                              ? activeEntries[highlightedIndex]
+                              : null
+                          const field = activeEntry
+                            ? null
+                            : filteredFields[
+                                highlightedIndex - activeEntries.length
+                              ]
                           const hasSubMenu =
                             field &&
                             (field.type === "select" ||
                               field.type === "multiselect") &&
                             fieldHasOptions(field)
 
-                          if (e.key === "ArrowRight" && hasSubMenu) {
+                          if (e.key === "ArrowRight" && activeEntry) {
+                            e.preventDefault()
+                            setOpenSubMenu(`edit:${activeEntry.filter.id}`)
+                            setActiveMenu(`edit:${activeEntry.filter.id}`)
+                          } else if (e.key === "ArrowRight" && hasSubMenu) {
                             e.preventDefault()
                             setOpenSubMenu(field.key || null)
                             setActiveMenu(field.key || "root")
@@ -1827,21 +1862,40 @@ export function Filters<T = unknown>({
                           }
                         } else if (e.key === "Enter" && highlightedIndex >= 0) {
                           e.preventDefault()
-                          const field = filteredFields[highlightedIndex]
-                          if (field.key) {
-                            const hasSubMenu =
-                              (field.type === "select" ||
-                                field.type === "multiselect") &&
-                              fieldHasOptions(field)
-                            if (!hasSubMenu) {
-                              addFilter(field.key)
+                          const activeEntry =
+                            highlightedIndex >= 0 &&
+                            highlightedIndex < activeEntries.length
+                              ? activeEntries[highlightedIndex]
+                              : null
+                          if (activeEntry) {
+                            const subId = `edit:${activeEntry.filter.id}`
+                            if (openSubMenu === subId) {
+                              setOpenSubMenu(null)
+                              setActiveMenu("root")
                             } else {
-                              if (openSubMenu === field.key) {
-                                setOpenSubMenu(null)
-                                setActiveMenu("root")
+                              setOpenSubMenu(subId)
+                              setActiveMenu(subId)
+                            }
+                          } else {
+                            const field =
+                              filteredFields[
+                                highlightedIndex - activeEntries.length
+                              ]
+                            if (field.key) {
+                              const hasSubMenu =
+                                (field.type === "select" ||
+                                  field.type === "multiselect") &&
+                                fieldHasOptions(field)
+                              if (!hasSubMenu) {
+                                addFilter(field.key)
                               } else {
-                                setOpenSubMenu(field.key)
-                                setActiveMenu(field.key)
+                                if (openSubMenu === field.key) {
+                                  setOpenSubMenu(null)
+                                  setActiveMenu("root")
+                                } else {
+                                  setOpenSubMenu(field.key)
+                                  setActiveMenu(field.key)
+                                }
                               }
                             }
                           }
@@ -1868,8 +1922,77 @@ export function Filters<T = unknown>({
                   id={`${rootId}-listbox`}
                 >
                   <ScrollArea className="**:data-[slot=scroll-area-scrollbar]:m-0">
+                    {activeEntries.length > 0 && (
+                      <>
+                        <DropdownMenuLabel className="text-muted-foreground text-xs">
+                          {mergedI18n.activeFilters ?? DEFAULT_I18N.activeFilters}
+                        </DropdownMenuLabel>
+                        {activeEntries.map((entry, index) => {
+                          const isHighlighted = highlightedIndex === index
+                          const itemId = `${rootId}-item-${index}`
+                          const subId = `edit:${entry.filter.id}`
+                          return (
+                            <DropdownMenuSub
+                              key={entry.filter.id}
+                              open={openSubMenu === subId}
+                              onOpenChange={(open) => {
+                                if (open) {
+                                  setOpenSubMenu(subId)
+                                } else if (openSubMenu === subId) {
+                                  setOpenSubMenu(null)
+                                  setActiveMenu("root")
+                                }
+                              }}
+                            >
+                              <DropdownMenuSubTrigger
+                                id={itemId}
+                                role="option"
+                                aria-selected={isHighlighted}
+                                data-highlighted={isHighlighted || undefined}
+                                onMouseEnter={() => setHighlightedIndex(index)}
+                                className="data-[state=open]:bg-accent data-[state=open]:text-accent-foreground data-highlighted:bg-accent data-highlighted:text-accent-foreground"
+                              >
+                                {entry.field.icon}
+                                <span className="shrink-0">{entry.field.label}</span>
+                                <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
+                                  {formatFilterSummary(
+                                    entry.field,
+                                    entry.filter,
+                                    mergedI18n
+                                  )}
+                                </span>
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent className="w-[220px] px-0">
+                                <FilterEditSubmenuContent<T>
+                                  filter={entry.filter}
+                                  field={entry.field}
+                                  enabled={openSubMenu === subId}
+                                  onUpdate={(updates) =>
+                                    updateFilter(entry.filter.id, updates)
+                                  }
+                                  onRemove={() => {
+                                    removeFilter(entry.filter.id)
+                                    setOpenSubMenu(null)
+                                    setActiveMenu("root")
+                                  }}
+                                  onBack={() => {
+                                    setOpenSubMenu(null)
+                                    setActiveMenu("root")
+                                  }}
+                                  onCloseMenu={() => setAddFilterOpen(false)}
+                                />
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
+                          )
+                        })}
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
                     {(() => {
-                      if (filteredFields.length === 0) {
+                      if (
+                        filteredFields.length === 0 &&
+                        activeEntries.length === 0
+                      ) {
                         return (
                           <div className="text-muted-foreground py-2 text-center text-sm">
                             {mergedI18n.noFieldsFound}
@@ -1878,8 +2001,9 @@ export function Filters<T = unknown>({
                       }
 
                       return filteredFields.map((field, index) => {
-                        const isHighlighted = highlightedIndex === index
-                        const itemId = `${rootId}-item-${index}`
+                        const isHighlighted =
+                          highlightedIndex === index + activeEntries.length
+                        const itemId = `${rootId}-item-${index + activeEntries.length}`
                         const hasSubMenu =
                           (field.type === "select" ||
                             field.type === "multiselect") &&
@@ -1916,7 +2040,9 @@ export function Filters<T = unknown>({
                                 role="option"
                                 aria-selected={isHighlighted}
                                 data-highlighted={isHighlighted || undefined}
-                                onMouseEnter={() => setHighlightedIndex(index)}
+                                onMouseEnter={() =>
+                                  setHighlightedIndex(index + activeEntries.length)
+                                }
                                 className="data-[state=open]:bg-accent data-[state=open]:text-accent-foreground data-highlighted:bg-accent data-highlighted:text-accent-foreground"
                               >
                                 {field.icon}
@@ -2004,7 +2130,9 @@ export function Filters<T = unknown>({
                             role="option"
                             aria-selected={isHighlighted}
                             data-highlighted={isHighlighted || undefined}
-                            onMouseEnter={() => setHighlightedIndex(index)}
+                            onMouseEnter={() =>
+                              setHighlightedIndex(index + activeEntries.length)
+                            }
                             onClick={() => field.key && addFilter(field.key)}
                             className="data-highlighted:bg-accent data-highlighted:text-accent-foreground"
                           >
@@ -2017,6 +2145,20 @@ export function Filters<T = unknown>({
                   </ScrollArea>
                 </div>
               </div>
+              {display === "compact" && filters.length > 0 && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      onChange([])
+                      setAddFilterOpen(false)
+                    }}
+                  >
+                    <XIcon className="text-muted-foreground" />
+                    {mergedI18n.clearFilters ?? DEFAULT_I18N.clearFilters}
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}
@@ -2060,7 +2202,3 @@ export const createFilter = <T = unknown,>(
   operator: operator || "is",
   values,
 })
-
-// Task 3 will wire these into compact mode; keep references until then.
-void formatFilterSummary
-void FilterEditSubmenuContent
