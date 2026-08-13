@@ -10,8 +10,10 @@ import {
   type StatusBadgeStatus,
 } from "@villuh/ui"
 import { ROUTES } from "@/app/routes"
+import { TenantsList } from "@/modules/tenants/components/list"
 
 export type UnitDetailOverview = {
+  id: string
   label: string
   squareFootage: number | null
   baseRent: number
@@ -27,8 +29,9 @@ function OverviewField({ label, children }: { label: string; children: React.Rea
 }
 
 /**
- * Screen 6 body tabs. Rent history / Tenant history are stub-empty only (UNIT-03/04, D-04) —
- * no ledger/tenant API calls, no fabricated rows. Live wiring is a future phase.
+ * Screen 6 body tabs. Tenant history renders this unit's tenancies via the live
+ * TenantsList (scoped to the unit). Rent history remains stub-empty (UNIT-03,
+ * D-04) — no ledger API calls, no fabricated rows; live wiring is a future phase.
  */
 export function UnitDetailTabs({
   unit,
@@ -77,12 +80,7 @@ export function UnitDetailTabs({
       </TabsContent>
 
       <TabsContent value="tenant-history">
-        <div className="flex flex-col items-center gap-1 py-12 text-center">
-          <p className="text-sm font-medium text-foreground">Tenant history coming soon</p>
-          <p className="text-sm text-muted-foreground">
-            Previous tenants for this unit will appear here once leases are connected.
-          </p>
-        </div>
+        <TenantsList lockedUnitId={unit.id} filterDisplay="compact" />
       </TabsContent>
     </Tabs>
   )

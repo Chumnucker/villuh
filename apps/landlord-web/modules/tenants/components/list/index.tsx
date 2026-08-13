@@ -23,21 +23,35 @@ export type TenantsListProps = {
    * is hidden.
    */
   lockedUnitId?: string
+  /**
+   * Multi-unit generalization of `lockedUnitId`: scopes the table to a set of
+   * units (e.g. every unit in a property). The server query is always filtered
+   * to these units and the redundant Unit filter chip is hidden. When both are
+   * provided, `lockedUnitId` wins.
+   */
+  lockedUnitIds?: string[]
   /** Filters presentation for the toolbar — use "compact" in narrow layouts. */
   filterDisplay?: "inline" | "compact"
 }
 
-export function TenantsList({ lockedUnitId, filterDisplay }: TenantsListProps) {
+export function TenantsList({
+  lockedUnitId,
+  lockedUnitIds,
+  filterDisplay,
+}: TenantsListProps) {
   const { form, archive, detail } = tenantOverlays.useGroup()
+
+  const lockedUnits = lockedUnitId ? [lockedUnitId] : lockedUnitIds
+  const isUnitLocked = lockedUnits !== undefined
 
   const { query, setQuery, serverInput, filterFields } =
     useDataTableQueryState(tenantsTable, {
-      hide: lockedUnitId ? HIDE_UNIT : HIDE_NOTHING,
+      hide: isUnitLocked ? HIDE_UNIT : HIDE_NOTHING,
     })
 
   const { data, isLoading } = trpc.tenants.list.useQuery({
     ...serverInput,
-    ...(lockedUnitId ? { unitIds: [lockedUnitId] } : {}),
+    ...(lockedUnits ? { unitIds: lockedUnits } : {}),
   })
 
   const columns = useMemo(
