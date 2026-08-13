@@ -1,5 +1,7 @@
 # Compact Filters Variant — Design
 
+> **Post-UAT revision (2026-08-12, commits `4643562` + `24e16e8`):** user testing rejected the separate "Active" section. The shipped design instead makes each field row the edit surface: in compact mode every field submenu (option, text, and custom fields) opens with an operator row on top, a value editor bound live to the field's filter, and a destructive "Remove filter" item when a filter exists. Fields with an active filter show a small primary dot on their row (no value summary in the root menu). "Clear filters" uses the destructive item variant. Consequence: compact mode edits one filter per field (the field's first filter); multiple instances per field remain supported only in inline mode. The unit Status filter is configured `searchable: false`. The sections below describe the original pre-UAT design where they mention the "Active" section.
+
 **Date:** 2026-08-12
 **Component:** `packages/ui/src/filters.tsx` (`Filters`), `packages/ui/src/data-table-toolbar.tsx` (`DataTableToolbar`)
 **Motivating use case:** the units table on the property page (`apps/landlord-web/modules/properties/templates/property-units-template.tsx`), where the page's narrow max-width leaves no horizontal room for filter chips.
