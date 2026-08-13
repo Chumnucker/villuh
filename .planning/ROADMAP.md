@@ -16,6 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 2: Auth & Billing** - Better Auth (email/password + Google OAuth, org/roles), Stripe Subscriptions, plan limits, setup wizard, settings
 - [ ] **Phase 3: Properties & Units** - Full CRUD for properties and units, S3 image upload, custom tags/statuses, proration, lease expiry alerts
+- [ ] **Phase 3.1: URL Query State (nuqs)** *(INSERTED)* - Reusable nuqs primitives for overlay open/close state and data-table filter/sort/pagination state; migrate all landlord-web consumers
 - [ ] **Phase 4: Tenants, Leases & Documents** - Tenant profiles, co-tenants, lease entity, DocuSign integration, document lifecycle, signed PDF storage
 - [ ] **Phase 5: Onboarding Flow Engine** - Flow builder, 5 step types, conditional branching, tenant invite system, Stripe Connect payment step, preview mode
 - [ ] **Phase 6: Rent Ledger** - Auto-generated monthly entries, manual payment recording, partial payments, late fees, Railway Cron overdue job
@@ -127,6 +128,20 @@ Plans:
 - [x] 03-09-PLAN.md — Tags API + live me.get quotas
 **UI hint**: yes
 
+### Phase 3.1: URL Query State (nuqs) — INSERTED
+**Goal**: Overlay open/close state and data-table filter/sort/pagination state live in the URL, so any view is a shareable link — delivered as a reusable abstraction where a new overlay or a new filter costs one config line
+**Depends on**: Phase 3
+**Requirements**: None (cross-cutting frontend infrastructure)
+**Success Criteria** (what must be TRUE):
+  1. A pasted URL cold-restores the exact table state (search, multiple field/operator/value filters, sort, page) and any open overlay, fetching the overlay's record by id
+  2. Adding a filter to an existing table is one line in that table's config; adding an overlay is one line in that module's config plus the component — no third place to update
+  3. Browser back closes an open overlay without clearing filter state; filter/sort/page changes do not pollute history
+  4. All landlord-web overlay call sites and the units DataTable are migrated; `useDataTableQuery` and the per-template `useState` trios are deleted
+  5. No intercepting or parallel routes are introduced; `DataTable`, `DataGrid`, column defs, and the toolbar are unmodified
+**Plans**: TBD
+**Context**: `.planning/phases/03.1-url-query-state/03.1-CONTEXT.md`
+**UI hint**: yes
+
 ### Phase 4: Tenants, Leases & Documents
 **Goal**: Landlords can manage the full tenant-lease-document lifecycle — from creating a tenant profile through signing documents via DocuSign and storing the signed PDF
 **Depends on**: Phase 3
@@ -192,7 +207,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
+Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 4 → 5 → 6 → 7 → 8
 (Phase 6 and Phase 7 depend on Phase 4 and can be planned in parallel, but execute sequentially)
 
 | Phase | Plans Complete | Status | Completed |
@@ -200,6 +215,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Infrastructure Foundation | 6/6 | Complete | All plans done 2026-04-29–30 |
 | 2. Auth & Billing | 0/12 | Not started | - |
 | 3. Properties & Units | 8/9 | In Progress|  |
+| 3.1 URL Query State (nuqs) | 0/TBD | Context ready | - |
 | 4. Tenants, Leases & Documents | 0/TBD | Not started | - |
 | 5. Onboarding Flow Engine | 0/TBD | Not started | - |
 | 6. Rent Ledger | 0/TBD | Not started | - |
