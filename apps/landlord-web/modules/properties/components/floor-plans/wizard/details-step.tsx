@@ -26,7 +26,17 @@ import {
  * — deliberate and locked (D-40). Select values are strings; the wizard
  * converts them at the form boundary (D-07).
  */
-export function DetailsStep({ form }: { form: FloorPlanFormApi }) {
+export function DetailsStep({
+  form,
+  nameError,
+  onNameChange,
+}: {
+  form: FloorPlanFormApi
+  /** Server-side error (e.g. duplicate name, D-09) surfaced under the Name field. */
+  nameError?: string | null
+  /** Called when the user edits Name, so the wizard can clear a stale server error. */
+  onNameChange?: () => void
+}) {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <form.Field
@@ -37,7 +47,7 @@ export function DetailsStep({ form }: { form: FloorPlanFormApi }) {
         }}
       >
         {(field) => {
-          const error = fieldError(field.state.meta)
+          const error = nameError ?? fieldError(field.state.meta)
           return (
             <Field className="sm:col-span-2" data-invalid={error ? true : undefined}>
               <FieldLabel htmlFor={field.name}>Name</FieldLabel>
@@ -46,7 +56,10 @@ export function DetailsStep({ form }: { form: FloorPlanFormApi }) {
                 name={field.name}
                 value={field.state.value}
                 onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
+                onChange={(e) => {
+                  field.handleChange(e.target.value)
+                  onNameChange?.()
+                }}
                 placeholder="2 bed / 2 bath"
                 aria-invalid={error ? true : undefined}
               />
