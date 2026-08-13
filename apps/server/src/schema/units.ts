@@ -1,8 +1,9 @@
 import { sql } from 'drizzle-orm'
-import { boolean, integer, pgPolicy, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core'
+import { boolean, integer, numeric, pgPolicy, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core'
 import { villuhApp } from './rls.js'
 import { organization } from './auth.js'
 import { properties } from './properties.js'
+import { floorPlans } from './floor-plans.js'
 import { tagColorEnum, tagIconEnum } from './enums.js'
 
 // Org-defined status catalog (D-26-D-29). Seeded via ensureDefaultUnitStatuses (Pattern 6).
@@ -47,6 +48,10 @@ export const units = pgTable('units', {
   baseRent: integer('base_rent').notNull().default(0),
   // Manual assignment in Phase 3 (D-28); Phase 4 will auto-set Occupied when a lease is active.
   statusId: uuid('status_id').references(() => unitStatuses.id, { onDelete: 'set null' }),
+  // Nullable floor-plan link (D-17). Thunked reference avoids the import cycle (RESEARCH Pitfall 5).
+  floorPlanId: uuid('floor_plan_id').references(() => floorPlans.id, { onDelete: 'set null' }),
+  bedrooms: integer('bedrooms'),
+  bathrooms: numeric('bathrooms', { precision: 4, scale: 2, mode: 'number' }),
   archivedAt: timestamp('archived_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
