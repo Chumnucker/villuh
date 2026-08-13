@@ -157,8 +157,8 @@ Plans:
 - No component test infrastructure exists (D-46); everything above the parser layer is manually verified at the 03.1-05 and 03.1-08 checkpoints.
 
 Plans:
-- [x] 03.1-01-PLAN.md — nuqs deps, vitest harness, URL key registry, shared type contracts *(1/8 complete)*
-- [ ] 03.1-02-PLAN.md — filter/sort/page parsers (TDD) + `<NuqsAdapter>` in both root layouts
+- [x] 03.1-01-PLAN.md — nuqs deps, vitest harness, URL key registry, shared type contracts *(2/8 complete)*
+- [x] 03.1-02-PLAN.md — filter/sort/page parsers (TDD) + `<NuqsAdapter>` in both root layouts
 - [ ] 03.1-03-PLAN.md — `defineTable` + `useDataTableQueryState` (the URL-backed twin)
 - [ ] 03.1-04-PLAN.md — `createOverlays`, `<AppOverlays>`, `<OverlayBody>`
 - [ ] 03.1-05-PLAN.md — units table migration + browser verify *(checkpoint)*
