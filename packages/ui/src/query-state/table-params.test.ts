@@ -1,8 +1,19 @@
 import { isParserBijective } from "nuqs/testing"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
+import {
+  DATA_TABLE_DEFAULT_PAGE_SIZE,
+  DATA_TABLE_PAGE_SIZES,
+} from "../data-table"
 import { idFilterOperators, numericFilterOperators } from "../data-table-query"
-import { fieldFiltersEq, parseAsFieldFilters } from "./table-params"
+import {
+  fieldFiltersEq,
+  pageParser,
+  parseAsFieldFilters,
+  parseAsSort,
+  searchParser,
+  sizeParser,
+} from "./table-params"
 import type { FieldFilter } from "./types"
 
 /** The real vocabularies from `data-table-query.ts` — not a second one (D-19). */
@@ -184,5 +195,98 @@ describe("parseAsFieldFilters — eq and default identity (D-41)", () => {
     expect(first.defaultValue).toBe(second.defaultValue)
     expect(first.defaultValue).toEqual([])
     expect(Object.isFrozen(first.defaultValue)).toBe(true)
+  })
+})
+
+/** Mirrors the server's `UNIT_SORT_KEYS` allow-list (units/schemas.ts). */
+const SORTABLE = ["label", "propertyName", "status", "baseRent", "squareFootage"]
+const sortParser = parseAsSort(SORTABLE)
+
+describe("parseAsSort (D-20)", () => {
+  it("reads a leading '-' as descending", () => {
+    expect(sortParser.parse("-baseRent")).toEqual({
+      id: "baseRent",
+      desc: true,
+    })
+  })
+
+  it("reads a bare column id as ascending", () => {
+    expect(sortParser.parse("label")).toEqual({ id: "label", desc: false })
+  })
+
+  it("rejects a column id outside the sortable allow-list (T-03.1-06)", () => {
+    expect(sortParser.parse("nope")).toBeNull()
+    expect(sortParser.parse("-nope")).toBeNull()
+  })
+
+  it("serializes the '-' prefix only for descending", () => {
+    expect(sortParser.serialize({ id: "baseRent", desc: true })).toBe(
+      "-baseRent"
+    )
+    expect(sortParser.serialize({ id: "label", desc: false })).toBe("label")
+  })
+
+  it("declares an eq comparing id and desc (D-41)", () => {
+    expect(
+      sortParser.eq({ id: "label", desc: false }, { id: "label", desc: false })
+    ).toBe(true)
+    expect(
+      sortParser.eq({ id: "label", desc: false }, { id: "label", desc: true })
+    ).toBe(false)
+    expect(
+      sortParser.eq({ id: "label", desc: false }, { id: "status", desc: false })
+    ).toBe(false)
+  })
+
+  it("round-trips both directions", () => {
+    expect(
+      isParserBijective(sortParser, "-baseRent", { id: "baseRent", desc: true })
+    ).toBe(true)
+    expect(
+      isParserBijective(sortParser, "label", { id: "label", desc: false })
+    ).toBe(true)
+  })
+})
+
+describe("pageParser (D-20, D-43)", () => {
+  it("is 1-based in the URL and 0-based in state", () => {
+    expect(pageParser.parse("1")).toBe(0)
+    expect(pageParser.parse("3")).toBe(2)
+  })
+
+  it("serializes back to the 1-based form", () => {
+    expect(pageParser.serialize(0)).toBe("1")
+    expect(pageParser.serialize(2)).toBe("3")
+  })
+
+  it("rejects non-numeric input and defaults to the first page (T-03.1-07)", () => {
+    expect(pageParser.parse("nope")).toBeNull()
+    expect(pageParser.defaultValue).toBe(0)
+  })
+})
+
+describe("sizeParser (D-20)", () => {
+  it("accepts an allow-listed page size", () => {
+    for (const size of DATA_TABLE_PAGE_SIZES) {
+      expect(sizeParser.parse(String(size))).toBe(size)
+    }
+    expect(sizeParser.parse("50")).toBe(50)
+  })
+
+  it("rejects a size outside DATA_TABLE_PAGE_SIZES (T-03.1-07)", () => {
+    expect(sizeParser.parse("999")).toBeNull()
+    expect(sizeParser.parse("nope")).toBeNull()
+  })
+
+  it("defaults to DATA_TABLE_DEFAULT_PAGE_SIZE", () => {
+    expect(sizeParser.defaultValue).toBe(DATA_TABLE_DEFAULT_PAGE_SIZE)
+    expect(sizeParser.defaultValue).toBe(25)
+  })
+})
+
+describe("searchParser (D-27)", () => {
+  it("defaults to the empty string so an untouched table has no ?q=", () => {
+    expect(searchParser.defaultValue).toBe("")
+    expect(searchParser.parse("main")).toBe("main")
   })
 })
