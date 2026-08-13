@@ -10,7 +10,7 @@ progress:
   total_phases: 11
   completed_phases: 1
   total_plans: 43
-  completed_plans: 30
+  completed_plans: 34
   percent: 9
 ---
 
@@ -103,6 +103,10 @@ unknown flag, and a genuine pass are indistinguishable by exit code alone.
 | Phase 03.1 P02 | 20min | 3 tasks | 4 files |
 | Phase 03.1 P04 | 20min | 3 tasks | 5 files |
 | Phase 03.1 P03 | 25min | 3 tasks | 5 files |
+| Phase 03.1 P05 | 30min | 3 tasks | 5 files |
+| Phase 03.1 P06 | 40min | 3 tasks | 8 files |
+| Phase 03.1 P07 | 45min | 2 tasks | 8 files |
+| Phase 03.1 P08 | 30min | 3 tasks | 3 files |
 | Phase 03.2 P01 | 15min | 2 tasks | 5 files |
 | Phase 03.2 P05 | 20min | 2 tasks | 2 files |
 
@@ -189,4 +193,6 @@ Last session: 2026-08-13T19:04:43.686Z
 Stopped at: Completed 03.1-03-PLAN.md
 Resume file: None
 
-Waves 0–2 are complete. 03.1-03 landed `defineTable`, `ids()`/`numeric()`, and `useDataTableQueryState`, plus the remaining `query-state/` barrel lines (`table-params`, `define-table`, `use-data-table-query-state`). `table-params.ts` gained a `"use client"` directive so the barrel re-export resolves in the RSC graph. Next: 03.1-05 (units list migration to `defineTable` + `useDataTableQueryState`), which also validates `query.filters` reference identity against `DataTable`'s page-snap comparison.
+Waves 0–2 are complete. 03.1-03 landed `defineTable`, `ids()`/`numeric()`, and `useDataTableQueryState`, plus the remaining `query-state/` barrel lines (`table-params`, `define-table`, `use-data-table-query-state`). `table-params.ts` gained a `"use client"` directive so the barrel re-export resolves in the RSC graph.
+
+**Phase 03.1 execution complete (2026-08-13) — all 8 plans done, one blocking checkpoint remains.** 03.1-05 migrated the units list to `defineTable` + `useDataTableQueryState`; 03.1-06 moved the units overlay trio (form/archive + the `ManageUnitStatusesDialog` flag overlay) to URL-backed overlays via `unitOverlays` + `<LandlordOverlays />`; 03.1-07 did the same for properties (archive/tags entity+flag overlays, gallery lightbox as `pageEntity`); 03.1-08 deleted the dead `useDataTableQuery` (pure deletion — `DataTable` byte-identical), added the `server-input.test.ts` golden freeze of `buildDataTableServerInput`, and signed off `03.1-VALIDATION.md`. All automated gates + eight invariant sweeps are green; `pnpm why nuqs` → single `nuqs@2.9.5`. **Still open:** 03.1-08 Task 3 — the eleven manual browser scenarios (D-46: no component-test toolchain) need `pnpm dev` + a human, then flip `Approval:` in VALIDATION.md. `apps/server`'s 26 red tests are pre-existing TODO scaffolds, untouched by this phase.
