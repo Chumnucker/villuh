@@ -27,7 +27,8 @@ import type { FieldFilter, TableDefinition, TableFieldDef } from "./types"
 const TABLE_OPTIONS = { history: "replace", scroll: false } as const
 
 /**
- * URL-backed twin of `useDataTableQuery` (D-28). Identical return signature plus
+ * URL-backed table query hook (D-28) — the replacement for the former plain
+ * `useState`-based table-query hook. Identical return signature plus
  * `filterFields`, so a call site swaps one hook and nothing else — `DataTable`,
  * `DataGrid`, the column defs, and `DataTableToolbar` are untouched.
  */

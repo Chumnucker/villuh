@@ -27,8 +27,6 @@ import { DataGridScrollArea } from "./data-grid/data-grid-scroll-area"
 import { DataGridTable } from "./data-grid/data-grid-table"
 import { DataTableToolbar } from "./data-table-toolbar"
 import {
-  buildDataTableServerInput,
-  EMPTY_DATA_TABLE_QUERY,
   hasActiveDataTableQuery,
   type DataTableQuery,
 } from "./data-table-query"
@@ -40,23 +38,6 @@ export const DATA_TABLE_PAGE_SIZES = [10, 25, 50, 100]
 
 export function createDataTableColumnHelper<TData extends object>() {
   return createColumnHelper<DataGridFeatures, TData>()
-}
-
-/**
- * One query state + serialized server input for a DataTable page.
- * Pass `serverInput` straight into the module's tRPC list query.
- */
-export function useDataTableQuery<TInput = Record<string, unknown>>(
-  filterFields?: FilterFieldConfig[]
-) {
-  const [query, setQuery] = React.useState<DataTableQuery>(
-    EMPTY_DATA_TABLE_QUERY
-  )
-  const serverInput = React.useMemo(
-    () => buildDataTableServerInput(query, filterFields ?? []) as TInput,
-    [query, filterFields]
-  )
-  return { query, setQuery, serverInput }
 }
 
 export type DataTableEmptyContent = {
