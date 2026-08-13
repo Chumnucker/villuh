@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: in_progress
-stopped_at: Completed 03.1-04-PLAN.md (Wave 1 — overlay primitives)
-last_updated: "2026-08-13T17:29:00.000Z"
-last_activity: 2026-08-13
+status: executing
+stopped_at: Completed 03.1-03-PLAN.md
+last_updated: "2026-08-13T18:06:00.614Z"
+last_activity: 2026-08-13 -- Phase 03.2 planning complete
 progress:
-  total_phases: 8
+  total_phases: 11
   completed_phases: 1
-  total_plans: 35
-  completed_plans: 24
-  percent: 14
+  total_plans: 43
+  completed_plans: 25
+  percent: 9
 ---
 
 # Project State
@@ -25,13 +25,14 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 
 ## Current Position
 
-Phase: 03.1 (url-query-state) — IN PROGRESS, Wave 0 and Wave 1 complete
+Phase: 03.1 (url-query-state) — IN PROGRESS, Waves 0–2 complete
 Plans: 8, across waves 0–6. Approved by gsd-plan-checker on pass 3 of the revision loop.
-Status: 03.1-01 (Wave 0), 03.1-02 (table parsers + adapter mounts) and 03.1-04
-(overlay primitives) complete. Next: 03.1-03 (`defineTable` +
-`useDataTableQueryState`), which is now unblocked — it owes the
-`table-params` barrel line that 03.1-04 deliberately left to it.
-Last activity: 2026-08-13
+Status: Ready to execute
+(overlay primitives) and 03.1-03 (`defineTable` + `useDataTableQueryState`)
+complete. The `table-params` + `define-table` + `use-data-table-query-state`
+barrel lines have landed; every query-state module resolves at runtime (green
+landlord-web build). Next: 03.1-05 (units list migration to `defineTable`).
+Last activity: 2026-08-13 -- Phase 03.2 planning complete
 
 Phase 03 (properties-units) remains at plan 8 of 9 (03-09 completed out of order as Wave 4; 05-08 remain).
 
@@ -53,10 +54,13 @@ plausible exit codes:
 
 - `rg -qE` — `-E` is ripgrep's `--encoding`, so the command exits 2, which
   satisfies any "returns non-zero" criterion. One gate could not fail.
+
 - `rg` takes a regex, so literal patterns containing `(`, `)`, `[`, `]`, `$`
   matched the wrong text rather than erroring.
+
 - grep's BRE `\|` is a literal pipe in rg, so alternation criteria matched
   nothing and read as passes.
+
 - The `&&` → `;` rule leaked into patterns quoting TypeScript source.
 - PowerShell strips inner double quotes before a native exe sees them.
 - Four criteria were gated by tokens their own task mandates in comments,
@@ -98,6 +102,7 @@ unknown flag, and a genuine pass are indistinguishable by exit code alone.
 | Phase 03.1 P01 | 22min | 3 tasks | 11 files |
 | Phase 03.1 P02 | 20min | 3 tasks | 4 files |
 | Phase 03.1 P04 | 20min | 3 tasks | 5 files |
+| Phase 03.1 P03 | 25min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -144,6 +149,8 @@ Recent decisions affecting current work:
 - [Phase 03.1-04]: A plan that builds a consumer whose first real call site is in a later plan owes a **compile-time** assignability test in the plan that builds it — that is the only thing that caught the `AnyOverlayGroup` defect before 03.1-06
 - [Phase 03.1-04]: `IconQuestionCircle` and `IconLock` are not `PlatformIconName` keys (the map has no lock or question glyph); `OverlayBody` uses `IconCircleInfo` for not-found and `IconEyeClosed` for forbidden rather than adding icons
 - [Phase 03.1-04]: `next/navigation` imports cleanly into the jsdom-less node vitest project — `overlays.tsx` is the first runtime `next/*` import in `packages/ui` and needs no shim
+- [Phase 03.1-03]: `defineTable(name, namespace, config)` registers URL keys under the definition-unique `name`, never `namespace ?? "table"` — the D-29 collision guard only fires for its stated trigger (a second UNPREFIXED table) when the owner is the name; a namespace-derived owner reads two unprefixed tables as HMR and returns silently
+- [Phase 03.1-03]: Every nuqs-touching module under `query-state/` must carry `"use client"`. nuqs's own `dist/index.js` is a client module, so once the barrel re-exported `table-params.ts` (which lacked the directive) it evaluated in the RSC server graph where `parseAsIndex` is a client-reference proxy and `.withDefault` is not a function — the landlord-web build (D-39 gate) is what caught it
 - [Phase 03.1-01]: Of the three pre-existing failures blocking the phase gate, two were fixed (missing eslint setup in `@villuh/api`/`@villuh/auth`; `set-state-in-effect` in the property header) so `lint typecheck` run unscoped. Only `test` is scoped, to `--filter=@villuh/ui`, skipping `@villuh/server`'s environment-blocked suite. See `.planning/phases/03.1-url-query-state/deferred-items.md`
 - [Phase 03.2]: **A unit's property is immutable after creation (D-27a).** `updateUnitInputSchema` currently accepts `propertyId` and `updateUnit` writes it; that capability is removed rather than accommodated, because reassignment is the only route to a unit inheriting from another property's floor plan — a state D-27 rejects on create and update, and one the `ON DELETE SET NULL` FK cannot catch (a property change is a `units` write the `floor_plans` constraint never sees). The client-side lock lives in `unit-form-sheet.tsx` keyed off `mode === "edit"`, not in `units/components/list/index.tsx`, which 03.1-05/06 rewrite. Miskeyed units are corrected by archive + recreate
 - [Phase 03.2]: Sq ft joins Beds/Baths/Floor plan as a **non-sortable** units column — all four render inheritance-resolved values the server never computes (D-20), so a server sort orders by the raw nullable column and disagrees with the screen. Requires removing `squareFootage` from `UNIT_SORT_KEYS` **and** updating 03.1-05's acceptance criterion, which asserts the old list
@@ -173,8 +180,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-13T17:29:00.000Z
-Stopped at: Completed 03.1-04-PLAN.md
+Last session: 2026-08-13T17:45:00.000Z
+Stopped at: Completed 03.1-03-PLAN.md
 Resume file: None
 
-Wave 0 and Wave 1 are complete. Next: 03.1-03 (`defineTable` + `useDataTableQueryState`), which consumes the parsers 03.1-02 landed and owes the `packages/ui/src/index.ts` barrel line for `table-params` — 03.1-04 created the `query-state/` barrel block but deliberately left that one line to 03.1-03.
+Waves 0–2 are complete. 03.1-03 landed `defineTable`, `ids()`/`numeric()`, and `useDataTableQueryState`, plus the remaining `query-state/` barrel lines (`table-params`, `define-table`, `use-data-table-query-state`). `table-params.ts` gained a `"use client"` directive so the barrel re-export resolves in the RSC graph. Next: 03.1-05 (units list migration to `defineTable` + `useDataTableQueryState`), which also validates `query.filters` reference identity against `DataTable`'s page-snap comparison.
