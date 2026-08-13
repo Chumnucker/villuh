@@ -140,7 +140,7 @@ Plans:
   5. No intercepting or parallel routes are introduced; `DataTable`, `DataGrid`, column defs, and the toolbar are unmodified
 **Plans**: TBD
 **Context**: `.planning/phases/03.1-url-query-state/03.1-CONTEXT.md`
-**UI hint**: yes
+**UI hint**: no — zero visual change; overlays and tables keep their existing appearance, only their state source moves to the URL
 
 ### Phase 4: Tenants, Leases & Documents
 **Goal**: Landlords can manage the full tenant-lease-document lifecycle — from creating a tenant profile through signing documents via DocuSign and storing the signed PDF
