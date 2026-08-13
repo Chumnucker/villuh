@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed 03.2-03-PLAN.md
-last_updated: "2026-08-13T19:19:58.209Z"
+last_updated: "2026-08-13T19:27:06.887Z"
 last_activity: 2026-08-13
 progress:
   total_phases: 11
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 ## Current Position
 
 Phase: 03.2 (floor-plans) — EXECUTING
-Plan: 5 of 8
+Plan: 6 of 8
 Plans: 8, across waves 0–6. Approved by gsd-plan-checker on pass 3 of the revision loop.
 Status: Ready to execute
 URL state via `defineTable` + `useDataTableQueryState`, human-verify checkpoint
@@ -111,6 +111,7 @@ unknown flag, and a genuine pass are indistinguishable by exit code alone.
 | Phase 03.2 P05 | 20min | 2 tasks | 2 files |
 | Phase 03.2 P02 | 10min | 3 tasks | 7 files |
 | Phase 03.2 P03 | 10min | 2 tasks | 2 files |
+| Phase 03.2 P04 | 10min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -169,6 +170,7 @@ Recent decisions affecting current work:
 - [Phase 03.2-05]: `WizardDialog` composes `DialogContainer`/`DialogFooter`/`DialogTitle` via `cn()` re-exports (class strings byte-identical by construction) with a zero-byte `dialog.tsx` diff (D-29). The right-column `<form>` is owned by the consumer (`FloorPlanWizard`, plans 06/07) since D-30's export list has no `form` member and the consumer owns the `@tanstack/react-form` instance — the primitive exposes `next()`/`isLast` via `useWizardDialog()` so the consumer's `onSubmit` implements the Enter-must-not-submit contract
 - [Phase 03.2-02]: `floorPlans` server module is a statement-for-statement replication of the `properties` module + nested gallery with the noun changed and all billing side-effects omitted (uncapped, D-28); lists alphabetically by `asc(name)` not `createdAt` (D-10); archive is single-row soft (archiveUnit shape), non-cascading (D-11); `presignFloorPlanImage` key nests under the parent property `{org}/properties/{propertyId}/floor-plans/{floorPlanId}/gallery/{uuid}.{ext}` (D-16) and the 25-image cap is double-enforced at presign + `gallery.add` (D-14)
 - [Phase 03.2]: 03.2-03: unit property is immutable on update — updateUnitInputSchema omits propertyId and updateUnit never writes it (D-27a). requireFloorPlanInProperty rejects cross-property assignment with BAD_REQUEST on create and update (D-27). squareFootage removed from UNIT_SORT_KEYS/UNIT_SORT_COLUMNS (D-46). New unit columns written only when supplied, never copied from the plan (D-19).
+- [Phase ?]: 03.2-04: D-48 floor-plans integration suite is the regression backstop (CRUD/D-09 uniqueness/D-07 number bathrooms/D-27 cross-property both paths/D-27a immutability/D-11 archive-intact/D-19 no-copy/D-14 25-cap/D-16 objectKey-only/D-12 delete/RLS). [Rule 2] createFloorPlan/updateFloorPlan now map the 23505 unique-name violation to BAD_REQUEST so D-09 surfaces correctly.
 
 ### Roadmap Evolution
 
@@ -193,7 +195,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-13T19:19:57.991Z
+Last session: 2026-08-13T19:26:42.149Z
 Stopped at: Completed 03.2-03-PLAN.md
 Resume file: None
 

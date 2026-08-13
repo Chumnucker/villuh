@@ -203,7 +203,7 @@ Plans:
 - [x] 03.2-01-PLAN.md — Drizzle schema (floor_plans + floor_plan_images) + 3 units columns + [BLOCKING] migration + audit triggers
 - [x] 03.2-02-PLAN.md — floorPlans module (CRUD + nested gallery) + uploads.presignFloorPlanImage + registration
 - [x] 03.2-03-PLAN.md — units input widening + D-27a property immutability + cross-property rejection
-- [ ] 03.2-04-PLAN.md — floor-plans.test.ts (D-48 integration suite)
+- [x] 03.2-04-PLAN.md — floor-plans.test.ts (D-48 integration suite)
 - [x] 03.2-05-PLAN.md — `WizardDialog` primitive in `@villuh/ui` (composes dialog.tsx, zero-byte diff)
 - [ ] 03.2-06-PLAN.md — floor plan wizard components + display lib + staged-gallery retarget *(GATED on 3.1)*
 - [ ] 03.2-07-PLAN.md — FloorPlansSection + card + archive + overlay registration + template *(GATED on 3.1, checkpoint)*
