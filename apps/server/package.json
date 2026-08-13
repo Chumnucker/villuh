@@ -23,6 +23,7 @@
     "./schemas/billing": "./src/modules/billing/schemas.ts",
     "./schemas/audit-log": "./src/modules/audit-log/schemas.ts",
     "./schemas/properties": "./src/modules/properties/schemas.ts",
+    "./schemas/floor-plans": "./src/modules/floor-plans/schemas.ts",
     "./schemas/uploads": "./src/modules/uploads/schemas.ts",
     "./schemas/units": "./src/modules/units/schemas.ts",
     "./schemas/unit-statuses": "./src/modules/unit-statuses/schemas.ts",
