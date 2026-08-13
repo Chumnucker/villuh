@@ -138,7 +138,32 @@ Plans:
   3. Browser back closes an open overlay without clearing filter state; filter/sort/page changes do not pollute history
   4. All landlord-web overlay call sites and the units DataTable are migrated; `useDataTableQuery` and the per-template `useState` trios are deleted
   5. No intercepting or parallel routes are introduced; `DataTable`, `DataGrid`, column defs, and the toolbar are unmodified
-**Plans**: TBD
+**Plans**: 8 plans (03.1-01 through 03.1-08)
+
+**Wave dependency notes:**
+- **Wave 0** — 03.1-01: nuqs deps, packages/ui vitest node project, URL key registry, shared type contracts (unblocks everything)
+- **Wave 1** *(parallel)* — 03.1-02: filter/sort/page parsers (TDD) + `<NuqsAdapter>` in both root layouts; 03.1-04: overlay primitives (`createOverlays`, `<AppOverlays>`, `<OverlayBody>`)
+- **Wave 2** — 03.1-03: `defineTable` + `useDataTableQueryState` (depends on 02 for parsers, 04 for barrel ownership)
+- **Wave 3** — 03.1-05: units table migration + human verify (depends on 03)
+- **Wave 4** — 03.1-06: units overlays + the single `<AppOverlays>` mount (depends on 04 and 05 — shares `units/components/list/index.tsx` with 05)
+- **Wave 5** — 03.1-07: properties overlays + gallery lightbox (depends on 06 — shares the global mount file)
+- **Wave 6** — 03.1-08: delete `useDataTableQuery`, full gate sweep, 11 manual scenarios (depends on 07)
+
+**Cross-cutting constraints:**
+- `DataTable`, `DataGrid`, `DataTableToolbar`, `filters.tsx`, and the units column defs must not be modified (D-05, D-28). `data-table.tsx`'s only permitted diff is 03.1-08's deletion of the dead `useDataTableQuery`.
+- Parser maps and `urlKeys` objects are built once at module scope and frozen, and every non-primitive-default parser declares `eq` (D-41) — violating this makes the search box silently never commit.
+- `pnpm --filter @villuh/landlord-web build` is a gate on every wave that touches app code, not just typecheck (D-39, D-48).
+- No component test infrastructure exists (D-46); everything above the parser layer is manually verified at the 03.1-05 and 03.1-08 checkpoints.
+
+Plans:
+- [ ] 03.1-01-PLAN.md — nuqs deps, vitest harness, URL key registry, shared type contracts
+- [ ] 03.1-02-PLAN.md — filter/sort/page parsers (TDD) + `<NuqsAdapter>` in both root layouts
+- [ ] 03.1-03-PLAN.md — `defineTable` + `useDataTableQueryState` (the URL-backed twin)
+- [ ] 03.1-04-PLAN.md — `createOverlays`, `<AppOverlays>`, `<OverlayBody>`
+- [ ] 03.1-05-PLAN.md — units table migration + browser verify *(checkpoint)*
+- [ ] 03.1-06-PLAN.md — units overlays + the single global overlay mount
+- [ ] 03.1-07-PLAN.md — properties overlays + page-mounted gallery lightbox
+- [ ] 03.1-08-PLAN.md — delete `useDataTableQuery`, gate sweep, manual sign-off *(checkpoint)*
 **Context**: `.planning/phases/03.1-url-query-state/03.1-CONTEXT.md`
 **UI hint**: no — zero visual change; overlays and tables keep their existing appearance, only their state source moves to the URL
 
