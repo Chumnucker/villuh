@@ -26,7 +26,6 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
@@ -76,7 +75,6 @@ export interface FilterI18nConfig {
   loadingOptions?: string
   errorLoadingOptions?: string
   // Compact display mode labels (optional; fall back to sensible defaults)
-  activeFilters?: string
   clearFilters?: string
   removeFilter?: string
 
@@ -155,7 +153,6 @@ export const DEFAULT_I18N: FilterI18nConfig = {
   addFilterTitle: "Add filter",
   loadingOptions: "Loading...",
   errorLoadingOptions: "Failed to load options.",
-  activeFilters: "Active",
   clearFilters: "Clear filters",
   removeFilter: "Remove filter",
 
@@ -918,41 +915,6 @@ const resolveSelectedOptions = <T = unknown,>(
   )
 }
 
-/**
- * One-line summary for a compact active-filter row: "operator · values".
- * empty/not_empty render the operator alone.
- */
-const formatFilterSummary = <T = unknown,>(
-  field: FilterFieldConfig<T>,
-  filter: Filter<T>,
-  i18n: FilterI18nConfig
-): string => {
-  const operators = getOperatorsForField(field, filter.values, i18n)
-  const opLabel =
-    operators.find((op) => op.value === filter.operator)?.label ??
-    i18n.helpers.formatOperator(filter.operator)
-
-  if (filter.operator === "empty" || filter.operator === "not_empty") {
-    return opLabel
-  }
-
-  if (field.type === "text") {
-    const raw = String(filter.values[0] ?? "")
-    if (!raw) return opLabel
-    const prefix = typeof field.prefix === "string" ? field.prefix : ""
-    const suffix = typeof field.suffix === "string" ? field.suffix : ""
-    return `${opLabel} · ${prefix}${raw}${suffix}`
-  }
-
-  const selected = resolveSelectedOptions(field, filter.values)
-  if (selected.length === 0) return opLabel
-  const valuePart =
-    selected.length > 3
-      ? `${selected.length} ${i18n.selectedCount}`
-      : selected.map((opt) => opt.label).join(", ")
-  return `${opLabel} · ${valuePart}`
-}
-
 interface FilterOptionsListProps<T = unknown> {
   field: FilterFieldConfig<T>
   selectedValues: T[]
@@ -1389,11 +1351,13 @@ const stopSubmenuEditorKeyPropagation = (e: React.KeyboardEvent) => {
   }
 }
 
-interface FilterEditSubmenuContentProps<T = unknown> {
-  filter: Filter<T>
+interface CompactFieldSubmenuContentProps<T = unknown> {
   field: FilterFieldConfig<T>
-  /** Partial update merged into the filter (values auto-clear on empty/not_empty via updateFilter). */
-  onUpdate: (updates: Partial<Filter<T>>) => void
+  /** The field's live filter (first match in `filters`), or null when none exists yet. */
+  filter: Filter<T> | null
+  /** Create-or-update-or-retract the field's filter. */
+  onCommit: (operator: string, values: T[]) => void
+  /** Remove the field's filter (only called when `filter` exists). */
   onRemove: () => void
   /** Collapse back to the root menu (ArrowLeft / single-select pick). */
   onBack: () => void
@@ -1404,175 +1368,43 @@ interface FilterEditSubmenuContentProps<T = unknown> {
 }
 
 /**
- * Body of a compact-mode edit submenu: operator row (toggles to an inline
- * operator list), value editor, and a destructive remove item.
+ * Unified compact-mode field submenu: operator row (toggles to an inline
+ * operator list) at the top, a value editor bound to the field's live
+ * filter, and — when a filter already exists — a destructive remove item.
+ * This is the edit surface for every keyed field in compact mode: option
+ * fields, text fields, and custom-rendered fields.
  */
-function FilterEditSubmenuContent<T = unknown>({
-  filter,
+function CompactFieldSubmenuContent<T = unknown>({
   field,
-  onUpdate,
+  filter,
+  onCommit,
   onRemove,
   onBack,
   onCloseMenu,
   enabled,
-}: FilterEditSubmenuContentProps<T>) {
-  const context = useFilterContext()
-  const [showOperators, setShowOperators] = useState(false)
-
-  const operators = useMemo(
-    () => getOperatorsForField(field, filter.values, context.i18n),
-    [field, filter.values, context.i18n]
-  )
-  const operatorLabel =
-    operators.find((op) => op.value === filter.operator)?.label ??
-    context.i18n.helpers.formatOperator(filter.operator)
-  const hideValueEditor =
-    filter.operator === "empty" || filter.operator === "not_empty"
-
-  const isMultiSelect = field.type === "multiselect" || filter.values.length > 1
-
-  return (
-    <div className="flex flex-col">
-      <DropdownMenuGroup className="px-1.5">
-        <DropdownMenuItem
-          onSelect={(e) => {
-            e.preventDefault()
-            setShowOperators((prev) => !prev)
-          }}
-          className="text-muted-foreground justify-between"
-        >
-          <span>{operatorLabel}</span>
-          <ChevronDownIcon
-            className={cn(
-              "size-3.5 transition-transform",
-              showOperators && "rotate-180"
-            )}
-          />
-        </DropdownMenuItem>
-      </DropdownMenuGroup>
-      <DropdownMenuSeparator className="mx-0" />
-
-      {showOperators ? (
-        <DropdownMenuGroup className="px-1.5">
-          {operators.map((op) => (
-            <DropdownMenuItem
-              key={op.value}
-              onSelect={(e) => {
-                e.preventDefault()
-                onUpdate({ operator: op.value })
-                setShowOperators(false)
-              }}
-              className="flex items-center justify-between"
-            >
-              <span>{op.label}</span>
-              <CheckIcon
-                className={cn(
-                  "text-primary ms-auto",
-                  op.value === filter.operator ? "opacity-100" : "opacity-0"
-                )}
-              />
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuGroup>
-      ) : hideValueEditor ? null : field.customRenderer ? (
-        <div
-          className="px-2 py-1.5"
-          onKeyDown={stopSubmenuEditorKeyPropagation}
-        >
-          {field.customRenderer({
-            field,
-            values: filter.values,
-            onChange: (values) => onUpdate({ values }),
-            operator: filter.operator,
-          })}
-        </div>
-      ) : field.type === "text" ? (
-        <div
-          className="p-1.5 [&_[data-slot=input-group]]:w-full"
-          onKeyDown={stopSubmenuEditorKeyPropagation}
-        >
-          <TextFilterValue
-            field={field}
-            values={filter.values}
-            onChange={(values) => onUpdate({ values })}
-            autoFocus
-          />
-        </div>
-      ) : (
-        <FilterOptionsList<T>
-          field={field}
-          selectedValues={filter.values}
-          isMultiSelect={isMultiSelect}
-          enabled={enabled}
-          onBack={onBack}
-          onClose={onCloseMenu}
-          onToggle={(option, isSelected) => {
-            const next = isSelected
-              ? filter.values.filter((v) => v !== option.value)
-              : isMultiSelect
-                ? [...filter.values, option.value]
-                : [option.value]
-            onUpdate({ values: next })
-            if (!isMultiSelect) onBack()
-          }}
-        />
-      )}
-
-      {!showOperators && (
-        <>
-          <DropdownMenuSeparator className="mx-0" />
-          <DropdownMenuGroup className="px-1.5">
-            <DropdownMenuItem variant="destructive" onSelect={onRemove}>
-              <XIcon />
-              {context.i18n.removeFilter ?? DEFAULT_I18N.removeFilter}
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-        </>
-      )}
-    </div>
-  )
-}
-
-/**
- * Add-flow submenu body for compact mode's text/custom fields: local operator
- * + draft value, committed upward on every change (creating the filter on the
- * first non-empty commit).
- */
-function CompactAddValueSubmenuContent<T = unknown>({
-  field,
-  initialOperator,
-  initialValues,
-  onCommit,
-}: {
-  field: FilterFieldConfig<T>
-  /**
-   * The field's current session filter (if the menu already created one
-   * this session), so reopening the add row after a collapse reflects it
-   * instead of resetting to the field default.
-   */
-  initialOperator?: string
-  initialValues?: T[]
-  /** Create-or-update this field's session filter. */
-  onCommit: (operator: string, values: T[]) => void
-}) {
+}: CompactFieldSubmenuContentProps<T>) {
   const context = useFilterContext()
   const [operator, setOperator] = useState(
     () =>
-      initialOperator ||
-      field.defaultOperator ||
+      filter?.operator ??
+      field.defaultOperator ??
       (field.type === "multiselect" ? "is_any_of" : "is")
   )
-  const [values, setValues] = useState<T[]>(() => initialValues ?? [])
   const [showOperators, setShowOperators] = useState(false)
 
+  const currentValues = useMemo(() => filter?.values ?? [], [filter])
+
   const operators = useMemo(
-    () => getOperatorsForField(field, values, context.i18n),
-    [field, values, context.i18n]
+    () => getOperatorsForField(field, currentValues, context.i18n),
+    [field, currentValues, context.i18n]
   )
   const operatorLabel =
     operators.find((op) => op.value === operator)?.label ??
     context.i18n.helpers.formatOperator(operator)
-  const isEmptyOp = operator === "empty" || operator === "not_empty"
+  const hideValueEditor = operator === "empty" || operator === "not_empty"
+
+  const isMultiSelect =
+    field.type === "multiselect" || currentValues.length > 1
 
   return (
     <div className="flex flex-col">
@@ -1604,10 +1436,10 @@ function CompactAddValueSubmenuContent<T = unknown>({
                 e.preventDefault()
                 setOperator(op.value)
                 setShowOperators(false)
-                // commitAddValueFilter handles every case (create, update,
-                // retract on empty draft, no-op) — always commit here so an
-                // operator switch never leaves a stale filter behind.
-                onCommit(op.value, values)
+                // onCommit handles every case (create, update, retract on
+                // empty draft, no-op) — always commit here so an operator
+                // switch never leaves a stale filter behind.
+                onCommit(op.value, currentValues)
               }}
               className="flex items-center justify-between"
             >
@@ -1621,36 +1453,60 @@ function CompactAddValueSubmenuContent<T = unknown>({
             </DropdownMenuItem>
           ))}
         </DropdownMenuGroup>
-      ) : isEmptyOp ? null : field.customRenderer ? (
+      ) : hideValueEditor ? null : field.customRenderer ? (
         <div
           className="px-2 py-1.5"
           onKeyDown={stopSubmenuEditorKeyPropagation}
         >
           {field.customRenderer({
             field,
-            values,
-            onChange: (next) => {
-              setValues(next)
-              onCommit(operator, next)
-            },
+            values: currentValues,
+            onChange: (values) => onCommit(operator, values),
             operator,
           })}
         </div>
-      ) : (
+      ) : field.type === "text" ? (
         <div
           className="p-1.5 [&_[data-slot=input-group]]:w-full"
           onKeyDown={stopSubmenuEditorKeyPropagation}
         >
           <TextFilterValue
             field={field}
-            values={values}
-            onChange={(next) => {
-              setValues(next)
-              onCommit(operator, next)
-            }}
+            values={currentValues}
+            onChange={(values) => onCommit(operator, values)}
             autoFocus
           />
         </div>
+      ) : (
+        <FilterOptionsList<T>
+          field={field}
+          selectedValues={currentValues}
+          isMultiSelect={isMultiSelect}
+          enabled={enabled}
+          onBack={onBack}
+          onClose={onCloseMenu}
+          onToggle={(option, isSelected) => {
+            const next = isSelected
+              ? currentValues.filter((v) => v !== option.value)
+              : isMultiSelect
+                ? [...currentValues, option.value]
+                : [option.value]
+            onCommit(operator, next)
+            if (!isMultiSelect) onBack()
+          }}
+        />
+      )}
+
+      {filter && !showOperators && (
+        <>
+          <DropdownMenuSeparator className="mx-0" />
+          <DropdownMenuGroup className="px-1.5">
+            <DropdownMenuItem variant="destructive" onSelect={onRemove}>
+              <XIcon />
+              {context.i18n.removeFilter ?? DEFAULT_I18N.removeFilter}
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        </>
       )}
     </div>
   )
@@ -1832,48 +1688,32 @@ export function Filters<T = unknown>({
     [fieldsMap, filters, onChange]
   )
 
-  // Compact add flow: create the field's session filter on first value commit,
-  // then keep updating that same instance while the menu stays open.
-  const commitAddValueFilter = useCallback(
+  // Compact edit flow: create, update, or retract the field's own filter
+  // (bound by field key, not by add-flow session state).
+  const commitFieldFilter = useCallback(
     (field: FilterFieldConfig<T>, operator: string, values: T[]) => {
       const fieldKey = field.key as string
-      const sessionFilterId = sessionFilterIds[fieldKey]
-      const sessionFilter = sessionFilterId
-        ? filters.find((f) => f.id === sessionFilterId)
-        : null
-
+      const existing = filters.find((f) => f.field === fieldKey) ?? null
       const isEmptyOp = operator === "empty" || operator === "not_empty"
       const hasValue = values.some((v) => String(v ?? "") !== "")
 
-      if (sessionFilter) {
+      if (existing) {
         if (!isEmptyOp && !hasValue) {
-          // Value cleared before menu closed — retract the session filter.
-          onChange(filters.filter((f) => f.id !== sessionFilter.id))
-          setSessionFilterIds((prev) => {
-            const next = { ...prev }
-            delete next[fieldKey]
-            return next
-          })
+          onChange(filters.filter((f) => f.id !== existing.id))
         } else {
           onChange(
             filters.map((f) =>
-              f.id === sessionFilter.id
+              f.id === existing.id
                 ? { ...f, operator, values: isEmptyOp ? ([] as T[]) : values }
                 : f
             )
           )
         }
       } else if (isEmptyOp || hasValue) {
-        const newFilter = createFilter<T>(
-          fieldKey,
-          operator,
-          isEmptyOp ? ([] as T[]) : values
-        )
-        onChange([...filters, newFilter])
-        setSessionFilterIds((prev) => ({ ...prev, [fieldKey]: newFilter.id }))
+        onChange([...filters, createFilter<T>(fieldKey, operator, isEmptyOp ? ([] as T[]) : values)])
       }
     },
-    [filters, onChange, sessionFilterIds]
+    [filters, onChange]
   )
 
   const fieldOpensSubmenu = (field: FilterFieldConfig<T>): boolean => {
@@ -1891,10 +1731,13 @@ export function Filters<T = unknown>({
     const flatFields = flattenFields(fields)
     return flatFields.filter((field) => {
       if (!field.key || field.type === "separator") return false
+      // Compact mode's field row IS the edit surface — a field with an
+      // active filter must stay listed regardless of `allowMultiple`.
+      if (display === "compact") return true
       if (allowMultiple) return true
       return !filters.some((filter) => filter.field === field.key)
     })
-  }, [fields, filters, allowMultiple])
+  }, [fields, filters, allowMultiple, display])
 
   const filteredFields = useMemo(() => {
     return selectableFields.filter(
@@ -1904,26 +1747,7 @@ export function Filters<T = unknown>({
     )
   }, [selectableFields, menuSearchInput])
 
-  // Compact mode: active filter instances shown at the top of the root menu.
-  // Search-filtered by field label so the menu search stays coherent.
-  const activeEntries = useMemo(() => {
-    if (display !== "compact") return []
-    return filters
-      .map((filter) => ({ filter, field: fieldsMap[filter.field] }))
-      .filter(
-        (entry): entry is { filter: Filter<T>; field: FilterFieldConfig<T> } =>
-          Boolean(entry.field)
-      )
-      .filter(
-        (entry) =>
-          !menuSearchInput ||
-          entry.field.label
-            ?.toLowerCase()
-            .includes(menuSearchInput.toLowerCase())
-      )
-  }, [display, filters, fieldsMap, menuSearchInput])
-
-  const navigableCount = activeEntries.length + filteredFields.length
+  const navigableCount = filteredFields.length
 
   useEffect(() => {
     if (addFilterOpen && navigableCount > 0) {
@@ -2028,24 +1852,11 @@ export function Filters<T = unknown>({
                           (e.key === "ArrowRight" || e.key === "ArrowLeft") &&
                           highlightedIndex >= 0
                         ) {
-                          const activeEntry =
-                            highlightedIndex >= 0 &&
-                            highlightedIndex < activeEntries.length
-                              ? activeEntries[highlightedIndex]
-                              : null
-                          const field = activeEntry
-                            ? null
-                            : filteredFields[
-                                highlightedIndex - activeEntries.length
-                              ]
+                          const field = filteredFields[highlightedIndex]
                           const opensSubmenu =
                             field && fieldOpensSubmenu(field)
 
-                          if (e.key === "ArrowRight" && activeEntry) {
-                            e.preventDefault()
-                            setOpenSubMenu(`edit:${activeEntry.filter.id}`)
-                            setActiveMenu(`edit:${activeEntry.filter.id}`)
-                          } else if (e.key === "ArrowRight" && opensSubmenu) {
+                          if (e.key === "ArrowRight" && opensSubmenu) {
                             e.preventDefault()
                             setOpenSubMenu(field.key || null)
                             setActiveMenu(field.key || "root")
@@ -2058,37 +1869,18 @@ export function Filters<T = unknown>({
                           }
                         } else if (e.key === "Enter" && highlightedIndex >= 0) {
                           e.preventDefault()
-                          const activeEntry =
-                            highlightedIndex >= 0 &&
-                            highlightedIndex < activeEntries.length
-                              ? activeEntries[highlightedIndex]
-                              : null
-                          if (activeEntry) {
-                            const subId = `edit:${activeEntry.filter.id}`
-                            if (openSubMenu === subId) {
-                              setOpenSubMenu(null)
-                              setActiveMenu("root")
+                          const field = filteredFields[highlightedIndex]
+                          if (field.key) {
+                            const opensSubmenu = fieldOpensSubmenu(field)
+                            if (!opensSubmenu) {
+                              addFilter(field.key)
                             } else {
-                              setOpenSubMenu(subId)
-                              setActiveMenu(subId)
-                            }
-                          } else {
-                            const field =
-                              filteredFields[
-                                highlightedIndex - activeEntries.length
-                              ]
-                            if (field.key) {
-                              const opensSubmenu = fieldOpensSubmenu(field)
-                              if (!opensSubmenu) {
-                                addFilter(field.key)
+                              if (openSubMenu === field.key) {
+                                setOpenSubMenu(null)
+                                setActiveMenu("root")
                               } else {
-                                if (openSubMenu === field.key) {
-                                  setOpenSubMenu(null)
-                                  setActiveMenu("root")
-                                } else {
-                                  setOpenSubMenu(field.key)
-                                  setActiveMenu(field.key)
-                                }
+                                setOpenSubMenu(field.key)
+                                setActiveMenu(field.key)
                               }
                             }
                           }
@@ -2115,23 +1907,52 @@ export function Filters<T = unknown>({
                   id={`${rootId}-listbox`}
                 >
                   <ScrollArea className="**:data-[slot=scroll-area-scrollbar]:m-0">
-                    {activeEntries.length > 0 && (
-                      <>
-                        <DropdownMenuLabel className="text-muted-foreground text-xs">
-                          {mergedI18n.activeFilters ?? DEFAULT_I18N.activeFilters}
-                        </DropdownMenuLabel>
-                        {activeEntries.map((entry, index) => {
-                          const isHighlighted = highlightedIndex === index
-                          const itemId = `${rootId}-item-${index}`
-                          const subId = `edit:${entry.filter.id}`
+                    {(() => {
+                      if (filteredFields.length === 0) {
+                        return (
+                          <div className="text-muted-foreground py-2 text-center text-sm">
+                            {mergedI18n.noFieldsFound}
+                          </div>
+                        )
+                      }
+
+                      return filteredFields.map((field, index) => {
+                        const isHighlighted = highlightedIndex === index
+                        const itemId = `${rootId}-item-${index}`
+                        const hasSubMenu =
+                          (field.type === "select" ||
+                            field.type === "multiselect") &&
+                          fieldHasOptions(field)
+                        const opensSubmenu = fieldOpensSubmenu(field)
+                        const fieldKey = field.key as string
+                        const isFieldActive =
+                          display === "compact" &&
+                          filters.some((f) => f.field === fieldKey)
+                        const activeDot = isFieldActive ? (
+                          <span
+                            aria-hidden
+                            className="bg-primary ms-auto size-1.5 shrink-0 rounded-full"
+                          />
+                        ) : null
+
+                        // Compact mode: every editable field (option, text,
+                        // or customRenderer) renders as a unified edit
+                        // submenu bound live to the field's own filter.
+                        if (display === "compact" && opensSubmenu) {
+                          const filterForField =
+                            filters.find((f) => f.field === fieldKey) ?? null
+
                           return (
                             <DropdownMenuSub
-                              key={entry.filter.id}
-                              open={openSubMenu === subId}
+                              key={fieldKey}
+                              open={openSubMenu === fieldKey}
                               onOpenChange={(open) => {
                                 if (open) {
-                                  setOpenSubMenu(subId)
-                                } else if (openSubMenu === subId) {
+                                  setOpenSubMenu((prev) =>
+                                    prev === fieldKey ? prev : fieldKey
+                                  )
+                                  setActiveMenu(fieldKey)
+                                } else if (openSubMenu === fieldKey) {
                                   setOpenSubMenu(null)
                                   setActiveMenu("root")
                                 }
@@ -2145,26 +1966,22 @@ export function Filters<T = unknown>({
                                 onMouseEnter={() => setHighlightedIndex(index)}
                                 className="data-[state=open]:bg-accent data-[state=open]:text-accent-foreground data-highlighted:bg-accent data-highlighted:text-accent-foreground"
                               >
-                                {entry.field.icon}
-                                <span className="shrink-0">{entry.field.label}</span>
-                                <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
-                                  {formatFilterSummary(
-                                    entry.field,
-                                    entry.filter,
-                                    mergedI18n
-                                  )}
-                                </span>
+                                {field.icon}
+                                <span>{field.label}</span>
+                                {activeDot}
                               </DropdownMenuSubTrigger>
                               <DropdownMenuSubContent className="w-[220px] px-0">
-                                <FilterEditSubmenuContent<T>
-                                  filter={entry.filter}
-                                  field={entry.field}
-                                  enabled={openSubMenu === subId}
-                                  onUpdate={(updates) =>
-                                    updateFilter(entry.filter.id, updates)
+                                <CompactFieldSubmenuContent<T>
+                                  field={field}
+                                  filter={filterForField}
+                                  enabled={openSubMenu === fieldKey}
+                                  onCommit={(operator, values) =>
+                                    commitFieldFilter(field, operator, values)
                                   }
                                   onRemove={() => {
-                                    removeFilter(entry.filter.id)
+                                    if (filterForField) {
+                                      removeFilter(filterForField.id)
+                                    }
                                     setOpenSubMenu(null)
                                     setActiveMenu("root")
                                   }}
@@ -2177,40 +1994,12 @@ export function Filters<T = unknown>({
                               </DropdownMenuSubContent>
                             </DropdownMenuSub>
                           )
-                        })}
-                        <DropdownMenuSeparator />
-                      </>
-                    )}
-                    {(() => {
-                      if (
-                        filteredFields.length === 0 &&
-                        activeEntries.length === 0
-                      ) {
-                        return (
-                          <div className="text-muted-foreground py-2 text-center text-sm">
-                            {mergedI18n.noFieldsFound}
-                          </div>
-                        )
-                      }
+                        }
 
-                      return filteredFields.map((field, index) => {
-                        const isHighlighted =
-                          highlightedIndex === index + activeEntries.length
-                        const itemId = `${rootId}-item-${index + activeEntries.length}`
-                        const hasSubMenu =
-                          (field.type === "select" ||
-                            field.type === "multiselect") &&
-                          fieldHasOptions(field)
-                        const isCompactValueField =
-                          display === "compact" &&
-                          !hasSubMenu &&
-                          (field.type === "text" ||
-                            Boolean(field.customRenderer))
-                        const opensSubmenu = fieldOpensSubmenu(field)
-
-                        if (opensSubmenu && hasSubMenu) {
+                        // Inline mode's option-field add flow: unchanged
+                        // session-based submenu (`sessionFilterIds`).
+                        if (display === "inline" && hasSubMenu) {
                           const isMultiSelect = field.type === "multiselect"
-                          const fieldKey = field.key as string
                           const sessionFilterId = sessionFilterIds[fieldKey]
                           const sessionFilter = sessionFilterId
                             ? filters.find((f) => f.id === sessionFilterId)
@@ -2239,9 +2028,7 @@ export function Filters<T = unknown>({
                                 role="option"
                                 aria-selected={isHighlighted}
                                 data-highlighted={isHighlighted || undefined}
-                                onMouseEnter={() =>
-                                  setHighlightedIndex(index + activeEntries.length)
-                                }
+                                onMouseEnter={() => setHighlightedIndex(index)}
                                 className="data-[state=open]:bg-accent data-[state=open]:text-accent-foreground data-highlighted:bg-accent data-highlighted:text-accent-foreground"
                               >
                                 {field.icon}
@@ -2322,56 +2109,6 @@ export function Filters<T = unknown>({
                           )
                         }
 
-                        if (opensSubmenu && isCompactValueField) {
-                          const fieldKey = field.key as string
-                          const sessionFilterId = sessionFilterIds[fieldKey]
-                          const sessionFilter = sessionFilterId
-                            ? filters.find((f) => f.id === sessionFilterId)
-                            : null
-
-                          return (
-                            <DropdownMenuSub
-                              key={field.key}
-                              open={openSubMenu === fieldKey}
-                              onOpenChange={(open) => {
-                                if (open) {
-                                  setOpenSubMenu((prev) =>
-                                    prev === fieldKey ? prev : fieldKey
-                                  )
-                                  setActiveMenu(fieldKey)
-                                } else if (openSubMenu === fieldKey) {
-                                  setOpenSubMenu(null)
-                                  setActiveMenu("root")
-                                }
-                              }}
-                            >
-                              <DropdownMenuSubTrigger
-                                id={itemId}
-                                role="option"
-                                aria-selected={isHighlighted}
-                                data-highlighted={isHighlighted || undefined}
-                                onMouseEnter={() =>
-                                  setHighlightedIndex(index + activeEntries.length)
-                                }
-                                className="data-[state=open]:bg-accent data-[state=open]:text-accent-foreground data-highlighted:bg-accent data-highlighted:text-accent-foreground"
-                              >
-                                {field.icon}
-                                <span>{field.label}</span>
-                              </DropdownMenuSubTrigger>
-                              <DropdownMenuSubContent className="w-[220px] px-0">
-                                <CompactAddValueSubmenuContent<T>
-                                  field={field}
-                                  initialOperator={sessionFilter?.operator}
-                                  initialValues={sessionFilter?.values}
-                                  onCommit={(operator, values) =>
-                                    commitAddValueFilter(field, operator, values)
-                                  }
-                                />
-                              </DropdownMenuSubContent>
-                            </DropdownMenuSub>
-                          )
-                        }
-
                         return (
                           <DropdownMenuItem
                             key={field.key}
@@ -2379,14 +2116,13 @@ export function Filters<T = unknown>({
                             role="option"
                             aria-selected={isHighlighted}
                             data-highlighted={isHighlighted || undefined}
-                            onMouseEnter={() =>
-                              setHighlightedIndex(index + activeEntries.length)
-                            }
+                            onMouseEnter={() => setHighlightedIndex(index)}
                             onClick={() => field.key && addFilter(field.key)}
                             className="data-highlighted:bg-accent data-highlighted:text-accent-foreground"
                           >
                             {field.icon}
                             <span>{field.label}</span>
+                            {activeDot}
                           </DropdownMenuItem>
                         )
                       })
@@ -2398,12 +2134,13 @@ export function Filters<T = unknown>({
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
+                    variant="destructive"
                     onSelect={() => {
                       onChange([])
                       setAddFilterOpen(false)
                     }}
                   >
-                    <XIcon className="text-muted-foreground" />
+                    <XIcon />
                     {mergedI18n.clearFilters ?? DEFAULT_I18N.clearFilters}
                   </DropdownMenuItem>
                 </>
