@@ -3,10 +3,11 @@ import { withOrganization } from '../../db/index.js'
 import {
   createTenantInputSchema, updateTenantInputSchema, tenantIdInputSchema, listTenantsInputSchema,
   createTenancyInputSchema, updateTenancyInputSchema, tenancyIdInputSchema, addCoTenantInputSchema, removeMemberInputSchema,
+  tenantActivityInputSchema,
 } from './schemas.js'
 import {
   listTenants, getTenant, createTenant, updateTenant, archiveTenant,
-  createTenancy, updateTenancy, endTenancy, addCoTenant, removeMember,
+  createTenancy, updateTenancy, endTenancy, addCoTenant, removeMember, getTenantActivity,
 } from './service.js'
 
 export const tenantsRouter = router({
@@ -15,6 +16,9 @@ export const tenantsRouter = router({
 
   get: protectedProcedure.input(tenantIdInputSchema).query(({ ctx, input }) =>
     withOrganization(ctx.organizationId, ctx.userId, (tx) => getTenant(tx, ctx.organizationId, input.tenantId))),
+
+  activity: protectedProcedure.input(tenantActivityInputSchema).query(({ ctx, input }) =>
+    withOrganization(ctx.organizationId, ctx.userId, (tx) => getTenantActivity(tx, ctx.organizationId, input))),
 
   create: permissionProcedure('write').input(createTenantInputSchema).mutation(({ ctx, input }) =>
     withOrganization(ctx.organizationId, ctx.userId, (tx) => createTenant(tx, ctx.organizationId, input)).then((tenant) => ({ tenant }))),

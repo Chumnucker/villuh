@@ -54,6 +54,13 @@ export type RemoveMemberInput = z.infer<typeof removeMemberInputSchema>
 /** Sort keys — ids match the frontend column accessors. */
 export const TENANT_SORT_KEYS = ['name', 'email', 'currentUnit', 'status'] as const
 
+export const tenantActivityInputSchema = z.object({
+  tenantId: z.uuid(),
+  page: z.number().int().min(1).default(1),
+  limit: z.number().int().min(1).max(100).default(50),
+})
+export type TenantActivityInput = z.infer<typeof tenantActivityInputSchema>
+
 export const listTenantsInputSchema = z
   .object({
     ...listQueryFields(TENANT_SORT_KEYS),

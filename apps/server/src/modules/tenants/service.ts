@@ -14,6 +14,7 @@ import type {
   UpdateTenancyInput,
   AddCoTenantInput,
   RemoveMemberInput,
+  TenantActivityInput,
 } from './schemas.js'
 
 export type TenantRow = typeof tenants.$inferSelect
@@ -321,6 +322,49 @@ export async function updateTenancy(tx: OrganizationTx, organizationId: string, 
     .where(and(eq(tenancies.id, input.tenancyId), eq(tenancies.organizationId, organizationId)))
     .returning()
   return row
+}
+
+export type TenantActivityEntry = {
+  id: string; tableName: string; rowId: string; operation: string; actorId: string; createdAt: string
+}
+
+/**
+ * Read-only timeline over the partitioned audit_log (RLS-scoped by org). We gather the
+ * tenant's own row id plus its tenancy ids and membership ids, then select audit rows whose
+ * (table_name, row_id) match. Future phases (doc views, logins) appear automatically once
+ * their tables emit audit rows. No new write path (TENT-03).
+ */
+export async function getTenantActivity(
+  tx: OrganizationTx, organizationId: string, input: TenantActivityInput,
+): Promise<{ entries: TenantActivityEntry[]; total: number }> {
+  await requireTenant(tx, organizationId, input.tenantId)
+
+  const memberRows = await tx.select({ id: tenancyMembers.id, tenancyId: tenancyMembers.tenancyId })
+    .from(tenancyMembers)
+    .where(and(eq(tenancyMembers.tenantId, input.tenantId), eq(tenancyMembers.organizationId, organizationId)))
+
+  const tenancyIds = memberRows.map((r) => r.tenancyId)
+  const membershipIds = memberRows.map((r) => r.id)
+  const rowIds = [input.tenantId, ...tenancyIds, ...membershipIds]
+
+  const offset = (input.page - 1) * input.limit
+  const idList = sql.join(rowIds.map((id) => sql`${id}::uuid`), sql`, `)
+
+  const entries = await tx.execute(sql`
+    SELECT id, table_name AS "tableName", row_id AS "rowId", operation, actor_id AS "actorId", created_at AS "createdAt"
+    FROM audit_log
+    WHERE table_name IN ('tenants','tenancies','tenancy_members')
+      AND row_id IN (${idList})
+    ORDER BY created_at DESC
+    LIMIT ${input.limit} OFFSET ${offset}
+  `) as unknown as TenantActivityEntry[]
+
+  const totalRes = await tx.execute(sql`
+    SELECT COUNT(*)::int AS c FROM audit_log
+    WHERE table_name IN ('tenants','tenancies','tenancy_members') AND row_id IN (${idList})
+  `) as unknown as { c: number }[]
+
+  return { entries, total: totalRes[0]?.c ?? 0 }
 }
 
 export async function endTenancy(tx: OrganizationTx, organizationId: string, tenancyId: string): Promise<TenancyRow> {

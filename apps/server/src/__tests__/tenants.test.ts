@@ -9,6 +9,7 @@ import {
   listTenants,
   getTenant,
   archiveTenant,
+  getTenantActivity,
 } from '../modules/tenants/service.js'
 import {
   signUpTestUser,
@@ -160,6 +161,17 @@ describe('tenants service', () => {
       expect(archived.archivedAt).not.toBeNull()
       const { tenants } = await listTenants(tx, orgId)
       expect(tenants.some((r) => r.id === a.id)).toBe(false)
+    })
+  })
+
+  it('activity timeline surfaces tenant + tenancy + membership events from audit_log', async () => {
+    await withOrganization(orgId, userId, async (tx) => {
+      const t = await createTenant(tx, orgId, { firstName: 'Log', lastName: 'Ged', email: 'log@x.com' })
+      await createTenancy(tx, orgId, { unitId, status: 'pending', memberTenantIds: [t.id], primaryTenantId: t.id })
+      const { entries, total } = await getTenantActivity(tx, orgId, { tenantId: t.id, page: 1, limit: 50 })
+      expect(total).toBeGreaterThanOrEqual(2) // tenant INSERT + membership INSERT (+ tenancy INSERT)
+      expect(entries.some((e) => e.tableName === 'tenants' && e.operation === 'INSERT')).toBe(true)
+      expect(entries.some((e) => e.tableName === 'tenancy_members')).toBe(true)
     })
   })
 })
