@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed 03.1-03-PLAN.md
-last_updated: "2026-08-13T18:06:00.614Z"
-last_activity: 2026-08-13 -- Phase 03.2 planning complete
+last_updated: "2026-08-13T18:55:53.735Z"
+last_activity: 2026-08-13
 progress:
   total_phases: 11
   completed_phases: 1
   total_plans: 43
-  completed_plans: 25
+  completed_plans: 28
   percent: 9
 ---
 
@@ -21,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-29)
 
 **Core value:** A landlord can onboard a tenant from zero to signed lease in one structured flow — without touching email, a spreadsheet, or a separate e-sign tool.
-**Current focus:** Phase 03.1 — URL query state (nuqs)
+**Current focus:** Phase 03.2 — floor-plans
 
 ## Current Position
 
-Phase: 03.1 (url-query-state) — IN PROGRESS, Waves 0–2 complete
+Phase: 03.2 (floor-plans) — EXECUTING
+Plan: 2 of 8
 Plans: 8, across waves 0–6. Approved by gsd-plan-checker on pass 3 of the revision loop.
 Status: Ready to execute
-(overlay primitives) and 03.1-03 (`defineTable` + `useDataTableQueryState`)
-complete. The `table-params` + `define-table` + `use-data-table-query-state`
-barrel lines have landed; every query-state module resolves at runtime (green
-landlord-web build). Next: 03.1-05 (units list migration to `defineTable`).
-Last activity: 2026-08-13 -- Phase 03.2 planning complete
+URL state via `defineTable` + `useDataTableQueryState`, human-verify checkpoint
+approved). Next: 03.1-06 (units overlay trio → URL-backed overlays), then 03.1-07
+and 03.1-08 (cleanup, deletes old `useDataTableQuery`).
+Last activity: 2026-08-13
 
 Phase 03 (properties-units) remains at plan 8 of 9 (03-09 completed out of order as Wave 4; 05-08 remain).
 
-Progress: [████████░░] 78%
+Progress: [███████░░░] 65%
 
 ### Phase 03.1 planning notes
 
@@ -103,6 +103,7 @@ unknown flag, and a genuine pass are indistinguishable by exit code alone.
 | Phase 03.1 P02 | 20min | 3 tasks | 4 files |
 | Phase 03.1 P04 | 20min | 3 tasks | 5 files |
 | Phase 03.1 P03 | 25min | 3 tasks | 5 files |
+| Phase 03.2 P01 | 15min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -156,6 +157,8 @@ Recent decisions affecting current work:
 - [Phase 03.2]: Sq ft joins Beds/Baths/Floor plan as a **non-sortable** units column — all four render inheritance-resolved values the server never computes (D-20), so a server sort orders by the raw nullable column and disagrees with the screen. Requires removing `squareFootage` from `UNIT_SORT_KEYS` **and** updating 03.1-05's acceptance criterion, which asserts the old list
 - [Phase 03.2]: `WizardDialog` composes `DialogContainer` via `className` — `cn()` is `twMerge`, so `sm:max-w-md`→`sm:max-w-4xl` merges while the unprefixed `max-w-[calc(100%-2rem)]` survives. Use **`sm:flex-row`**, not the unprefixed `flex-row` RESEARCH §6 suggests; unprefixed forces a row layout at every width and silently breaks D-32's mobile stack. This is what makes D-29's zero-byte `dialog.tsx` diff and D-31's geometry satisfiable together
 - [Phase 03.2]: The server test suite is **red at baseline** — 27 pre-existing failures (billing/plan-limit/permissions/audit/org/wizard, all Phase 2 territory). `properties`, `units`, `gallery` pass. Every server-test acceptance criterion must target one file (`pnpm --filter @villuh/server exec vitest run src/__tests__/floor-plans.test.ts`), never `turbo run test --filter=@villuh/server`, which can never exit 0
+- [Phase ?]: [Phase 03.2-01]: 0017 floor-plans migration hand-authored (not drizzle-kit generate) — generate is blocked by a pre-existing corrupt snapshot chain (0012_snapshot.json.id = all-zeros collides with 0000 as root) and a stale baseline (0013 is last; 0014-0016 hand-written with no snapshots). Migrator reads journal + .sql only; baseline repair deferred as tech debt
+- [Phase ?]: [Phase 03.2-01]: schema migrations must be applied to BOTH the dev DB (DATABASE_URL) and the villuh_test DB (DATABASE_OWNER_TEST_URL) — the server test suites run against villuh_test, so a dev-only migrate leaves them red with missing-column errors
 
 ### Roadmap Evolution
 
@@ -180,7 +183,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-13T17:45:00.000Z
+Last session: 2026-08-13T18:55:23.972Z
 Stopped at: Completed 03.1-03-PLAN.md
 Resume file: None
 
