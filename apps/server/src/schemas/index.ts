@@ -15,3 +15,8 @@ export * from '../modules/members/schemas.js'
 export * from '../modules/permissions/schemas.js'
 export * from '../modules/billing/schemas.js'
 export * from '../modules/audit-log/schemas.js'
+export * from '../modules/tenants/schemas.js'
+// `members` and `tenants` both export `removeMemberInputSchema`/`RemoveMemberInput`.
+// Disambiguate the wildcard barrel toward the pre-existing `members` owner; the tenant
+// variant is reached via its module path (`@villuh/server/schemas/tenants`) per convention.
+export { removeMemberInputSchema, type RemoveMemberInput } from '../modules/members/schemas.js'
