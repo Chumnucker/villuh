@@ -18,6 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 3: Properties & Units** - Full CRUD for properties and units, S3 image upload, custom tags/statuses, proration, lease expiry alerts
 - [ ] **Phase 3.1: URL Query State (nuqs)** *(INSERTED)* - Reusable nuqs primitives for overlay open/close state and data-table filter/sort/pagination state; migrate all landlord-web consumers
 - [ ] **Phase 3.2: Floor Plans** *(INSERTED)* - Reusable per-property unit layouts (beds/baths/default sq ft + 25-image gallery) that units inherit from, plus a new wide two-column `WizardDialog` primitive in `@villuh/ui`
+- [ ] **Phase 3.3: Amenities** *(INSERTED)* - Org amenity catalog scoped property/unit/both, property assignments with reservability + 10-image gallery, unit assignments with bulk apply; reservations designed but deferred past Phase 4
 - [ ] **Phase 4: Tenants, Leases & Documents** - Tenant profiles, co-tenants, lease entity, DocuSign integration, document lifecycle, signed PDF storage
 - [ ] **Phase 5: Onboarding Flow Engine** - Flow builder, 5 step types, conditional branching, tenant invite system, Stripe Connect payment step, preview mode
 - [ ] **Phase 6: Rent Ledger** - Auto-generated monthly entries, manual payment recording, partial payments, late fees, Railway Cron overdue job
@@ -157,10 +158,10 @@ Plans:
 - No component test infrastructure exists (D-46); everything above the parser layer is manually verified at the 03.1-05 and 03.1-08 checkpoints.
 
 Plans:
-- [x] 03.1-01-PLAN.md — nuqs deps, vitest harness, URL key registry, shared type contracts *(2/8 complete)*
+- [x] 03.1-01-PLAN.md — nuqs deps, vitest harness, URL key registry, shared type contracts *(3/8 complete)*
 - [x] 03.1-02-PLAN.md — filter/sort/page parsers (TDD) + `<NuqsAdapter>` in both root layouts
 - [ ] 03.1-03-PLAN.md — `defineTable` + `useDataTableQueryState` (the URL-backed twin)
-- [ ] 03.1-04-PLAN.md — `createOverlays`, `<AppOverlays>`, `<OverlayBody>`
+- [x] 03.1-04-PLAN.md — `createOverlays`, `<AppOverlays>`, `<OverlayBody>`
 - [ ] 03.1-05-PLAN.md — units table migration + browser verify *(checkpoint)*
 - [ ] 03.1-06-PLAN.md — units overlays + the single global overlay mount
 - [ ] 03.1-07-PLAN.md — properties overlays + page-mounted gallery lightbox
@@ -189,6 +190,30 @@ Plans:
 
 **Context**: `.planning/phases/03.2-floor-plans/03.2-CONTEXT.md`
 **UI hint**: yes — new `WizardDialog` primitive, floor plans settings section, unit form and units table changes
+
+### Phase 3.3: Amenities — INSERTED
+**Goal**: An organization owns one amenity catalog scoped to properties, units, or both, and assigns entries to properties (with reservability config and a photo gallery) and to units (individually or in bulk) — so amenity labels stay consistent enough to filter and search on instead of drifting into unmatchable free text
+**Depends on**: Phase 3.2 (soft — no shared files); **hard gate on Phase 3.1**
+**Requirements**: None (extends PROP/UNIT domain)
+**Success Criteria** (what must be TRUE):
+  1. A landlord can create, rename, re-icon, and archive org catalog amenities scoped `property`, `unit`, or `both`; archiving hides an entry from pickers while every existing assignment keeps rendering unchanged
+  2. Renaming a catalog amenity updates the label on every assignment that still carried the old catalog name, and leaves deliberately customized per-property labels untouched
+  3. A landlord can attach catalog or freeform amenities to a property, mark one reservable and whether it requires approval, attach up to 10 photos with the 11th refused server-side, and promote a freeform entry into the catalog without creating a duplicate by name
+  4. A landlord can assign unit amenities from the unit form and in bulk from a multi-row units table selection; re-applying an amenity to units that already have it is idempotent rather than an error
+  5. A `unit`-scoped amenity is rejected server-side on a property (and vice versa), cross-organization access is blocked by RLS, and the amenity detail sheet cold-loads open from a pasted URL
+  6. The property About tab renders real amenities and the tag-based amenity stopgap is removed
+**Plans**: TBD
+
+**Cross-cutting constraints:**
+- **Phase 3.1 must be complete first.** The units amenities column touches `units-columns.tsx`, which 3.1 forbids modifying (3.1 D-05, D-28). The amenity sheet uses `createOverlays`; any reservations table uses `defineTable`.
+- All four new tables need hand-written audit triggers appended to the generated migration — Drizzle does not emit them.
+- Gallery rows persist `objectKey` only, with presigned GET at read time.
+- Catalog archives, never deletes — deleting must not strip an amenity and its photos from every property using it.
+- Reservations are explicitly **out of scope** — designed in the spec, built in a later phase after Phase 4 (they require tenants and a resident request surface).
+- Every shell command in every plan must run in Windows PowerShell 5.1 (D-49/D-50). Note: PowerShell has no heredoc — use `@'…'@`.
+
+**Spec**: `docs/superpowers/specs/2026-08-13-amenities-design.md`
+**UI hint**: yes — amenities settings page, amenity detail sheet, catalog dialog, unit picker, units-table bulk actions, About tab chips
 
 ### Phase 4: Tenants, Leases & Documents
 **Goal**: Landlords can manage the full tenant-lease-document lifecycle — from creating a tenant profile through signing documents via DocuSign and storing the signed PDF
@@ -255,7 +280,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 3.2 → 4 → 5 → 6 → 7 → 8
+Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 3.2 → 3.3 → 4 → 5 → 6 → 7 → 8
 (Phase 6 and Phase 7 depend on Phase 4 and can be planned in parallel, but execute sequentially)
 
 | Phase | Plans Complete | Status | Completed |
@@ -265,6 +290,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 3.2 → 4 → 5 → 6
 | 3. Properties & Units | 8/9 | In Progress|  |
 | 3.1 URL Query State (nuqs) | 0/TBD | Context ready | - |
 | 3.2 Floor Plans | 0/TBD | Context ready | - |
+| 3.3 Amenities | 0/TBD | Spec approved | - |
 | 4. Tenants, Leases & Documents | 0/TBD | Not started | - |
 | 5. Onboarding Flow Engine | 0/TBD | Not started | - |
 | 6. Rent Ledger | 0/TBD | Not started | - |
