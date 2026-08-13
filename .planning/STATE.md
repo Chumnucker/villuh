@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03.2-03-PLAN.md
-last_updated: "2026-08-13T19:27:06.887Z"
+stopped_at: Completed 03.2-06-PLAN.md
+last_updated: "2026-08-13T19:48:29.607Z"
 last_activity: 2026-08-13
 progress:
   total_phases: 11
   completed_phases: 2
   total_plans: 43
-  completed_plans: 33
-  percent: 18
+  completed_plans: 35
+  percent: 81
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 ## Current Position
 
 Phase: 03.2 (floor-plans) — EXECUTING
-Plan: 6 of 8
+Plan: 7 of 8
 Plans: 8, across waves 0–6. Approved by gsd-plan-checker on pass 3 of the revision loop.
 Status: Ready to execute
 URL state via `defineTable` + `useDataTableQueryState`, human-verify checkpoint
@@ -36,7 +36,7 @@ Last activity: 2026-08-13
 
 Phase 03 (properties-units) remains at plan 8 of 9 (03-09 completed out of order as Wave 4; 05-08 remain).
 
-Progress: [████████░░] 77%
+Progress: [████████░░] 81%
 
 ### Phase 03.1 planning notes
 
@@ -112,6 +112,7 @@ unknown flag, and a genuine pass are indistinguishable by exit code alone.
 | Phase 03.2 P02 | 10min | 3 tasks | 7 files |
 | Phase 03.2 P03 | 10min | 2 tasks | 2 files |
 | Phase 03.2 P04 | 10min | 2 tasks | 1 files |
+| Phase 03.2 P06 | 35min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -171,6 +172,7 @@ Recent decisions affecting current work:
 - [Phase 03.2-02]: `floorPlans` server module is a statement-for-statement replication of the `properties` module + nested gallery with the noun changed and all billing side-effects omitted (uncapped, D-28); lists alphabetically by `asc(name)` not `createdAt` (D-10); archive is single-row soft (archiveUnit shape), non-cascading (D-11); `presignFloorPlanImage` key nests under the parent property `{org}/properties/{propertyId}/floor-plans/{floorPlanId}/gallery/{uuid}.{ext}` (D-16) and the 25-image cap is double-enforced at presign + `gallery.add` (D-14)
 - [Phase 03.2]: 03.2-03: unit property is immutable on update — updateUnitInputSchema omits propertyId and updateUnit never writes it (D-27a). requireFloorPlanInProperty rejects cross-property assignment with BAD_REQUEST on create and update (D-27). squareFootage removed from UNIT_SORT_KEYS/UNIT_SORT_COLUMNS (D-46). New unit columns written only when supplied, never copied from the plan (D-19).
 - [Phase ?]: 03.2-04: D-48 floor-plans integration suite is the regression backstop (CRUD/D-09 uniqueness/D-07 number bathrooms/D-27 cross-property both paths/D-27a immutability/D-11 archive-intact/D-19 no-copy/D-14 25-cap/D-16 objectKey-only/D-12 delete/RLS). [Rule 2] createFloorPlan/updateFloorPlan now map the 23505 unique-name violation to BAD_REQUEST so D-09 surfaces correctly.
+- [Phase 03.2-06]: `FloorPlanWizard` composes 03.2-05's `WizardDialog` as two independent roots switched on `overlay.value` (`new`|id) — create=`linear` (Details→Photos→Review), edit=`free` (Details→Photos, no Review, D-42). One `@tanstack/react-form` spans each wizard; Review reads live values via `useStore` (D-35). Images stage in memory and persist only on Confirm/Save via the now owner-agnostic `persistStagedGallery` (propertyId dropped, callbacks close over the id, D-43). Duplicate-name BAD_REQUEST maps onto the Name field + jumps to Details (D-09). No org-quota invalidation (floor plans uncapped, D-28/D-47). Pure `lib/floor-plan-display.ts` (Studio, quarter baths, thousands sq ft, ` · `) is the single formatter (D-39). Two scope additions vs `files_modified`: `property-form.tsx` retargeted to the new persist signature, and `wizard/floor-plan-form.ts` added to break the panel↔wizard type cycle (mirrors `property-form-shared.ts`). Wizard has no mount point until 03.2-07 registers the `property.floorPlan` overlay.
 
 ### Roadmap Evolution
 
@@ -195,9 +197,11 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-13T19:26:42.149Z
-Stopped at: Completed 03.2-03-PLAN.md
+Last session: 2026-08-13T19:48:29.596Z
+Stopped at: Completed 03.2-06-PLAN.md
 Resume file: None
+
+03.2-06 built the floor-plan wizard (first 03.2 UI plan). `FloorPlanWizard` composes 03.2-05's `WizardDialog` for create (linear, Details→Photos→Review) and edit (free, Details→Photos), owning one form + a staged gallery that persists only on Confirm/Save (D-41). Also shipped: pure `lib/floor-plan-display.ts`, an owner-agnostic `persistStagedGallery` (D-43), and `StagedGalleryField` copy props. Monorepo typecheck 6/6, `dialog.tsx` zero-byte diff intact. The wizard has no mount point yet — 03.2-07 registers the `property.floorPlan` overlay and adds `FloorPlansSection`/`FloorPlanCard`.
 
 Waves 0–2 are complete. 03.1-03 landed `defineTable`, `ids()`/`numeric()`, and `useDataTableQueryState`, plus the remaining `query-state/` barrel lines (`table-params`, `define-table`, `use-data-table-query-state`). `table-params.ts` gained a `"use client"` directive so the barrel re-export resolves in the RSC graph.
 
