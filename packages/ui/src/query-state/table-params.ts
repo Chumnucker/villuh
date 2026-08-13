@@ -1,5 +1,15 @@
-import { createParser } from "nuqs"
+import {
+  createParser,
+  parseAsIndex,
+  parseAsNumberLiteral,
+  parseAsString,
+} from "nuqs"
 
+import {
+  DATA_TABLE_DEFAULT_PAGE_SIZE,
+  DATA_TABLE_PAGE_SIZES,
+} from "../data-table"
+import type { DataTableSort } from "../data-table-query"
 import type { FieldFilter } from "./types"
 
 /**
@@ -149,3 +159,39 @@ export function parseAsFieldFilters(
     eq: fieldFiltersEq,
   }).withDefault(EMPTY_PREDICATES)
 }
+
+/**
+ * `sort=-baseRent` <-> `{ id: "baseRent", desc: true }` (D-20).
+ * Validated against the table's declared sortable column ids — an unknown id
+ * yields null, which nuqs resolves to the default (no sort).
+ */
+export function parseAsSort(sortableIds: readonly string[]) {
+  const allowed = new Set(sortableIds)
+  return createParser<DataTableSort>({
+    parse(query) {
+      const desc = query.startsWith("-")
+      const id = desc ? query.slice(1) : query
+      return allowed.has(id) ? { id, desc } : null
+    },
+    serialize: (s) => (s.desc ? `-${s.id}` : s.id),
+    // Non-primitive value -> `eq` is required for clearOnDefault and for
+    // keyMap stability (D-41). Note this parser has NO default, so its
+    // `defaultValue` is `undefined` and stable by identity; `eq` still matters
+    // for `clearOnDefault` comparisons at call sites that add one later.
+    eq: (a, b) => a.id === b.id && a.desc === b.desc,
+  })
+}
+
+/**
+ * 1-based in the URL, 0-based in state — exactly `parseAsIndex` (D-20, D-43).
+ * Do not hand-roll the ±1; nuqs's version already handles null and non-numeric input.
+ */
+export const pageParser = parseAsIndex.withDefault(0)
+
+/** Allow-listed page size; a hand-edited `?size=999` falls back to the default (D-20). */
+export const sizeParser = parseAsNumberLiteral(DATA_TABLE_PAGE_SIZES).withDefault(
+  DATA_TABLE_DEFAULT_PAGE_SIZE
+)
+
+/** Committed search text only — the 300 ms debounce stays in DataTableToolbar (D-27). */
+export const searchParser = parseAsString.withDefault("")
