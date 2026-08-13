@@ -244,6 +244,12 @@ Plans:
   4. When a signer declines, the step is marked failed, the landlord is notified, and the landlord can resend (new envelope) or void the existing envelope from within Villuh
   5. Signed PDFs are stored in S3 and accessible via one-click download or inline browser preview; tenant can preview the PDF on their invite page before the DocuSign step
 **Plans**: TBD
+
+**Decomposition (2026-08-13):** Phase 4 is split into independent slices, each with its own spec → plan → execution cycle:
+- **Tenant slice** (`TENT-01–04`) — tenant profiles, co-tenants, tenancy↔unit link, activity timeline, archive/retention. **Designed & planned** (execution deferred until Phase 4 reaches the queue). Spec: `docs/superpowers/specs/2026-08-13-tenant-slice-design.md`; Plan: `docs/superpowers/plans/2026-08-13-tenant-slice.md` (commit `c215578`). Architecture: a "tenancy seam" (`tenants` / `tenancies` / `tenancy_members`) the future Lease entity extends without migration; occupancy derived, not written; activity timeline derived from `audit_log`.
+- **Lease slice** (`LEASE-01/02/04/05` + record fields) — lease entity, activation modes, addendums. *Not yet designed.*
+- **Documents/e-sign slice** (`LEASE-03/06/07/08/09/10/11/12/13`, `TENT-05/06` import/export) — DocuSign lifecycle, signed-PDF storage, CSV import/export. *Not yet designed.*
+
 **UI hint**: yes
 
 ### Phase 5: Onboarding Flow Engine
