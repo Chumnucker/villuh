@@ -106,6 +106,7 @@ This project uses the Get Shit Done (GSD) workflow. Always follow it.
 - Auth: Better Auth only — no custom JWT
 - E-signature: DocuSign non-negotiable
 - Dates: `date` type for lease dates (not `timestamptz`), `timestamptz` for event timestamps
+- Enums: closed option sets we own are real Postgres enums declared in `apps/server/src/schema/enums.ts`, built from the same `as const` array the Zod validator uses — adding an option means editing that array *and* writing a migration. Never enum a column Better Auth or Stripe writes (`member.role`, `invitation.status`, `subscription.*`, `organization.subscription_*`)
 - Node: 22 LTS minimum (Twilio 6 hard requirement)
 - Audit log: cross-cutting, implemented alongside data models in Phase 1
 

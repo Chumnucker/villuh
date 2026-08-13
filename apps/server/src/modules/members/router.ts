@@ -5,7 +5,7 @@ import { organization } from '../../schema/auth.js'
 import { withOrganization } from '../../db/index.js'
 import { forbidden } from '../../domain/index.js'
 import { resolveLimitsTier } from '../billing/plans.js'
-import { sql, eq } from 'drizzle-orm'
+import { and, sql, eq } from 'drizzle-orm'
 import {
   createInvitationInputSchema,
   removeMemberInputSchema,
@@ -65,7 +65,7 @@ export const membersRouter = router({
         const limitRows = await tx
           .select()
           .from(planLimits)
-          .where(sql`tier = ${lookupTier} AND resource = 'members'`)
+          .where(and(eq(planLimits.tier, lookupTier), eq(planLimits.resource, 'members')))
           .limit(1)
         const limit = limitRows[0]?.limit ?? 2
 

@@ -6,7 +6,7 @@ import {
 } from "@villuh/server/schemas/properties"
 
 /** Human-readable property type label, or `null` when unset. Falls back to the
- * raw stored value for forward-compat with option values added after a deploy. */
+ * raw stored value so a DB migrated ahead of this deploy still renders. */
 export function propertyTypeLabel(value: string | null | undefined): string | null {
   if (!value) return null
   return PROPERTY_TYPE_LABELS[value as PropertyType] ?? value

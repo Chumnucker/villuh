@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { organization } from '../schema/auth.js'
 import { planLimits } from '../schema/plan-limits.js'
 import { forbidden } from './errors.js'
@@ -31,7 +31,7 @@ export async function assertPlanLimit(opts: {
   const limitRows = await tx
     .select()
     .from(planLimits)
-    .where(sql`tier = ${lookupTier} AND resource = ${resource}`)
+    .where(and(eq(planLimits.tier, lookupTier), eq(planLimits.resource, resource)))
     .limit(1)
   const limit = limitRows[0]?.limit ?? -1
 

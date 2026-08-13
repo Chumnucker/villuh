@@ -131,7 +131,7 @@
   --sidebar-ring: oklch(0.705 0.015 286.067);
 
   --page-padding: 1rem;
-  --content-padding: 2rem;
+  --content-padding: 1.5rem;
   --destructive-foreground: var(--color-red-800);
   --success-foreground: var(--color-emerald-900);
   --info: var(--color-violet-500);
@@ -180,7 +180,7 @@
   --primary-foreground: oklch(0.21 0 0);
   --secondary: oklch(0.21 0 0);
   --secondary-foreground: oklch(0.90 0 0);
-  --muted: oklch(0.23 0 0);
+  --muted: oklch(0.25 0 0);
   --muted-foreground: oklch(0.705 0 0);
   --accent: oklch(0.26 0 0);
   --accent-foreground: oklch(0.985 0 0);

@@ -10,7 +10,7 @@ import {
   mapboxAutofillPopoverOptions,
   mapboxAutofillTheme,
 } from "@villuh/ui"
-import type { PropertyFormApi } from "./property-form"
+import type { PropertyFormApi } from "./property-form-shared"
 import {
   COUNTRIES,
   regionsForCountry,
@@ -31,7 +31,14 @@ const AddressAutofill = dynamic(
  * (no token, or Mapbox errors) is just "the assist didn't fire" — never a blocked form.
  * Country/region use searchable comboboxes (curated lists; orphan Mapbox values stay selectable).
  */
-export function AddressFields({ form }: { form: PropertyFormApi }) {
+export function AddressFields({
+  form,
+  streetClassName,
+}: {
+  form: PropertyFormApi
+  /** Lets a grid parent widen the street row (the settings page spans it full width). */
+  streetClassName?: string
+}) {
   return (
     <>
       <form.Field name="street">
@@ -51,7 +58,7 @@ export function AddressFields({ form }: { form: PropertyFormApi }) {
           )
 
           return (
-            <Field>
+            <Field className={streetClassName}>
               <FieldLabel htmlFor={field.name}>Address</FieldLabel>
               {MAPBOX_TOKEN ? (
                 <AddressAutofill

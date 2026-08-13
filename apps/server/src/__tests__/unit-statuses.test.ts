@@ -74,7 +74,7 @@ describe('UNIT-02: Admin-only catalog mutations (D-27)', () => {
     const { status } = await caller.unitStatuses.create({
       name: 'Renovating',
       iconKey: 'IconWrench',
-      colorKey: 'purple',
+      colorKey: 'violet',
     })
     expect(status.name).toBe('Renovating')
     expect(status.isSystem).toBe(false)
@@ -101,7 +101,7 @@ describe('UNIT-02: Admin-only catalog mutations (D-27)', () => {
     await setRole(userId, orgId, 'manager')
 
     await expect(
-      caller.unitStatuses.create({ name: 'Blocked', iconKey: 'IconX', colorKey: 'red' }),
+      caller.unitStatuses.create({ name: 'Blocked', iconKey: 'IconFlag', colorKey: 'red' }),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' })
   })
 
@@ -111,8 +111,30 @@ describe('UNIT-02: Admin-only catalog mutations (D-27)', () => {
     await setRole(userId, orgId, 'viewer')
 
     await expect(
-      caller.unitStatuses.create({ name: 'Blocked', iconKey: 'IconX', colorKey: 'red' }),
+      caller.unitStatuses.create({ name: 'Blocked', iconKey: 'IconFlag', colorKey: 'red' }),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+  })
+
+  it('rejects an off-palette icon/color before it reaches the tag_icon/tag_color enums', async () => {
+    const { caller } = await setupOwner('statuspalette@test.local')
+
+    await expect(
+      caller.unitStatuses.create({
+        name: 'Bad palette',
+        // @ts-expect-error -- deliberately outside the locked palette (D-21)
+        iconKey: 'IconNotReal',
+        colorKey: 'red',
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+
+    await expect(
+      caller.unitStatuses.create({
+        name: 'Bad palette',
+        iconKey: 'IconFlag',
+        // @ts-expect-error -- deliberately outside the locked palette (D-21)
+        colorKey: '#ff00ff',
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
   })
 })
 

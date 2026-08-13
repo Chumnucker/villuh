@@ -213,7 +213,8 @@ const CountrySelect = ({
         className={cn(
           "h-full w-fit shrink-0 gap-1 rounded-none border-0 border-r border-border bg-transparent px-2 shadow-none",
           "hover:bg-muted/50 data-[state=open]:bg-muted/50",
-          "focus-visible:border-transparent focus-visible:ring-0 focus-visible:ring-offset-0",
+          // The wrapper owns the focus ring — the nested trigger must not add its own.
+          "focus-within:border-transparent focus-within:ring-0 focus-within:ring-offset-0",
           "[&_[data-slot=select-value]]:sr-only [&_svg:last-child]:opacity-50",
           className
         )}

@@ -42,7 +42,8 @@ const TAG_ICON_COLOR_CLASSES: Record<TagColorKey, string> = {
 /**
  * Fixed-palette picker (D-21, T-03-16): only the 14 `icon_key` / 8 `color_key` enum values from
  * the UI-SPEC are selectable — no free hex input, no arbitrary icon name entry. Shared by
- * `TagPicker` (freeform create), `ManageTagsDialog` (org catalog edit), and `StatusCatalogPanel`.
+ * `TagPicker` (freeform create), `ManageTagsDialog` (org catalog edit), and
+ * `ManageUnitStatusesDialog` (unit status catalog edit).
  */
 export function TagIconColorPicker({
   iconKey,

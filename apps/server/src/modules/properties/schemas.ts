@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
-/** Fixed option set — validated here rather than a Postgres enum (see schema/properties.ts). */
+/** Source of truth for both the Zod validator below and the `property_type`
+ * Postgres enum (see schema/enums.ts) — adding an option needs a migration. */
 export const PROPERTY_TYPES = [
   'single_family',
   'duplex',

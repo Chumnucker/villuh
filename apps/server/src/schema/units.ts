@@ -3,6 +3,7 @@ import { boolean, integer, pgPolicy, pgTable, text, timestamp, unique, uuid } fr
 import { villuhApp } from './rls.js'
 import { organization } from './auth.js'
 import { properties } from './properties.js'
+import { tagColorEnum, tagIconEnum } from './enums.js'
 
 // Org-defined status catalog (D-26-D-29). Seeded via ensureDefaultUnitStatuses (Pattern 6).
 export const unitStatuses = pgTable('unit_statuses', {
@@ -11,8 +12,10 @@ export const unitStatuses = pgTable('unit_statuses', {
     .notNull()
     .references(() => organization.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
-  iconKey: text('icon_key').notNull(),
-  colorKey: text('color_key').notNull(),
+  // Same locked palette as tags — the status catalog is org-defined by *name*,
+  // not by icon/color (D-26-D-29).
+  iconKey: tagIconEnum('icon_key').notNull(),
+  colorKey: tagColorEnum('color_key').notNull(),
   sortOrder: integer('sort_order').notNull().default(0),
   // System-seeded defaults (Available/Occupied/Maintenance) vs landlord-created custom statuses.
   isSystem: boolean('is_system').notNull().default(false),

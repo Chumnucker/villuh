@@ -101,7 +101,7 @@ export function NotesEditor({
       )}
       data-disabled={disabled || undefined}
     >
-      <div className="flex items-center gap-1 bg-muted dark:bg-input p-1 rounded-xl">
+      <div className="flex items-center gap-1 bg-muted p-1 rounded-xl">
         <ToolbarButton
           icon="IconBold"
           label="Bold"

@@ -6,10 +6,12 @@ import { trpc } from "@villuh/api"
 import {
   EmptyState,
   Lightbox,
+  LinkButton,
   Page,
   SkeletonBox,
   SkeletonContainer,
 } from "@villuh/ui"
+import { ROUTES } from "@/app/routes"
 
 type GalleryImage = { id: string; url: string }
 
@@ -37,8 +39,17 @@ export function PropertyGalleryTemplate() {
           <EmptyState
             icon="IconCloudUpload"
             title="No photos yet"
-            description="Add photos from the edit page."
+            description="Add photos from the Gallery tab in property settings."
             className="aspect-video w-full rounded-4xl bg-muted"
+            action={
+              <LinkButton
+                href={ROUTES.propertySettingsGallery(propertyId)}
+                variant="outline"
+                size="sm"
+              >
+                Add photos
+              </LinkButton>
+            }
           />
         }
       >

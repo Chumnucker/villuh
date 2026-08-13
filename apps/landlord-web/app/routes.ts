@@ -14,7 +14,18 @@ export const ROUTES = {
   propertyTenants: (propertyId: string) => r(`/properties/${propertyId}/tenants`),
   propertyAnalytics: (propertyId: string) =>
     r(`/properties/${propertyId}/analytics`),
-  propertyEdit: (propertyId: string) => r(`/properties/${propertyId}/edit`),
+  propertySettings: (propertyId: string) =>
+    r(`/properties/${propertyId}/settings`),
+  propertySettingsUnits: (propertyId: string) =>
+    r(`/properties/${propertyId}/settings/units`),
+  propertySettingsAmenities: (propertyId: string) =>
+    r(`/properties/${propertyId}/settings/amenities`),
+  propertySettingsIntegrations: (propertyId: string) =>
+    r(`/properties/${propertyId}/settings/integrations`),
+  propertySettingsGallery: (propertyId: string) =>
+    r(`/properties/${propertyId}/settings/gallery`),
+  propertySettingsTeam: (propertyId: string) =>
+    r(`/properties/${propertyId}/settings/team`),
   units: r("/units"),
   unitDetail: (unitId: string) => r(`/units/${unitId}`),
   tenants: r("/tenants"),
@@ -26,7 +37,6 @@ export const ROUTES = {
   members: r("/members"),
   billing: r("/billing"),
   settings: r("/settings"),
-  settingsUnitStatuses: r("/settings/unit-statuses"),
   auth: {
     login: r("/auth/login"),
     register: r("/auth/register"),

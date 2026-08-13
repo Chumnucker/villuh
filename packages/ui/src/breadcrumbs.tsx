@@ -25,7 +25,6 @@ const STATIC_LABELS: Record<string, string> = {
   ["/members"]: "Members",
   ["/billing"]: "Billing",
   ["/settings"]: "Settings",
-  ["/settings/unit-statuses"]: "Unit statuses",
 }
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i

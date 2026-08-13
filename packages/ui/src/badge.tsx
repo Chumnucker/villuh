@@ -51,7 +51,14 @@ function Badge({
   )
 }
 
-/** Soft `/15` fills for the fixed tag/status color palette. */
+/**
+ * Soft `/15` fills. Two groups share one `variant` prop:
+ * - color keys (`slate`…`teal`) — the fixed tag/status palette users pick from
+ * - `PROPERTY_TYPES` keys (`single_family`…`other`) — named after the stored
+ *   value so callers can pass `variant={property.propertyType}` directly
+ *   instead of maintaining a type→color map at each call site. Ordered as a
+ *   green→blue→violet ramp roughly tracking property size.
+ */
 const tagBadgeVariants = cva("border-transparent", {
   variants: {
     variant: {
@@ -63,6 +70,17 @@ const tagBadgeVariants = cva("border-transparent", {
       red: "bg-red-500/15 text-red-700 dark:text-red-300",
       violet: "bg-violet-500/15 text-violet-700 dark:text-violet-300",
       teal: "bg-teal-500/15 text-teal-700 dark:text-teal-300",
+
+      single_family: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+      duplex: "bg-teal-500/15 text-teal-700 dark:text-teal-300",
+      triplex: "bg-cyan-500/15 text-cyan-700 dark:text-cyan-300",
+      fourplex: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
+      apartment_complex: "bg-blue-500/15 text-blue-700 dark:text-blue-300",
+      condo: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300",
+      townhouse: "bg-violet-500/15 text-violet-700 dark:text-violet-300",
+      manufactured: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+      commercial: "bg-orange-500/15 text-orange-700 dark:text-orange-300",
+      other: "bg-slate-500/15 text-slate-700 dark:text-slate-300",
     },
   },
   defaultVariants: {
@@ -73,6 +91,17 @@ const tagBadgeVariants = cva("border-transparent", {
 export type TagBadgeVariant = NonNullable<
   VariantProps<typeof tagBadgeVariants>["variant"]
 >
+
+/** The user-pickable color subset of `TagBadgeVariant`. */
+export type TagBadgeColor =
+  | "slate"
+  | "blue"
+  | "green"
+  | "amber"
+  | "orange"
+  | "red"
+  | "violet"
+  | "teal"
 
 export type TagBadgeProps = Omit<React.ComponentProps<typeof Badge>, "variant"> &
   VariantProps<typeof tagBadgeVariants> & {
@@ -102,10 +131,10 @@ function TagBadge({
   )
 }
 
-/** Resolve a free-string color key from the API into a known TagBadge variant. */
+/** Resolve a free-string color key from the API into a known TagBadge color. */
 function toTagBadgeVariant(
   colorKey: string | null | undefined
-): TagBadgeVariant {
+): TagBadgeColor {
   switch (colorKey) {
     case "slate":
     case "blue":

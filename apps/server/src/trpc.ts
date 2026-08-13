@@ -1,7 +1,7 @@
 import { initTRPC } from '@trpc/server'
 import type { Context } from './context.js'
-import type { ActionCategory, Role } from './domain/index.js'
-import { isAppErrorCause, unauthorized, forbidden } from './domain/index.js'
+import type { ActionCategory } from './domain/index.js'
+import { isRole, isAppErrorCause, unauthorized, forbidden } from './domain/index.js'
 import { isAllowed } from './modules/permissions/service.js'
 import { auth } from './modules/auth/index.js'
 
@@ -47,8 +47,11 @@ export function permissionProcedure(action: ActionCategory) {
     const memberResponse = await auth.api
       .getActiveMember({ headers: ctx.headers })
       .catch(() => null)
-    const role = (memberResponse as { role?: Role } | null)?.role
+    const role = (memberResponse as { role?: string } | null)?.role
     if (!role) forbidden('Not a member of this organization')
+    // Reject roles outside our own set here rather than letting one reach the
+    // `org_role` enum in `role_permissions` — same deny outcome, no failed query.
+    if (!isRole(role)) forbidden('Unrecognized organization role')
     const allowed = await isAllowed(ctx.organizationId, role, action)
     if (!allowed) forbidden(`${action} permission required`)
     return next()

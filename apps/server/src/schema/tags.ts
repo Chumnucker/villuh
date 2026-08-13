@@ -3,6 +3,7 @@ import { pgPolicy, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg
 import { villuhApp } from './rls.js'
 import { organization } from './auth.js'
 import { properties } from './properties.js'
+import { tagColorEnum, tagIconEnum } from './enums.js'
 
 // Org catalog tags — promoted from freeform property_tag rows (D-17-D-18).
 export const organizationTag = pgTable('organization_tag', {
@@ -11,8 +12,8 @@ export const organizationTag = pgTable('organization_tag', {
     .notNull()
     .references(() => organization.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
-  iconKey: text('icon_key').notNull(),
-  colorKey: text('color_key').notNull(),
+  iconKey: tagIconEnum('icon_key').notNull(),
+  colorKey: tagColorEnum('color_key').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 }, (t) => [
   unique('organization_tag_org_name_unique').on(t.organizationId, t.name),
@@ -38,8 +39,8 @@ export const propertyTag = pgTable('property_tag', {
     .references(() => properties.id, { onDelete: 'cascade' }),
   organizationTagId: uuid('organization_tag_id').references(() => organizationTag.id, { onDelete: 'set null' }),
   label: text('label').notNull(),
-  iconKey: text('icon_key').notNull(),
-  colorKey: text('color_key').notNull(),
+  iconKey: tagIconEnum('icon_key').notNull(),
+  colorKey: tagColorEnum('color_key').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 }, () => [
   pgPolicy('organization_isolation', {

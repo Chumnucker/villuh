@@ -1,4 +1,10 @@
-export { ROLES, zRole, BETTER_AUTH_BUILTIN_ROLES, type Role } from './roles.js'
+export {
+  ROLES,
+  zRole,
+  isRole,
+  BETTER_AUTH_BUILTIN_ROLES,
+  type Role,
+} from './roles.js'
 export {
   ACTION_CATEGORIES,
   zActionCategory,

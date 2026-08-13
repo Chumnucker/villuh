@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { motion } from "framer-motion"
 import {
@@ -10,14 +10,13 @@ import {
   PlatformIcon,
   useBreadcrumbLabel,
 } from "@villuh/ui"
-import { formatAddress, formatPhoneNumber } from "@villuh/ui/utils"
 import { ROUTES } from "@/app/routes"
 import { ArchivePropertyDialog } from "@/modules/properties/components/actions/archive-property-dialog"
-import { TagPicker } from "@/modules/properties/components/tags/tag-picker"
+import { PropertyBadgeRow } from "@/modules/properties/components/view/property-badge-row"
 import { usePropertyDetail } from "@/modules/properties/providers/property-detail-provider"
 
 /**
- * Property detail page header — name, address/phone, tags, edit/archive
+ * Property detail page header — name, type/tag chips, edit/archive
  * actions, plus the decorative "sun-setting over the horizon" hero backdrop
  * (first cover photo, low opacity, radial-gradient fade). Mounted once here
  * (rather than per-tab) so the backdrop spans every tab — About, Units,
@@ -43,18 +42,29 @@ export function PropertyDetailHeader() {
   useBreadcrumbLabel(property.id, property.name)
 
   const heroImage = property.coverImageUrl
+  const heroContainerRef = useRef<HTMLDivElement>(null)
   const [heroLoaded, setHeroLoaded] = useState(false)
-  // Reset if the image itself changes (e.g. navigating straight from one
-  // property's detail page to another's, which doesn't remount this
-  // persistent header) so the new image still fades in instead of popping.
+
+  // Fade-in is gated on load so we don't animate an empty box. On browser
+  // back (or any remount) the <img> is often already in HTTP cache —
+  // `onLoad` may never fire, so also sync from `img.complete`.
   useEffect(() => {
     setHeroLoaded(false)
-  }, [heroImage])
+    if (!heroImage) return
 
-  const address = formatAddress(property)
-  const phone = property.phone?.trim()
-    ? formatPhoneNumber(property.phone)
-    : null
+    let cancelled = false
+    const frame = requestAnimationFrame(() => {
+      const img = heroContainerRef.current?.querySelector("img")
+      if (!cancelled && img?.complete && img.naturalHeight > 0) {
+        setHeroLoaded(true)
+      }
+    })
+
+    return () => {
+      cancelled = true
+      cancelAnimationFrame(frame)
+    }
+  }, [heroImage])
 
   return (
     <>
@@ -70,6 +80,7 @@ export function PropertyDetailHeader() {
           }}
         >
           <motion.div
+            ref={heroContainerRef}
             className="relative size-full"
             initial={{ opacity: 0 }}
             animate={{ opacity: heroLoaded ? 1 : 0 }}
@@ -88,7 +99,7 @@ export function PropertyDetailHeader() {
               // native lazy-decode, and no CLS.
               unoptimized
               onLoad={() => setHeroLoaded(true)}
-              className="object-cover object-top opacity-12 dark:opacity-10"
+              className="object-cover object-top opacity-16 dark:opacity-10"
             />
           </motion.div>
         </div>
@@ -98,32 +109,7 @@ export function PropertyDetailHeader() {
         <div className="flex min-w-0 flex-col gap-3.5">
           <Page.Title>{property.name}</Page.Title>
 
-          {address || phone ? (
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-              {address ? (
-                <span className="inline-flex min-w-0 items-center gap-1.5">
-                  <PlatformIcon
-                    icon="IconMapPin"
-                    size={16}
-                    className="shrink-0"
-                  />
-                  <span className="truncate">{address}</span>
-                </span>
-              ) : null}
-              {phone ? (
-                <span className="inline-flex items-center gap-1.5">
-                  <PlatformIcon
-                    icon="IconPhone"
-                    size={16}
-                    className="shrink-0"
-                  />
-                  {phone}
-                </span>
-              ) : null}
-            </div>
-          ) : null}
-
-          <TagPicker propertyId={property.id} appearance="inline" />
+          <PropertyBadgeRow />
         </div>
 
         <Page.Actions>
@@ -135,7 +121,7 @@ export function PropertyDetailHeader() {
             <PlatformIcon icon="IconArchive" size={16} />
           </Button>
           <LinkButton
-            href={ROUTES.propertyEdit(property.id)}
+            href={ROUTES.propertySettings(property.id)}
             variant="outline-muted"
             size="icon"
           >

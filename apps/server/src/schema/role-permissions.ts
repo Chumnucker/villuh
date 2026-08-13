@@ -2,15 +2,15 @@ import { sql } from 'drizzle-orm'
 import { pgPolicy, pgTable, text, uuid, boolean, timestamp, unique } from 'drizzle-orm/pg-core'
 import { villuhApp } from './rls.js'
 import { organization } from './auth.js'
-import type { ActionCategory, Role } from '../domain/index.js'
+import { actionCategoryEnum, orgRoleEnum } from './enums.js'
 
 export const rolePermissions = pgTable('role_permissions', {
   id: uuid('id').primaryKey().defaultRandom(),
   organizationId: text('organization_id')
     .notNull()
     .references(() => organization.id, { onDelete: 'cascade' }),
-  role: text('role').$type<Role>().notNull(),
-  action: text('action').$type<ActionCategory>().notNull(),
+  role: orgRoleEnum('role').notNull(),
+  action: actionCategoryEnum('action').notNull(),
   allowed: boolean('allowed').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

@@ -59,16 +59,22 @@ export function TabsList({
 
 export function TabsTab({
   className,
+  render,
+  nativeButton,
   ...props
 }: TabsPrimitive.Tab.Props): React.ReactElement {
   return (
     <TabsPrimitive.Tab
+      {...props}
       className={cn(
         "relative flex h-9 shrink-0 grow cursor-pointer items-center justify-center gap-1.5 rounded-2xl border border-transparent px-[calc(--spacing(2.5)-1px)] text-base font-medium whitespace-nowrap transition-[color,background-color,box-shadow] outline-none focus-visible:ring-2 focus-visible:ring-ring data-[orientation=vertical]:w-full data-[orientation=vertical]:justify-start sm:h-8 sm:text-sm data-disabled:pointer-events-none data-disabled:opacity-64 data-active:text-foreground [&_svg]:pointer-events-none [&_svg]:-mx-0.5 [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4",
         className
       )}
       data-slot="tabs-tab"
-      {...props}
+      render={render}
+      // Base UI defaults to a native <button>. Custom `render` (e.g. Next Link)
+      // is not a button — disable nativeButton semantics in that case.
+      nativeButton={nativeButton ?? (render != null ? false : true)}
     />
   )
 }

@@ -5,7 +5,7 @@ import { planLimits } from '../../schema/plan-limits.js'
 import { loadRolePermissions } from '../permissions/service.js'
 import { withOrganization } from '../../db/index.js'
 import { DEFAULT_PERMISSIONS } from '../permissions/service.js'
-import { notFound, type Role } from '../../domain/index.js'
+import { isRole, notFound, type Role } from '../../domain/index.js'
 import { resolveLimitsTier } from '../billing/plans.js'
 import { countActiveProperties, countActiveUnits } from '../../domain/portfolio-counts.js'
 
@@ -37,8 +37,11 @@ export const meRouter = router({
 
       const memberRows = (await tx.execute(
         sql`SELECT role FROM "member" WHERE organization_id = ${organizationId} AND user_id = ${userId} LIMIT 1`,
-      )) as unknown as { role: Role }[]
-      const role: Role = memberRows[0]?.role ?? 'viewer'
+      )) as unknown as { role: string }[]
+      // Better Auth may have stored one of its built-in roles here; fall back to
+      // the least-privileged one instead of passing it to the `org_role` enum.
+      const storedRole = memberRows[0]?.role
+      const role: Role = isRole(storedRole) ? storedRole : 'viewer'
       // Pass tx — avoid nested withOrganization
       const permissions =
         role === 'owner' ? DEFAULT_PERMISSIONS.owner : await loadRolePermissions(organizationId, role, tx)

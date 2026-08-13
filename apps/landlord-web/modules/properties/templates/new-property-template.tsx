@@ -12,7 +12,7 @@ export function NewPropertyTemplate() {
       </Page.Header>
 
       <Page.Content>
-        <PropertyForm mode="create" />
+        <PropertyForm />
       </Page.Content>
     </Page.Shell>
   )
