@@ -1,5 +1,6 @@
 import localFont from "next/font/local"
 import { Inter } from "next/font/google"
+import { NuqsAdapter } from "nuqs/adapters/next/app"
 
 import "./globals.css"
 import { cn, ThemeProvider, LayoutProvider, Toaster } from "@villuh/ui"
@@ -32,12 +33,14 @@ export default function RootLayout({
       )}
     >
       <body>
-        <ThemeProvider>
-          <TRPCProvider>
-            <LayoutProvider>{children}</LayoutProvider>
-            <Toaster />
-          </TRPCProvider>
-        </ThemeProvider>
+        <NuqsAdapter>
+          <ThemeProvider>
+            <TRPCProvider>
+              <LayoutProvider>{children}</LayoutProvider>
+              <Toaster />
+            </TRPCProvider>
+          </ThemeProvider>
+        </NuqsAdapter>
       </body>
     </html>
   )
