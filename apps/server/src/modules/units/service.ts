@@ -2,12 +2,13 @@ import { and, eq, isNull } from 'drizzle-orm'
 import type { PgColumn } from 'drizzle-orm/pg-core'
 import { units, unitStatuses } from '../../schema/units.js'
 import { properties } from '../../schema/properties.js'
+import { floorPlans } from '../../schema/floor-plans.js'
 import { idFilter, listWhere, numericFilter, searchCondition } from '../../lib/filter-sql.js'
 import { resolveListQuery, runListQuery } from '../../lib/list-query.js'
 import { ensureDefaultUnitStatuses } from '../../domain/unit-statuses.js'
 import { assertPlanLimit } from '../../domain/plan-limit.js'
 import { countActiveUnits } from '../../domain/portfolio-counts.js'
-import { notFound } from '../../domain/index.js'
+import { badRequest, notFound } from '../../domain/index.js'
 import type { OrganizationTx } from '../../db/index.js'
 import type { CreateUnitInput, ListUnitsInput, UpdateUnitInput } from './schemas.js'
 
@@ -30,6 +31,29 @@ async function requireProperty(tx: OrganizationTx, organizationId: string, prope
     .where(and(eq(properties.id, propertyId), eq(properties.organizationId, organizationId)))
     .limit(1)
   if (!rows[0]) notFound('Property not found')
+}
+
+/**
+ * A floor plan may only be assigned to a unit of its own property (D-27). A plan that is
+ * missing in-org, or that belongs to a different property, is a cross-property assignment
+ * attempt — rejected with BAD_REQUEST (not NOT_FOUND): the plan id may be perfectly valid,
+ * it just does not belong to this unit's property (T-03.2-08).
+ */
+async function requireFloorPlanInProperty(
+  tx: OrganizationTx,
+  organizationId: string,
+  floorPlanId: string,
+  propertyId: string,
+): Promise<void> {
+  const rows = await tx
+    .select({ propertyId: floorPlans.propertyId })
+    .from(floorPlans)
+    .where(and(eq(floorPlans.id, floorPlanId), eq(floorPlans.organizationId, organizationId)))
+    .limit(1)
+  const plan = rows[0]
+  if (!plan || plan.propertyId !== propertyId) {
+    badRequest('That floor plan belongs to a different property.')
+  }
 }
 
 async function requireUnitStatus(tx: OrganizationTx, organizationId: string, statusId: string): Promise<void> {
@@ -180,10 +204,13 @@ export async function createUnit(
   await ensureDefaultUnitStatuses(organizationId, tx)
   await requireProperty(tx, organizationId, input.propertyId)
   if (input.statusId) await requireUnitStatus(tx, organizationId, input.statusId)
+  if (input.floorPlanId) await requireFloorPlanInProperty(tx, organizationId, input.floorPlanId, input.propertyId)
 
   const current = await countActiveUnits(tx, organizationId)
   await assertPlanLimit({ tx, organizationId, resource: 'units', current })
 
+  // New fields are written only when supplied — never copied from the plan (D-19); a unit
+  // inherits from its plan by leaving the column null, resolved client-side (D-20).
   const [row] = await tx
     .insert(units)
     .values({
@@ -193,6 +220,9 @@ export async function createUnit(
       squareFootage: input.squareFootage ?? null,
       baseRent: input.baseRentCents,
       statusId: input.statusId ?? null,
+      floorPlanId: input.floorPlanId ?? null,
+      bedrooms: input.bedrooms ?? null,
+      bathrooms: input.bathrooms ?? null,
     })
     .returning()
   return row
@@ -204,8 +234,10 @@ export async function updateUnit(
   input: UpdateUnitInput,
 ): Promise<UnitRow> {
   const { unitId, ...rest } = input
-  await requireUnit(tx, organizationId, unitId)
+  const existing = await requireUnit(tx, organizationId, unitId)
   if (rest.statusId !== undefined) await requireUnitStatus(tx, organizationId, rest.statusId)
+  // D-27a: property is immutable, so the plan is always validated against the unit's own property.
+  if (rest.floorPlanId) await requireFloorPlanInProperty(tx, organizationId, rest.floorPlanId, existing.propertyId)
 
   const patch: Partial<typeof units.$inferInsert> = { updatedAt: new Date() }
   // D-27a: a unit's property is immutable after creation — propertyId is not accepted here.
@@ -214,6 +246,10 @@ export async function updateUnit(
   if (rest.baseRentCents !== undefined) patch.baseRent = rest.baseRentCents
   // D-28: status assignment is manual write-permission territory, not admin-only catalog mgmt.
   if (rest.statusId !== undefined) patch.statusId = rest.statusId ?? null
+  // Present → write (null clears back to inheriting, D-45); absent → leave alone (D-19).
+  if (rest.floorPlanId !== undefined) patch.floorPlanId = rest.floorPlanId ?? null
+  if (rest.bedrooms !== undefined) patch.bedrooms = rest.bedrooms ?? null
+  if (rest.bathrooms !== undefined) patch.bathrooms = rest.bathrooms ?? null
 
   const [row] = await tx
     .update(units)
