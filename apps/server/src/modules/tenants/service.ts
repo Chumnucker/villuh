@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import type { PgColumn } from 'drizzle-orm/pg-core'
 import { tenants, tenancies, tenancyMembers } from '../../schema/tenants.js'
 import { units } from '../../schema/units.js'
@@ -365,6 +365,52 @@ export async function getTenantActivity(
   `) as unknown as { c: number }[]
 
   return { entries, total: totalRes[0]?.c ?? 0 }
+}
+
+export type UnitTenancyHistoryItem = TenancyRow & {
+  members: Array<{ tenantId: string; firstName: string; lastName: string; isPrimary: boolean }>
+}
+
+/**
+ * Unit-scoped tenancy history (UNIT-04): every tenancy for this unit — INCLUDING ended /
+ * archived ones — so the unit "Tenant history" tab shows past occupants, not just the
+ * current one. Ordered active-first (current occupant on top), then most-recent by
+ * start/created date. Each row carries its members with the primary marker.
+ */
+export async function getUnitTenancyHistory(
+  tx: OrganizationTx,
+  organizationId: string,
+  unitId: string,
+): Promise<UnitTenancyHistoryItem[]> {
+  await requireUnit(tx, organizationId, unitId)
+
+  const tenancyRows = await tx
+    .select()
+    .from(tenancies)
+    .where(and(eq(tenancies.unitId, unitId), eq(tenancies.organizationId, organizationId)))
+    .orderBy(sql`${currentTenancyRank} DESC`, desc(tenancies.startDate), desc(tenancies.createdAt))
+
+  if (tenancyRows.length === 0) return []
+
+  const tenancyIds = tenancyRows.map((r) => r.id)
+  const memberRows = await tx
+    .select({
+      tenancyId: tenancyMembers.tenancyId,
+      tenantId: tenancyMembers.tenantId,
+      isPrimary: tenancyMembers.isPrimary,
+      firstName: tenants.firstName,
+      lastName: tenants.lastName,
+    })
+    .from(tenancyMembers)
+    .innerJoin(tenants, eq(tenants.id, tenancyMembers.tenantId))
+    .where(and(inArray(tenancyMembers.tenancyId, tenancyIds), eq(tenancyMembers.organizationId, organizationId)))
+
+  return tenancyRows.map((t) => ({
+    ...t,
+    members: memberRows
+      .filter((m) => m.tenancyId === t.id)
+      .map((m) => ({ tenantId: m.tenantId, firstName: m.firstName, lastName: m.lastName, isPrimary: m.isPrimary })),
+  }))
 }
 
 export async function endTenancy(tx: OrganizationTx, organizationId: string, tenancyId: string): Promise<TenancyRow> {

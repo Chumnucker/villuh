@@ -44,6 +44,10 @@ export type UpdateTenancyInput = z.infer<typeof updateTenancyInputSchema>
 
 export const tenancyIdInputSchema = z.object({ tenancyId: z.uuid() })
 
+/** Unit-scoped tenancy history read (active + ended) for the unit "Tenant history" tab. */
+export const unitTenancyHistoryInputSchema = z.object({ unitId: z.uuid() })
+export type UnitTenancyHistoryInput = z.infer<typeof unitTenancyHistoryInputSchema>
+
 export const addCoTenantInputSchema = z.object({
   tenancyId: z.uuid(),
   tenantId: z.uuid(),

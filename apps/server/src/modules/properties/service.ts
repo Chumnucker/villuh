@@ -1,6 +1,7 @@
 import { and, asc, eq, isNull, sql } from 'drizzle-orm'
 import { properties, propertyImages } from '../../schema/properties.js'
 import { units } from '../../schema/units.js'
+import { tenancies } from '../../schema/tenants.js'
 import { assertPlanLimit } from '../../domain/plan-limit.js'
 import { countActiveProperties } from '../../domain/portfolio-counts.js'
 import { sanitizeNotesHtml } from '../../lib/sanitize-notes.js'
@@ -191,6 +192,23 @@ export async function archiveProperty(
   if (existing.archivedAt) {
     return { property: existing, archivedUnitIds: [] }
   }
+
+  // Locked spec guard #6: block archiving a property while ANY of its units still has an
+  // active (non-archived) tenancy — the active tenancies must be ended (retained) first.
+  const [activeTenancy] = await tx
+    .select({ id: tenancies.id })
+    .from(tenancies)
+    .innerJoin(units, eq(units.id, tenancies.unitId))
+    .where(
+      and(
+        eq(units.propertyId, propertyId),
+        eq(units.organizationId, organizationId),
+        eq(tenancies.status, 'active'),
+        isNull(tenancies.archivedAt),
+      ),
+    )
+    .limit(1)
+  if (activeTenancy) badRequest("End active tenancies on this property's units first.")
 
   const now = new Date()
 

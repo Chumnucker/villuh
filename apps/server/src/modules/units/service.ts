@@ -2,6 +2,7 @@ import { and, eq, isNull } from 'drizzle-orm'
 import type { PgColumn } from 'drizzle-orm/pg-core'
 import { units, unitStatuses } from '../../schema/units.js'
 import { properties } from '../../schema/properties.js'
+import { tenancies } from '../../schema/tenants.js'
 import { floorPlans } from '../../schema/floor-plans.js'
 import { idFilter, listWhere, numericFilter, searchCondition } from '../../lib/filter-sql.js'
 import { resolveListQuery, runListQuery } from '../../lib/list-query.js'
@@ -262,6 +263,15 @@ export async function updateUnit(
 export async function archiveUnit(tx: OrganizationTx, organizationId: string, unitId: string): Promise<UnitRow> {
   const existing = await requireUnit(tx, organizationId, unitId)
   if (existing.archivedAt) return existing
+
+  // Locked spec guard #6: a unit cannot be archived while it still has an active tenancy —
+  // the occupancy must be ended (retained) first, mirroring the DB single-active invariant.
+  const [activeTenancy] = await tx
+    .select({ id: tenancies.id })
+    .from(tenancies)
+    .where(and(eq(tenancies.unitId, unitId), eq(tenancies.status, 'active'), isNull(tenancies.archivedAt)))
+    .limit(1)
+  if (activeTenancy) badRequest('End the active tenancy on this unit first.')
 
   const now = new Date()
   const [row] = await tx

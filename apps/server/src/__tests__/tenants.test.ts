@@ -10,7 +10,10 @@ import {
   getTenant,
   archiveTenant,
   getTenantActivity,
+  getUnitTenancyHistory,
 } from '../modules/tenants/service.js'
+import { archiveUnit } from '../modules/units/service.js'
+import { archiveProperty } from '../modules/properties/service.js'
 import {
   signUpTestUser,
   markUserEmailVerified,
@@ -161,6 +164,54 @@ describe('tenants service', () => {
       expect(archived.archivedAt).not.toBeNull()
       const { tenants } = await listTenants(tx, orgId)
       expect(tenants.some((r) => r.id === a.id)).toBe(false)
+    })
+  })
+
+  it('blocks archiving a unit with an active tenancy until it is ended (spec guard #6)', async () => {
+    await withOrganization(orgId, userId, async (tx) => {
+      const a = await createTenant(tx, orgId, { firstName: 'Occ', lastName: 'Upied', email: 'occupied@x.com' })
+      const ten = await createTenancy(tx, orgId, { unitId, status: 'active', memberTenantIds: [a.id], primaryTenantId: a.id })
+
+      await expect(archiveUnit(tx, orgId, unitId)).rejects.toThrow(/end the active tenancy/i)
+
+      await endTenancy(tx, orgId, ten.id)
+      const archived = await archiveUnit(tx, orgId, unitId)
+      expect(archived.archivedAt).not.toBeNull()
+    })
+  })
+
+  it("blocks archiving a property while one of its units has an active tenancy (spec guard #6)", async () => {
+    const { property } = await caller.properties.create({ name: 'Occupied Property' })
+    const { unit } = await caller.units.create({ propertyId: property.id, label: 'Occ Unit', baseRentCents: 100000 })
+
+    await withOrganization(orgId, userId, async (tx) => {
+      const a = await createTenant(tx, orgId, { firstName: 'Prop', lastName: 'Occ', email: 'propocc@x.com' })
+      const ten = await createTenancy(tx, orgId, { unitId: unit.id, status: 'active', memberTenantIds: [a.id], primaryTenantId: a.id })
+
+      await expect(archiveProperty(tx, orgId, property.id)).rejects.toThrow(/active tenanc/i)
+
+      await endTenancy(tx, orgId, ten.id)
+      const result = await archiveProperty(tx, orgId, property.id)
+      expect(result.property.archivedAt).not.toBeNull()
+    })
+  })
+
+  it('unit tenancy history returns ended + active, active first, with members (UNIT-04)', async () => {
+    await withOrganization(orgId, userId, async (tx) => {
+      const past = await createTenant(tx, orgId, { firstName: 'Past', lastName: 'Tenant', email: 'pasthist@x.com' })
+      const current = await createTenant(tx, orgId, { firstName: 'Cur', lastName: 'Tenant', email: 'currhist@x.com' })
+
+      const ended = await createTenancy(tx, orgId, { unitId, status: 'active', memberTenantIds: [past.id], primaryTenantId: past.id })
+      await endTenancy(tx, orgId, ended.id)
+      await createTenancy(tx, orgId, { unitId, status: 'active', memberTenantIds: [current.id], primaryTenantId: current.id })
+
+      const history = await getUnitTenancyHistory(tx, orgId, unitId)
+      expect(history).toHaveLength(2)
+      expect(history[0]!.status).toBe('active')
+      expect(history[1]!.status).toBe('ended')
+      expect(history[0]!.members.map((m) => m.tenantId)).toContain(current.id)
+      expect(history[1]!.members.map((m) => m.tenantId)).toContain(past.id)
+      expect(history[0]!.members.find((m) => m.tenantId === current.id)!.isPrimary).toBe(true)
     })
   })
 
