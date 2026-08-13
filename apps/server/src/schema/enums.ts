@@ -38,3 +38,7 @@ export const planResourceEnum = pgEnum('plan_resource', PLAN_RESOURCES)
 /** Locked tag/status palette (D-21) — shared by tags and unit statuses. */
 export const tagColorEnum = pgEnum('tag_color', TAG_COLOR_KEYS)
 export const tagIconEnum = pgEnum('tag_icon', TAG_ICON_KEYS)
+
+/** Tenancy lifecycle (tenant slice). pending → active → ended. */
+export const TENANCY_STATUSES = ['pending', 'active', 'ended'] as const
+export const tenancyStatusEnum = pgEnum('tenancy_status', TENANCY_STATUSES)
