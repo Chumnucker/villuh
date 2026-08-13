@@ -1,6 +1,7 @@
 "use client"
 
 import { AppOverlays } from "@villuh/ui"
+import { propertyOverlays } from "@/modules/properties/lib/properties.overlays"
 import { unitOverlays } from "@/modules/units/lib/units.overlays"
 
 /**
@@ -14,7 +15,7 @@ import { unitOverlays } from "@/modules/units/lib/units.overlays"
  *
  * Registering a module is one line in MODULES (D-08).
  */
-const MODULES = [unitOverlays]
+const MODULES = [unitOverlays, propertyOverlays]
 
 export function LandlordOverlays() {
   return <AppOverlays modules={MODULES} />

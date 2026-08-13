@@ -22,6 +22,7 @@ import {
   ScrollArea,
   TagBadge,
   toTagBadgeVariant,
+  type OverlayHandle,
 } from "@villuh/ui"
 import { invalidateQueries, trpc } from "@villuh/api"
 import { useUser } from "@/modules/app/providers/me-provider"
@@ -37,19 +38,19 @@ import {
  * Screen 7 org tag catalog (D-18–D-20). List/edit/delete requires `write`; viewers see a
  * read-only list. Delete cascades every `property_tag` referencing the catalog row (server-side)
  * — the confirm copy in the delete dropdown spells that out before the destructive call fires.
+ *
+ * Overlay-driven (D-06, D-09): open/closed lives in the URL (`?property.tags=1`),
+ * mounted once app-wide by `<AppOverlays>`.
  */
-export function ManageTagsDialog({
-  open,
-  onOpenChange,
-}: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}) {
+export function ManageTagsDialog({ overlay }: { overlay: OverlayHandle }) {
+  // D-34: this useUser() call is the concrete reason <AppOverlays> must be
+  // mounted inside <UserProvider> — moving the mount above the provider breaks
+  // this dialog at runtime, not at compile time.
   const { user } = useUser()
   const canWrite = user.org.permissions.write
   const utils = trpc.useUtils()
   const { data } = trpc.tags.listOrganizationTags.useQuery(undefined, {
-    enabled: open,
+    enabled: overlay.isOpen,
   })
   const tags = data?.tags ?? []
 
@@ -94,7 +95,7 @@ export function ManageTagsDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog {...overlay.dialogProps}>
       <DialogContainer className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Manage Tags</DialogTitle>
@@ -216,7 +217,7 @@ export function ManageTagsDialog({
         </DialogContent>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => overlay.close()}>
             Close
           </Button>
         </DialogFooter>

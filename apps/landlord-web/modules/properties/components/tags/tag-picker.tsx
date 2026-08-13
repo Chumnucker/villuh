@@ -30,7 +30,7 @@ import {
   type TagIconKey,
 } from "@villuh/server/schemas/tags"
 import { useUser } from "@/modules/app/providers/me-provider"
-import { ManageTagsDialog } from "./manage-tags-dialog"
+import { propertyOverlays } from "@/modules/properties/lib/properties.overlays"
 import { TagIconColorPicker } from "./tag-icon-color-picker"
 
 export type TagPickerTag = {
@@ -66,7 +66,7 @@ function mapPropertyTagRow(row: {
 
 /**
  * PROP-02 tag UX (D-17–D-21): fixed icon/color chips, freeform create, org catalog suggestions,
- * promote-to-catalog when `write`, and a "Manage tags…" entry into `ManageTagsDialog` (Screen 7).
+ * promote-to-catalog when `write`, and a "Manage tags…" entry into the org tag catalog (Screen 7).
  *
  * Two modes, one component (both required by the property form's create/edit split):
  * - **Live** (`propertyId` set — detail page, edit form): reads/writes real `tags.*` property-tag
@@ -110,7 +110,7 @@ export function TagPicker(
   const canWrite = user.org.permissions.write
   const utils = trpc.useUtils()
 
-  const [manageOpen, setManageOpen] = useState(false)
+  const manageTags = propertyOverlays.use("tags")
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [search, setSearch] = useState("")
   const [creating, setCreating] = useState(false)
@@ -385,7 +385,7 @@ export function TagPicker(
                       type="button"
                       onClick={() => {
                         setPopoverOpen(false)
-                        setManageOpen(true)
+                        manageTags.open()
                       }}
                       className="mt-1 flex items-center gap-2 rounded-xl border-t border-border px-2 py-1.5 pt-2 text-left text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                     >
@@ -402,12 +402,7 @@ export function TagPicker(
   )
 
   if (isInline) {
-    return (
-      <>
-        {chips}
-        <ManageTagsDialog open={manageOpen} onOpenChange={setManageOpen} />
-      </>
-    )
+    return chips
   }
 
   return (
@@ -419,7 +414,7 @@ export function TagPicker(
           variant="text-muted"
           size="xs"
           className="h-auto p-0"
-          onClick={() => setManageOpen(true)}
+          onClick={() => manageTags.open()}
         >
           Manage tags…
         </Button>
@@ -432,8 +427,6 @@ export function TagPicker(
           You need write access to manage tags.
         </FieldDescription>
       ) : null}
-
-      <ManageTagsDialog open={manageOpen} onOpenChange={setManageOpen} />
     </Field>
   )
 }

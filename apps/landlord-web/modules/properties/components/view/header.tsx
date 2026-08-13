@@ -11,7 +11,7 @@ import {
   useBreadcrumbLabel,
 } from "@villuh/ui"
 import { ROUTES } from "@/app/routes"
-import { ArchivePropertyDialog } from "@/modules/properties/components/actions/archive-property-dialog"
+import { propertyOverlays } from "@/modules/properties/lib/properties.overlays"
 import { PropertyBadgeRow } from "@/modules/properties/components/view/property-badge-row"
 import { usePropertyDetail } from "@/modules/properties/providers/property-detail-provider"
 
@@ -37,7 +37,7 @@ import { usePropertyDetail } from "@/modules/properties/providers/property-detai
  */
 export function PropertyDetailHeader() {
   const { property } = usePropertyDetail()
-  const [archiveOpen, setArchiveOpen] = useState(false)
+  const archive = propertyOverlays.use("archive")
 
   useBreadcrumbLabel(property.id, property.name)
 
@@ -102,7 +102,7 @@ export function PropertyDetailHeader() {
               // native lazy-decode, and no CLS.
               unoptimized
               onLoad={() => setLoadedHero(heroImage)}
-              className="object-cover object-top opacity-16 dark:opacity-10"
+              className="object-cover object-top opacity-20"
             />
           </motion.div>
         </div>
@@ -119,7 +119,7 @@ export function PropertyDetailHeader() {
           <Button
             variant="ghost-destructive"
             size="icon"
-            onClick={() => setArchiveOpen(true)}
+            onClick={() => archive.open(property.id)}
           >
             <PlatformIcon icon="IconArchive" size={16} />
           </Button>
@@ -132,13 +132,6 @@ export function PropertyDetailHeader() {
           </LinkButton>
         </Page.Actions>
       </Page.Header>
-
-      <ArchivePropertyDialog
-        open={archiveOpen}
-        onOpenChange={setArchiveOpen}
-        propertyId={property.id}
-        propertyName={property.name}
-      />
     </>
   )
 }
