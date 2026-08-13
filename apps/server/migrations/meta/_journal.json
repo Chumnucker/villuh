@@ -127,6 +127,13 @@
       "when": 1786985160000,
       "tag": "0017_floor_plans",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1786993680000,
+      "tag": "0018_tenants",
+      "breakpoints": true
     }
   ]
 }
