@@ -1,6 +1,8 @@
+import type * as React from "react"
 import { createSerializer, parseAsString } from "nuqs"
 import { beforeEach, describe, expect, it } from "vitest"
 
+import type { AppOverlays } from "./app-overlays"
 import { __resetQueryStateKeyRegistry } from "./key-registry"
 import {
   buildOverlayHref,
@@ -109,6 +111,20 @@ describe("registry helpers", () => {
     expect(global).toEqual(["form", "manage"])
     expect(page).toEqual(["photo"])
     expect([...global, ...page].sort()).toEqual([...names].sort())
+  })
+
+  it("a concretely typed group is accepted as an <AppOverlays> module (D-08)", () => {
+    const group = createOverlays("unit", {
+      form: entity(Noop),
+      photo: pageEntity(),
+    })
+
+    // Compile-time assertion. This is the only place the widening from
+    // `OverlayGroup<C>` to the erased group type `<AppOverlays modules>` takes
+    // is exercised until the app-side registries land in 03.1-06 / 03.1-07.
+    const modules: React.ComponentProps<typeof AppOverlays>["modules"] = [group]
+
+    expect(modules).toHaveLength(1)
   })
 })
 
