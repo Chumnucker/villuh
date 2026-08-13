@@ -132,7 +132,7 @@ Recent decisions affecting current work:
 - [Phase 03.1]: Filter value escaping is `~~`/`~c`/`~s` with a **single left-to-right decode scan**. Three sequential `.replace` passes are not bijective — `"~c"` encodes to `"~~c"` and decodes to `"~:"` (D-45)
 - [Phase 03.1]: All plan verification commands must be Windows PowerShell 5.1 and must be **executed** before being recorded, especially the ones expected to return non-zero (D-49). No `grep`, no POSIX `find`/`diff`, no `&&`, no `rg -E` (that is `--encoding`), no glob in a path argument
 - [Phase 03.1-01]: `packages/ui` vitest keeps `passWithNoTests` at its default `false` — a zero-match run must stay red, or a mis-scoped `include` glob reports green forever
-- [Phase 03.1-01]: The phase gate `pnpm turbo run lint test typecheck` cannot exit 0 monorepo-wide due to three pre-existing unrelated failures; plans 02–08 must use the scoped substitution recorded in `.planning/phases/03.1-url-query-state/deferred-items.md`
+- [Phase 03.1-01]: Of the three pre-existing failures blocking the phase gate, two were fixed (missing eslint setup in `@villuh/api`/`@villuh/auth`; `set-state-in-effect` in the property header) so `lint typecheck` run unscoped. Only `test` is scoped, to `--filter=@villuh/ui`, skipping `@villuh/server`'s environment-blocked suite. See `.planning/phases/03.1-url-query-state/deferred-items.md`
 
 ### Pending Todos
 
@@ -146,7 +146,7 @@ None yet.
 
 ### Blockers/Concerns
 
-- `pnpm turbo run lint` fails monorepo-wide on pre-existing defects unrelated to any active phase: `@villuh/auth` and `@villuh/api` declare a `lint` script but have neither `eslint` nor an `eslint.config.*`; `apps/landlord-web/modules/properties/components/view/header.tsx:52` has one `react-hooks/set-state-in-effect` error. `apps/server`'s billing tests also need live Stripe credentials. See `.planning/phases/03.1-url-query-state/deferred-items.md`
+- `pnpm turbo run lint` and `typecheck` now pass monorepo-wide (6/6, 0 errors). Two pre-existing blockers were fixed during 03.1 rather than deferred, since seven remaining plans declare the same gate: `@villuh/auth` and `@villuh/api` gained `eslint` + an `eslint.config.mjs` mirroring `packages/ui`, and `properties/components/view/header.tsx` no longer resets a boolean synchronously inside an effect (it tracks which src loaded instead). Only `apps/server`'s 26 test failures remain deferred — they need real `STRIPE_*` credentials and possibly unimplemented routes, and 03.1 touches no server files. See `.planning/phases/03.1-url-query-state/deferred-items.md`
 - DocuSign developer account not yet set up — required before Phase 4 begins; schedule account creation early
 - Railway PgBouncer mode: confirm transaction-mode pooling (not session mode) for `set_config` compatibility before Phase 1 ships
 - Inbound message routing (Twilio/Resend) architecture is TBD — needs dedicated research at Phase 7 start

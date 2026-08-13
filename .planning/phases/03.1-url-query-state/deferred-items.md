@@ -10,11 +10,17 @@ task's changes).
 ## D-1 — `pnpm turbo run lint` cannot exit 0 monorepo-wide
 
 Found during: plan 03.1-01, Task 3 gate.
+**Status: items 1 and 2 FIXED by the orchestrator; only item 3 remains deferred.**
 
 Three independent pre-existing failures block the phase-wide lint/test gate that
 every plan in this phase declares. None involve a file this phase touches.
 
-### 1. `@villuh/auth` and `@villuh/api` have a `lint` script but no linter
+Items 1 and 2 were fixed rather than deferred, because seven remaining plans each
+declare this gate and would otherwise each independently work around it — the gate
+would be scoped away for the whole phase and never actually prove anything.
+`pnpm turbo run lint` now reports **6 successful, 6 total, 0 errors**.
+
+### 1. `@villuh/auth` and `@villuh/api` have a `lint` script but no linter — FIXED
 
 Both declare `"lint": "eslint ."` and depend on `@villuh/eslint-config`, but
 neither declares `eslint` itself as a devDependency, so the binary is absent from
@@ -26,11 +32,15 @@ their `node_modules/.bin` under pnpm's strict layout:
 ```
 
 Neither package has ever had an `eslint.config.*` file — confirmed absent at
-`bc121c2` via `git ls-tree -r --name-only bc121c2`. Fixing this means adding the
-devDependency, authoring two flat configs, and then resolving whatever the first
-lint run surfaces across two packages unrelated to URL query state.
+`bc121c2` via `git ls-tree -r --name-only bc121c2`.
 
-### 2. `@villuh/landlord-web` lint has one pre-existing error
+**Fix:** added `eslint@^9.39.4` + `eslint-plugin-react-hooks@^7.1.1` as
+devDependencies and an `eslint.config.mjs` to each, both mirroring
+`packages/ui/eslint.config.mjs` (shared base config plus the classic hooks rules,
+not the v7 React Compiler preset). Both packages lint clean on the first run — no
+follow-on errors surfaced.
+
+### 2. `@villuh/landlord-web` lint has one pre-existing error — FIXED
 
 ```
 apps/landlord-web/modules/properties/components/view/header.tsx
@@ -38,26 +48,40 @@ apps/landlord-web/modules/properties/components/view/header.tsx
                cascading renders                react-hooks/set-state-in-effect
 ```
 
-Phase 03 code. Fixing it is a behavioural change to the property hero-image load
-sequence, not a lint tidy-up.
+Phase 03 code, and a real correctness bug rather than a lint nit.
 
-### 3. `@villuh/server` billing tests fail without live credentials
+**Fix:** the effect reset a boolean (`setHeroLoaded(false)`) on every `heroImage`
+change, which is the cascading render the rule names. Replaced the boolean with the
+src that actually loaded (`loadedHero`), deriving `heroLoaded` as
+`loadedHero === heroImage`. A new image is then un-faded automatically, so no reset
+is needed and the synchronous setState is gone. Fade-in behaviour is unchanged,
+including the `img.complete` path for HTTP-cached images on back-navigation.
 
-`src/__tests__/billing.test.ts` — 7 of 10 tests fail. These are integration tests
-against a live Postgres and the Stripe API; they need real `STRIPE_*` values in
-`apps/server/.env`. Environmental, not a code defect.
+### 3. `@villuh/server` tests fail in this environment — STILL DEFERRED
+
+26 failures across `billing`, `plan-limit`, `permissions`, `audit`, `org` and
+`wizard` test files, nearly all `expected 404 to be 200` — the routes under test
+are not reachable. Postgres is up and healthy and `apps/server/.env` exists, so
+this is not simply a stopped database; it needs real `STRIPE_*` credentials and
+possibly routes that later phases still have to implement.
+
+Phase 03.1 touched **zero** files under `apps/server/` — verified with
+`git diff --name-only "bc121c2..HEAD" | rg 'apps/server'` returning nothing — so
+the phase cannot have caused these and cannot resolve them either.
 
 ### Consequence for this phase
 
-The phase gate as written (`pnpm turbo run lint typecheck test` exits 0) cannot
-pass until these are addressed. Until then, substitute the scoped equivalent and
-record which workspaces were covered:
+`lint` and `typecheck` now pass monorepo-wide and are used unscoped. Only the
+`test` task needs scoping, and only to skip `@villuh/server`:
 
 ```powershell
-pnpm turbo run typecheck
-pnpm turbo run lint test --filter=@villuh/ui
+pnpm turbo run lint typecheck
+pnpm turbo run test --filter=@villuh/ui
 pnpm turbo run build --filter=@villuh/landlord-web
 ```
+
+`@villuh/ui` is the only workspace this phase adds tests to, so this scoping costs
+no coverage of phase 03.1 work.
 
 ---
 

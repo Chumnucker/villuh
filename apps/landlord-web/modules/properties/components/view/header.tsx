@@ -43,20 +43,23 @@ export function PropertyDetailHeader() {
 
   const heroImage = property.coverImageUrl
   const heroContainerRef = useRef<HTMLDivElement>(null)
-  const [heroLoaded, setHeroLoaded] = useState(false)
+  // Tracks *which* image loaded rather than a boolean, so switching images
+  // starts un-faded on its own — a boolean would need a synchronous reset in
+  // the effect below, which cascades renders.
+  const [loadedHero, setLoadedHero] = useState<string | null>(null)
+  const heroLoaded = Boolean(heroImage) && loadedHero === heroImage
 
   // Fade-in is gated on load so we don't animate an empty box. On browser
   // back (or any remount) the <img> is often already in HTTP cache —
   // `onLoad` may never fire, so also sync from `img.complete`.
   useEffect(() => {
-    setHeroLoaded(false)
     if (!heroImage) return
 
     let cancelled = false
     const frame = requestAnimationFrame(() => {
       const img = heroContainerRef.current?.querySelector("img")
       if (!cancelled && img?.complete && img.naturalHeight > 0) {
-        setHeroLoaded(true)
+        setLoadedHero(heroImage)
       }
     })
 
@@ -98,7 +101,7 @@ export function PropertyDetailHeader() {
               // browser fetch it directly. Still get `fill` layout stability,
               // native lazy-decode, and no CLS.
               unoptimized
-              onLoad={() => setHeroLoaded(true)}
+              onLoad={() => setLoadedHero(heroImage)}
               className="object-cover object-top opacity-16 dark:opacity-10"
             />
           </motion.div>
