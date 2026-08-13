@@ -149,6 +149,13 @@ function TenantFormBody({
   const updateTenant = trpc.tenants.update.useMutation()
   const createTenancy = trpc.tenants.createTenancy.useMutation()
 
+  // If the tenant row was persisted but the chained createTenancy failed, the
+  // tenant id is stashed here so a retry SKIPS createTenant and only re-runs the
+  // tenancy step — otherwise resubmitting would create a duplicate person
+  // (decision #10). Cleared once the whole chain succeeds; a fresh open remounts
+  // this body (keyed by the shell) so it starts null.
+  const createdTenantIdRef = React.useRef<string | null>(null)
+
   const isPending =
     createTenant.isPending || updateTenant.isPending || createTenancy.isPending
 
@@ -164,8 +171,15 @@ function TenantFormBody({
       }
       try {
         if (mode === "create") {
-          const parsed = createTenantInputSchema.parse(base)
-          const { tenant: created } = await createTenant.mutateAsync(parsed)
+          // Reuse a tenant persisted by a prior failed attempt; only create when
+          // none exists yet.
+          let tenantId = createdTenantIdRef.current
+          if (tenantId === null) {
+            const parsed = createTenantInputSchema.parse(base)
+            const { tenant: created } = await createTenant.mutateAsync(parsed)
+            tenantId = created.id
+            createdTenantIdRef.current = created.id
+          }
 
           if (assignUnit && unitId) {
             const tenancyInput = createTenancyInputSchema.parse({
@@ -174,12 +188,15 @@ function TenantFormBody({
               startDate: startDate.trim() === "" ? undefined : startDate,
               // The new tenant is always the primary; the picker contributes
               // only additional members (see CoTenantPicker `allowPrimary`).
-              memberTenantIds: [created.id, ...coTenants.memberTenantIds],
-              primaryTenantId: created.id,
+              memberTenantIds: [tenantId, ...coTenants.memberTenantIds],
+              primaryTenantId: tenantId,
             })
             await createTenancy.mutateAsync(tenancyInput)
           }
 
+          // Whole chain succeeded — clear the stash so this body can't reuse a
+          // stale id if it somehow stays mounted.
+          createdTenantIdRef.current = null
           await invalidateQueries(utils, [
             (u) => u.tenants.list,
             (u) => u.tenants.get,
