@@ -10,6 +10,30 @@ import type { CreateFloorPlanInput, UpdateFloorPlanInput } from './schemas.js'
 export type FloorPlanRow = typeof floorPlans.$inferSelect
 export type FloorPlanImageRow = typeof floorPlanImages.$inferSelect
 
+// The (organization_id, property_id, name) unique index (D-09) surfaces from Postgres as
+// a 23505 error. A duplicate name is user input, not a server fault — translate it to
+// BAD_REQUEST rather than letting it bubble up as INTERNAL_SERVER_ERROR.
+function rethrowDuplicateNameAsBadRequest(err: unknown): never {
+  // Drizzle wraps the driver error, so the Postgres 23505 code + constraint name may sit on
+  // the thrown error itself or on its `cause`. Check both.
+  const candidates = [err, (err as { cause?: unknown } | null)?.cause]
+  for (const candidate of candidates) {
+    if (
+      typeof candidate === 'object' &&
+      candidate !== null &&
+      (candidate as { code?: string }).code === '23505' &&
+      String(
+        (candidate as { constraint_name?: string; constraint?: string }).constraint_name ??
+          (candidate as { constraint?: string }).constraint ??
+          '',
+      ).includes('floor_plans_property_name_unique')
+    ) {
+      badRequest('A floor plan with that name already exists for this property.')
+    }
+  }
+  throw err
+}
+
 export async function listFloorPlans(
   tx: OrganizationTx,
   organizationId: string,
@@ -103,6 +127,7 @@ export async function createFloorPlan(
       defaultSquareFootage: input.defaultSquareFootage ?? null,
     })
     .returning()
+    .catch(rethrowDuplicateNameAsBadRequest)
   return row
 }
 
@@ -126,6 +151,7 @@ export async function updateFloorPlan(
     .set(patch)
     .where(and(eq(floorPlans.id, floorPlanId), eq(floorPlans.organizationId, organizationId)))
     .returning()
+    .catch(rethrowDuplicateNameAsBadRequest)
   return row
 }
 
