@@ -17,6 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 2: Auth & Billing** - Better Auth (email/password + Google OAuth, org/roles), Stripe Subscriptions, plan limits, setup wizard, settings
 - [ ] **Phase 3: Properties & Units** - Full CRUD for properties and units, S3 image upload, custom tags/statuses, proration, lease expiry alerts
 - [ ] **Phase 3.1: URL Query State (nuqs)** *(INSERTED)* - Reusable nuqs primitives for overlay open/close state and data-table filter/sort/pagination state; migrate all landlord-web consumers
+- [ ] **Phase 3.2: Floor Plans** *(INSERTED)* - Reusable per-property unit layouts (beds/baths/default sq ft + 25-image gallery) that units inherit from, plus a new wide two-column `WizardDialog` primitive in `@villuh/ui`
 - [ ] **Phase 4: Tenants, Leases & Documents** - Tenant profiles, co-tenants, lease entity, DocuSign integration, document lifecycle, signed PDF storage
 - [ ] **Phase 5: Onboarding Flow Engine** - Flow builder, 5 step types, conditional branching, tenant invite system, Stripe Connect payment step, preview mode
 - [ ] **Phase 6: Rent Ledger** - Auto-generated monthly entries, manual payment recording, partial payments, late fees, Railway Cron overdue job
@@ -167,6 +168,28 @@ Plans:
 **Context**: `.planning/phases/03.1-url-query-state/03.1-CONTEXT.md`
 **UI hint**: no — zero visual change; overlays and tables keep their existing appearance, only their state source moves to the URL
 
+### Phase 3.2: Floor Plans — INSERTED
+**Goal**: A property owns reusable floor plans (name, beds, baths, optional default square footage, gallery of up to 25 images) that its units inherit from unless individually overridden — created and edited through a new wide two-column wizard dialog variant built as a reusable `@villuh/ui` primitive
+**Depends on**: Phase 3.1
+**Requirements**: None (extends PROP/UNIT domain)
+**Success Criteria** (what must be TRUE):
+  1. A landlord can create a floor plan through a three-step wizard (Details → Gallery → Review) that opens in a wide two-column dialog with a left sidebar carrying the title, description and a vertical stepper; abandoning it mid-flow leaves no database row and no S3 object
+  2. Editing a plan reopens the same wizard with values loaded, every step directly clickable and no review gate; the four pre-existing dialogs are visually unchanged and `packages/ui/src/dialog.tsx` has a zero-byte diff
+  3. A unit can be assigned one floor plan of its own property and inherits beds/baths/square footage from it; editing the plan updates every non-overridden unit, an overridden unit keeps its own value, and clearing a field returns it to inheriting
+  4. A floor plan gallery accepts up to 25 images with the 26th refused server-side, first image as cover, drag reorder, and `objectKey`-only persistence with presigned GET at read time
+  5. Cross-property plan assignment is rejected server-side, archiving a plan leaves assigned units intact and still inheriting, and cross-organization access is blocked by RLS
+**Plans**: TBD
+
+**Cross-cutting constraints:**
+- `packages/ui/src/dialog.tsx` must not be modified (D-29) — `wizard-dialog.tsx` composes its exports.
+- Assignment must never copy plan values into unit columns; NULL means inherit and resolution happens at read time (D-19).
+- Both new tables need hand-written audit triggers appended to the generated migration (D-21) — Drizzle does not emit them.
+- Floor plans live inside `modules/properties/`, not a module of their own (D-37).
+- Every shell command in every plan must run in Windows PowerShell 5.1 (D-50, inherited from 03.1 D-49).
+
+**Context**: `.planning/phases/03.2-floor-plans/03.2-CONTEXT.md`
+**UI hint**: yes — new `WizardDialog` primitive, floor plans settings section, unit form and units table changes
+
 ### Phase 4: Tenants, Leases & Documents
 **Goal**: Landlords can manage the full tenant-lease-document lifecycle — from creating a tenant profile through signing documents via DocuSign and storing the signed PDF
 **Depends on**: Phase 3
@@ -232,7 +255,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 4 → 5 → 6 → 7 → 8
+Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 3.2 → 4 → 5 → 6 → 7 → 8
 (Phase 6 and Phase 7 depend on Phase 4 and can be planned in parallel, but execute sequentially)
 
 | Phase | Plans Complete | Status | Completed |
@@ -241,6 +264,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 4 → 5 → 6 → 7 �
 | 2. Auth & Billing | 0/12 | Not started | - |
 | 3. Properties & Units | 8/9 | In Progress|  |
 | 3.1 URL Query State (nuqs) | 0/TBD | Context ready | - |
+| 3.2 Floor Plans | 0/TBD | Context ready | - |
 | 4. Tenants, Leases & Documents | 0/TBD | Not started | - |
 | 5. Onboarding Flow Engine | 0/TBD | Not started | - |
 | 6. Rent Ledger | 0/TBD | Not started | - |
