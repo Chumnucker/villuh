@@ -1964,7 +1964,15 @@ export function Filters<T = unknown>({
                                 aria-selected={isHighlighted}
                                 data-highlighted={isHighlighted || undefined}
                                 onMouseEnter={() => setHighlightedIndex(index)}
-                                className="data-[state=open]:bg-accent data-[state=open]:text-accent-foreground data-highlighted:bg-accent data-highlighted:text-accent-foreground"
+                                className={cn(
+                                  "data-[state=open]:bg-accent data-[state=open]:text-accent-foreground data-highlighted:bg-accent data-highlighted:text-accent-foreground",
+                                  // The dot's ms-auto and the built-in chevron's
+                                  // ml-auto would otherwise split the free space,
+                                  // stranding the dot mid-row: when the dot owns
+                                  // the push, zero the chevron's auto margin so
+                                  // they sit together at the right edge.
+                                  isFieldActive && "[&>svg:last-child]:ml-0"
+                                )}
                               >
                                 {field.icon}
                                 <span>{field.label}</span>
