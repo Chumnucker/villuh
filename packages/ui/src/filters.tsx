@@ -48,7 +48,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "./tooltip"
-import { AlertCircleIcon, XIcon, CheckIcon,  } from "lucide-react"
+import { AlertCircleIcon, XIcon, CheckIcon, ChevronDownIcon } from "lucide-react"
 import { PlatformIcon } from "./icon"
 
 // i18n Configuration Interface
@@ -917,6 +917,41 @@ const resolveSelectedOptions = <T = unknown,>(
   )
 }
 
+/**
+ * One-line summary for a compact active-filter row: "operator · values".
+ * empty/not_empty render the operator alone.
+ */
+const formatFilterSummary = <T = unknown,>(
+  field: FilterFieldConfig<T>,
+  filter: Filter<T>,
+  i18n: FilterI18nConfig
+): string => {
+  const operators = getOperatorsForField(field, filter.values, i18n)
+  const opLabel =
+    operators.find((op) => op.value === filter.operator)?.label ??
+    i18n.helpers.formatOperator(filter.operator)
+
+  if (filter.operator === "empty" || filter.operator === "not_empty") {
+    return opLabel
+  }
+
+  if (field.type === "text") {
+    const raw = String(filter.values[0] ?? "")
+    if (!raw) return opLabel
+    const prefix = typeof field.prefix === "string" ? field.prefix : ""
+    const suffix = typeof field.suffix === "string" ? field.suffix : ""
+    return `${opLabel} · ${prefix}${raw}${suffix}`
+  }
+
+  const selected = resolveSelectedOptions(field, filter.values)
+  if (selected.length === 0) return opLabel
+  const valuePart =
+    selected.length > 3
+      ? `${selected.length} ${i18n.selectedCount}`
+      : selected.map((opt) => opt.label).join(", ")
+  return `${opLabel} · ${valuePart}`
+}
+
 interface FilterOptionsListProps<T = unknown> {
   field: FilterFieldConfig<T>
   selectedValues: T[]
@@ -1335,6 +1370,144 @@ function FilterValueSelector<T = unknown>({
   // select / multiselect / everything else defaults to the options popover.
   return (
     <SelectOptionsPopover field={field} values={values} onChange={onChange} />
+  )
+}
+
+interface FilterEditSubmenuContentProps<T = unknown> {
+  filter: Filter<T>
+  field: FilterFieldConfig<T>
+  /** Partial update merged into the filter (values auto-clear on empty/not_empty via updateFilter). */
+  onUpdate: (updates: Partial<Filter<T>>) => void
+  onRemove: () => void
+  /** Collapse back to the root menu (ArrowLeft / single-select pick). */
+  onBack: () => void
+  /** Close the whole dropdown (Escape). */
+  onCloseMenu: () => void
+  /** Gate async option loading until the submenu is open. */
+  enabled: boolean
+}
+
+/**
+ * Body of a compact-mode edit submenu: operator row (toggles to an inline
+ * operator list), value editor, and a destructive remove item.
+ */
+function FilterEditSubmenuContent<T = unknown>({
+  filter,
+  field,
+  onUpdate,
+  onRemove,
+  onBack,
+  onCloseMenu,
+  enabled,
+}: FilterEditSubmenuContentProps<T>) {
+  const context = useFilterContext()
+  const [showOperators, setShowOperators] = useState(false)
+
+  const operators = useMemo(
+    () => getOperatorsForField(field, filter.values, context.i18n),
+    [field, filter.values, context.i18n]
+  )
+  const operatorLabel =
+    operators.find((op) => op.value === filter.operator)?.label ??
+    context.i18n.helpers.formatOperator(filter.operator)
+  const hideValueEditor =
+    filter.operator === "empty" || filter.operator === "not_empty"
+
+  const isMultiSelect = field.type === "multiselect" || filter.values.length > 1
+
+  return (
+    <div className="flex flex-col">
+      <DropdownMenuGroup className="px-1.5">
+        <DropdownMenuItem
+          onSelect={(e) => {
+            e.preventDefault()
+            setShowOperators((prev) => !prev)
+          }}
+          className="text-muted-foreground justify-between"
+        >
+          <span>{operatorLabel}</span>
+          <ChevronDownIcon
+            className={cn(
+              "size-3.5 transition-transform",
+              showOperators && "rotate-180"
+            )}
+          />
+        </DropdownMenuItem>
+      </DropdownMenuGroup>
+      <DropdownMenuSeparator className="mx-0" />
+
+      {showOperators ? (
+        <DropdownMenuGroup className="px-1.5">
+          {operators.map((op) => (
+            <DropdownMenuItem
+              key={op.value}
+              onSelect={(e) => {
+                e.preventDefault()
+                onUpdate({ operator: op.value })
+                setShowOperators(false)
+              }}
+              className="flex items-center justify-between"
+            >
+              <span>{op.label}</span>
+              <CheckIcon
+                className={cn(
+                  "text-primary ms-auto",
+                  op.value === filter.operator ? "opacity-100" : "opacity-0"
+                )}
+              />
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuGroup>
+      ) : hideValueEditor ? null : field.customRenderer ? (
+        <div className="px-2 py-1.5">
+          {field.customRenderer({
+            field,
+            values: filter.values,
+            onChange: (values) => onUpdate({ values }),
+            operator: filter.operator,
+          })}
+        </div>
+      ) : field.type === "text" ? (
+        <div className="p-1.5 [&_[data-slot=input-group]]:w-full">
+          <TextFilterValue
+            field={field}
+            values={filter.values}
+            onChange={(values) => onUpdate({ values })}
+            autoFocus
+          />
+        </div>
+      ) : (
+        <FilterOptionsList<T>
+          field={field}
+          selectedValues={filter.values}
+          isMultiSelect={isMultiSelect}
+          enabled={enabled}
+          onBack={onBack}
+          onClose={onCloseMenu}
+          onToggle={(option, isSelected) => {
+            const next = isSelected
+              ? filter.values.filter((v) => v !== option.value)
+              : isMultiSelect
+                ? [...filter.values, option.value]
+                : [option.value]
+            onUpdate({ values: next })
+            if (!isMultiSelect) onBack()
+          }}
+        />
+      )}
+
+      {!showOperators && (
+        <>
+          <DropdownMenuSeparator className="mx-0" />
+          <DropdownMenuGroup className="px-1.5">
+            <DropdownMenuItem variant="destructive" onSelect={onRemove}>
+              <XIcon />
+              {context.i18n.removeFilter ?? DEFAULT_I18N.removeFilter}
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        </>
+      )}
+    </div>
   )
 }
 
@@ -1887,3 +2060,7 @@ export const createFilter = <T = unknown,>(
   operator: operator || "is",
   values,
 })
+
+// Task 3 will wire these into compact mode; keep references until then.
+void formatFilterSummary
+void FilterEditSubmenuContent
