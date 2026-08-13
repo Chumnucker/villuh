@@ -1374,6 +1374,21 @@ function FilterValueSelector<T = unknown>({
   )
 }
 
+/**
+ * Value editors inside a compact submenu (text inputs, customRenderer
+ * output) sit inside a Radix `DropdownMenuSubContent`, which otherwise
+ * treats their keystrokes as menu input: printable keys feed typeahead and
+ * ArrowLeft collapses the submenu. Stop those keys from propagating past the
+ * editor — mirroring the `FilterOptionsList` search input and the root menu
+ * input elsewhere in this file — but never swallow Escape, which must keep
+ * bubbling so it still closes the whole menu.
+ */
+const stopSubmenuEditorKeyPropagation = (e: React.KeyboardEvent) => {
+  if (e.key !== "Escape") {
+    e.stopPropagation()
+  }
+}
+
 interface FilterEditSubmenuContentProps<T = unknown> {
   filter: Filter<T>
   field: FilterFieldConfig<T>
@@ -1460,7 +1475,10 @@ function FilterEditSubmenuContent<T = unknown>({
           ))}
         </DropdownMenuGroup>
       ) : hideValueEditor ? null : field.customRenderer ? (
-        <div className="px-2 py-1.5">
+        <div
+          className="px-2 py-1.5"
+          onKeyDown={stopSubmenuEditorKeyPropagation}
+        >
           {field.customRenderer({
             field,
             values: filter.values,
@@ -1469,7 +1487,10 @@ function FilterEditSubmenuContent<T = unknown>({
           })}
         </div>
       ) : field.type === "text" ? (
-        <div className="p-1.5 [&_[data-slot=input-group]]:w-full">
+        <div
+          className="p-1.5 [&_[data-slot=input-group]]:w-full"
+          onKeyDown={stopSubmenuEditorKeyPropagation}
+        >
           <TextFilterValue
             field={field}
             values={filter.values}
@@ -1519,19 +1540,29 @@ function FilterEditSubmenuContent<T = unknown>({
  */
 function CompactAddValueSubmenuContent<T = unknown>({
   field,
+  initialOperator,
+  initialValues,
   onCommit,
 }: {
   field: FilterFieldConfig<T>
+  /**
+   * The field's current session filter (if the menu already created one
+   * this session), so reopening the add row after a collapse reflects it
+   * instead of resetting to the field default.
+   */
+  initialOperator?: string
+  initialValues?: T[]
   /** Create-or-update this field's session filter. */
   onCommit: (operator: string, values: T[]) => void
 }) {
   const context = useFilterContext()
   const [operator, setOperator] = useState(
     () =>
+      initialOperator ||
       field.defaultOperator ||
       (field.type === "multiselect" ? "is_any_of" : "is")
   )
-  const [values, setValues] = useState<T[]>([])
+  const [values, setValues] = useState<T[]>(() => initialValues ?? [])
   const [showOperators, setShowOperators] = useState(false)
 
   const operators = useMemo(
@@ -1573,13 +1604,10 @@ function CompactAddValueSubmenuContent<T = unknown>({
                 e.preventDefault()
                 setOperator(op.value)
                 setShowOperators(false)
-                // empty/not_empty are complete without a value; commit now.
-                // A typed draft re-commits under the new operator.
-                if (op.value === "empty" || op.value === "not_empty") {
-                  onCommit(op.value, [] as T[])
-                } else if (values.some((v) => String(v ?? "") !== "")) {
-                  onCommit(op.value, values)
-                }
+                // commitAddValueFilter handles every case (create, update,
+                // retract on empty draft, no-op) — always commit here so an
+                // operator switch never leaves a stale filter behind.
+                onCommit(op.value, values)
               }}
               className="flex items-center justify-between"
             >
@@ -1594,7 +1622,10 @@ function CompactAddValueSubmenuContent<T = unknown>({
           ))}
         </DropdownMenuGroup>
       ) : isEmptyOp ? null : field.customRenderer ? (
-        <div className="px-2 py-1.5">
+        <div
+          className="px-2 py-1.5"
+          onKeyDown={stopSubmenuEditorKeyPropagation}
+        >
           {field.customRenderer({
             field,
             values,
@@ -1606,7 +1637,10 @@ function CompactAddValueSubmenuContent<T = unknown>({
           })}
         </div>
       ) : (
-        <div className="p-1.5 [&_[data-slot=input-group]]:w-full">
+        <div
+          className="p-1.5 [&_[data-slot=input-group]]:w-full"
+          onKeyDown={stopSubmenuEditorKeyPropagation}
+        >
           <TextFilterValue
             field={field}
             values={values}
@@ -2290,6 +2324,10 @@ export function Filters<T = unknown>({
 
                         if (opensSubmenu && isCompactValueField) {
                           const fieldKey = field.key as string
+                          const sessionFilterId = sessionFilterIds[fieldKey]
+                          const sessionFilter = sessionFilterId
+                            ? filters.find((f) => f.id === sessionFilterId)
+                            : null
 
                           return (
                             <DropdownMenuSub
@@ -2323,6 +2361,8 @@ export function Filters<T = unknown>({
                               <DropdownMenuSubContent className="w-[220px] px-0">
                                 <CompactAddValueSubmenuContent<T>
                                   field={field}
+                                  initialOperator={sessionFilter?.operator}
+                                  initialValues={sessionFilter?.values}
                                   onCommit={(operator, values) =>
                                     commitAddValueFilter(field, operator, values)
                                   }
