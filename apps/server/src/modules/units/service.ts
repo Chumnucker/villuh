@@ -58,7 +58,6 @@ const UNIT_SORT_COLUMNS = {
   propertyName: properties.name,
   status: unitStatuses.name,
   baseRent: units.baseRent,
-  squareFootage: units.squareFootage,
 } satisfies Record<NonNullable<ListUnitsInput['sortBy']>, PgColumn>
 
 export async function listUnits(
@@ -206,11 +205,10 @@ export async function updateUnit(
 ): Promise<UnitRow> {
   const { unitId, ...rest } = input
   await requireUnit(tx, organizationId, unitId)
-  if (rest.propertyId !== undefined) await requireProperty(tx, organizationId, rest.propertyId)
   if (rest.statusId !== undefined) await requireUnitStatus(tx, organizationId, rest.statusId)
 
   const patch: Partial<typeof units.$inferInsert> = { updatedAt: new Date() }
-  if (rest.propertyId !== undefined) patch.propertyId = rest.propertyId
+  // D-27a: a unit's property is immutable after creation — propertyId is not accepted here.
   if (rest.label !== undefined) patch.label = rest.label
   if (rest.squareFootage !== undefined) patch.squareFootage = rest.squareFootage ?? null
   if (rest.baseRentCents !== undefined) patch.baseRent = rest.baseRentCents
