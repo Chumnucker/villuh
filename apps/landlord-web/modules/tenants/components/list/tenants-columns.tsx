@@ -45,6 +45,9 @@ export function createTenantsColumns({
 }) {
   return columnHelper.columns([
     columnHelper.accessor("lastName", {
+      // id must match `tenantsTable.sortable` ("name"), not the accessor key,
+      // so the Name sort control round-trips through the URL.
+      id: "name",
       header: "Name",
       cell: ({ row }) => (
         <button
@@ -71,6 +74,8 @@ export function createTenantsColumns({
       cell: ({ row }) => <>{row.original.currentUnit?.label ?? "Unassigned"}</>,
     }),
     columnHelper.accessor("tenancyStatus", {
+      // id must match `tenantsTable.sortable` ("status"), not the accessor key.
+      id: "status",
       header: "Status",
       cell: ({ row }) => {
         const status = row.original.tenancyStatus
