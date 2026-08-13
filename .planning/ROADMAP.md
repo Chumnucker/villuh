@@ -179,17 +179,35 @@ Plans:
   3. A unit can be assigned one floor plan of its own property and inherits beds/baths/square footage from it; editing the plan updates every non-overridden unit, an overridden unit keeps its own value, and clearing a field returns it to inheriting
   4. A floor plan gallery accepts up to 25 images with the 26th refused server-side, first image as cover, drag reorder, and `objectKey`-only persistence with presigned GET at read time
   5. Cross-property plan assignment is rejected server-side, archiving a plan leaves assigned units intact and still inheriting, and cross-organization access is blocked by RLS
-**Plans**: TBD
+**Plans**: 8 plans (03.2-01 through 03.2-08)
+
+**Wave dependency notes:**
+- **Wave 1** *(no deps, parallel)* — 03.2-01: schema + [BLOCKING] migration; 03.2-05: `WizardDialog` primitive in `@villuh/ui`
+- **Wave 2** *(blocked on 01, parallel)* — 03.2-02: floorPlans module + gallery + uploads presign + registration; 03.2-03: units input widening + D-27a immutability + cross-property rejection
+- **Wave 3** *(blocked on 02+03)* — 03.2-04: floor-plans.test.ts (D-48 suite)
+- **Wave 4** *(GATED on Phase 3.1, blocked on 02+05)* — 03.2-06: floor plan wizard components (carries the loud 3.1 precondition — first UI plan)
+- **Wave 5** *(GATED on Phase 3.1, blocked on 06)* — 03.2-07: FloorPlansSection + card + archive + overlay registration + template + human-verify
+- **Wave 6** *(GATED on Phase 3.1, blocked on 02+06)* — 03.2-08: floor plan resolver + unit form assignment + units table columns + human-verify
 
 **Cross-cutting constraints:**
 - `packages/ui/src/dialog.tsx` must not be modified (D-29) — `wizard-dialog.tsx` composes its exports.
 - Assignment must never copy plan values into unit columns; NULL means inherit and resolution happens at read time (D-19).
 - Both new tables need hand-written audit triggers appended to the generated migration (D-21) — Drizzle does not emit them.
 - Floor plans live inside `modules/properties/`, not a module of their own (D-37).
-- Every shell command in every plan must run in Windows PowerShell 5.1 (D-50, inherited from 03.1 D-49).
+- **Shell contract for this phase: Linux bash** (this work is on Linux, not the Windows PowerShell 5.1 of D-49/D-50 — superseded for 03.2 acceptance criteria; every plan carries a `<shell_contract>` note and uses `main` as the git base).
 
 **Context**: `.planning/phases/03.2-floor-plans/03.2-CONTEXT.md`
 **UI hint**: yes — new `WizardDialog` primitive, floor plans settings section, unit form and units table changes
+
+Plans:
+- [ ] 03.2-01-PLAN.md — Drizzle schema (floor_plans + floor_plan_images) + 3 units columns + [BLOCKING] migration + audit triggers
+- [ ] 03.2-02-PLAN.md — floorPlans module (CRUD + nested gallery) + uploads.presignFloorPlanImage + registration
+- [ ] 03.2-03-PLAN.md — units input widening + D-27a property immutability + cross-property rejection
+- [ ] 03.2-04-PLAN.md — floor-plans.test.ts (D-48 integration suite)
+- [ ] 03.2-05-PLAN.md — `WizardDialog` primitive in `@villuh/ui` (composes dialog.tsx, zero-byte diff)
+- [ ] 03.2-06-PLAN.md — floor plan wizard components + display lib + staged-gallery retarget *(GATED on 3.1)*
+- [ ] 03.2-07-PLAN.md — FloorPlansSection + card + archive + overlay registration + template *(GATED on 3.1, checkpoint)*
+- [ ] 03.2-08-PLAN.md — floor plan resolver + unit form assignment + units table columns *(GATED on 3.1, checkpoint)*
 
 ### Phase 3.3: Amenities — INSERTED
 **Goal**: An organization owns one amenity catalog scoped to properties, units, or both, and assigns entries to properties (with reservability config and a photo gallery) and to units (individually or in bulk) — so amenity labels stay consistent enough to filter and search on instead of drifting into unmatchable free text
@@ -289,7 +307,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 3.2 → 3.3 → 4 →
 | 2. Auth & Billing | 0/12 | Not started | - |
 | 3. Properties & Units | 8/9 | In Progress|  |
 | 3.1 URL Query State (nuqs) | 0/TBD | Context ready | - |
-| 3.2 Floor Plans | 0/TBD | Context ready | - |
+| 3.2 Floor Plans | 0/8 | Planned | - |
 | 3.3 Amenities | 0/TBD | Spec approved | - |
 | 4. Tenants, Leases & Documents | 0/TBD | Not started | - |
 | 5. Onboarding Flow Engine | 0/TBD | Not started | - |
