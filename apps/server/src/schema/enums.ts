@@ -2,6 +2,7 @@ import { pgEnum } from 'drizzle-orm/pg-core'
 import { ACTION_CATEGORIES } from '../domain/actions.js'
 import { PLAN_RESOURCES } from '../domain/billing.js'
 import { ROLES } from '../domain/roles.js'
+import { AMENITY_ICON_KEYS, AMENITY_SCOPES } from '../modules/amenities/schemas.js'
 import { PARKING_TYPES, PROPERTY_TYPES } from '../modules/properties/schemas.js'
 import { TAG_COLOR_KEYS, TAG_ICON_KEYS } from '../modules/tags/schemas.js'
 import { TENANCY_STATUSES } from '../modules/tenants/schemas.js'
@@ -43,3 +44,9 @@ export const tagIconEnum = pgEnum('tag_icon', TAG_ICON_KEYS)
 /** Tenancy lifecycle (tenant slice). pending → active → ended. Array lives in
  * the tenants schema module (source of truth); imported here to build the enum. */
 export const tenancyStatusEnum = pgEnum('tenancy_status', TENANCY_STATUSES)
+
+/** Amenity scope + icon palette (D-04) — built from the same as-const arrays that
+ * back the Zod validators in modules/amenities/schemas.ts. Reservation status is
+ * deliberately NOT declared here (D-20 — reservations are a later phase). */
+export const amenityScopeEnum = pgEnum('amenity_scope', AMENITY_SCOPES)
+export const amenityIconEnum = pgEnum('amenity_icon', AMENITY_ICON_KEYS)
