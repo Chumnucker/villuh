@@ -14,6 +14,12 @@ type ScrollAreaProps = React.ComponentProps<typeof ScrollAreaPrimitive.Root> & {
    * the viewport width (vertical-scroll-only surfaces like sidebars).
    */
   constrainContentWidth?: boolean;
+  /**
+   * Keep the vertical scrollbar permanently visible instead of fading it in on
+   * hover/scroll/focus. Useful in compact popovers where the fade obscures that
+   * the surface is scrollable.
+   */
+  alwaysShowScrollbar?: boolean;
 };
 
 /**
@@ -33,6 +39,7 @@ function ScrollArea({
   viewportClassName,
   contentClassName,
   constrainContentWidth,
+  alwaysShowScrollbar,
   ...props
 }: ScrollAreaProps) {
   return (
@@ -66,7 +73,7 @@ function ScrollArea({
           {children}
         </ScrollAreaPrimitive.Content>
       </ScrollAreaPrimitive.Viewport>
-      <ScrollBar orientation="vertical" />
+      <ScrollBar orientation="vertical" forceVisible={alwaysShowScrollbar} />
       <ScrollBar orientation="horizontal" />
       <ScrollAreaPrimitive.Corner data-slot="scroll-area-corner" />
     </ScrollAreaPrimitive.Root>
@@ -76,16 +83,21 @@ function ScrollArea({
 function ScrollBar({
   className,
   orientation = "vertical",
+  forceVisible = false,
   ...props
-}: React.ComponentProps<typeof ScrollAreaPrimitive.Scrollbar>) {
+}: React.ComponentProps<typeof ScrollAreaPrimitive.Scrollbar> & {
+  /** Skip the hover/scroll fade and keep the scrollbar at full opacity. */
+  forceVisible?: boolean;
+}) {
   return (
     <ScrollAreaPrimitive.Scrollbar
       data-slot="scroll-area-scrollbar"
       orientation={orientation}
       className={cn(
-        "z-20 flex touch-none select-none p-px opacity-0 transition-opacity duration-150 ease-out",
-        "data-[hovering]:opacity-100 data-[scrolling]:opacity-100",
-        "group-focus-within/scroll-area:opacity-100",
+        "z-20 flex touch-none select-none p-px transition-opacity duration-150 ease-out",
+        forceVisible
+          ? "opacity-100"
+          : "opacity-0 data-[hovering]:opacity-100 data-[scrolling]:opacity-100 group-focus-within/scroll-area:opacity-100",
         orientation === "vertical" &&
           "h-full w-1.75 border-l border-l-transparent",
         orientation === "horizontal" &&

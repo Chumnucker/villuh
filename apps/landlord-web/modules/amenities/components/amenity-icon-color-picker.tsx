@@ -62,6 +62,7 @@ export function AmenityIconColorPicker({
 
   return (
     <Popover
+      modal={true}
       onOpenChange={(open) => {
         if (!open) setQuery("")
       }}
@@ -73,7 +74,7 @@ export function AmenityIconColorPicker({
           size={size === "sm" ? "icon-xs" : "icon"}
           disabled={disabled}
           className={cn(
-            "shrink-0",
+            "shrink-0 transition-colors duration-200 ease-out",
             AMENITY_ICON_COLOR_CLASSES[colorKey],
             className
           )}
@@ -94,7 +95,7 @@ export function AmenityIconColorPicker({
               className="mb-2"
               aria-label="Search icons"
             />
-            <ScrollArea className="h-48">
+            <ScrollArea className="h-48" alwaysShowScrollbar>
               {filteredIcons.length === 0 ? (
                 <p className="py-6 text-center text-xs text-muted-foreground">
                   No icons found
@@ -109,7 +110,7 @@ export function AmenityIconColorPicker({
                       aria-label={iconLabel(icon)}
                       title={iconLabel(icon)}
                       className={cn(
-                        "flex size-8 items-center justify-center rounded-xl hover:bg-accent",
+                        "flex size-8 items-center justify-center rounded-xl transition-colors duration-200 ease-out hover:bg-accent",
                         AMENITY_ICON_COLOR_CLASSES[colorKey],
                         icon === iconKey && "bg-accent ring-1 ring-ring/35"
                       )}
@@ -131,7 +132,7 @@ export function AmenityIconColorPicker({
                   onClick={() => onChange({ iconKey, colorKey: color })}
                   aria-label={color}
                   className={cn(
-                    "size-6 rounded-full ring-offset-2 ring-offset-popover",
+                    "size-6 rounded-full ring-offset-2 ring-offset-popover transition-all duration-200 ease-out",
                     AMENITY_SWATCH_CLASSES[color],
                     color === colorKey && "ring-2 ring-ring"
                   )}
