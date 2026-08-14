@@ -230,7 +230,7 @@ Plans:
 - [ ] 03.3-06-PLAN.md — Dual-mode AmenityPicker + GalleryManager extraction (D-31)
 - [ ] 03.3-07-PLAN.md — Property settings surface: overlay registry + amenity sheet + catalog dialog + card (+ checkpoint)
 - [ ] 03.3-08-PLAN.md — Units UI: DataTable row-selection extend + form picker + column + bulk-actions (+ checkpoint)
-- [ ] 03.3-09-PLAN.md — About-tab real amenity chips + tags-as-amenities stopgap removal (D-14)
+- [x] 03.3-09-PLAN.md — About-tab real amenity chips + tags-as-amenities stopgap removal (D-14)
 
 **Cross-cutting constraints:**
 - **Phase 3.1 must be complete first (COMPLETE).** The units amenities column touches the 3.1-migrated units table (`list/columns.tsx`, `list/index.tsx`). The amenity sheet uses `createOverlays`; any reservations table uses `defineTable`.
@@ -324,7 +324,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 3.2 → 3.3 → 4 →
 | 3. Properties & Units | 8/9 | In Progress|  |
 | 3.1 URL Query State (nuqs) | 0/TBD | Context ready | - |
 | 3.2 Floor Plans | 6/8 | In Progress|  |
-| 3.3 Amenities | 5/9 | In Progress|  |
+| 3.3 Amenities | 6/9 | In Progress|  |
 | 4. Tenants, Leases & Documents | 0/TBD | Not started | - |
 | 5. Onboarding Flow Engine | 0/TBD | Not started | - |
 | 6. Rent Ledger | 0/TBD | Not started | - |
