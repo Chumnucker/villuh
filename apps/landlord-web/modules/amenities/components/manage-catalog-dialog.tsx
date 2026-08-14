@@ -75,7 +75,10 @@ export function ManageAmenityCatalogDialog({
   const { data, isLoading } = trpc.amenities.catalog.list.useQuery(undefined, {
     enabled: overlay.isOpen,
   })
-  const amenities: CatalogRow[] = data?.amenities ?? []
+  const amenities: CatalogRow[] = useMemo(
+    () => data?.amenities ?? [],
+    [data]
+  )
 
   // `catalog.list` returns only active (non-archived) rows, so an archived row
   // vanishes from the list on refetch. Keep the ones archived this session so

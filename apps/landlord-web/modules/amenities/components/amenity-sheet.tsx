@@ -24,11 +24,9 @@ import {
   SkeletonBox,
   SkeletonLabel,
   Switch,
-  TagBadge,
   Textarea,
   cn,
   isPlatformIconName,
-  toTagBadgeVariant,
   type EntityOverlayHandle,
 } from "@villuh/ui"
 import { uploadPresignedPut } from "@villuh/ui/utils"
