@@ -54,6 +54,40 @@ import { TextSquareIcon } from "@solar-icons/react/linear/text-square"
 import { TrashBinMinimalisticIcon } from "@solar-icons/react/linear/trash-bin-minimalistic"
 import { UsersGroupRoundedIcon } from "@solar-icons/react/linear/users-group-rounded"
 import { UsersGroupTwoRoundedIcon } from "@solar-icons/react/linear/users-group-two-rounded"
+// Amenity palette (spec §5.1) — 38 keys, each a verified Solar Linear glyph.
+import { AccessibilityIcon } from "@solar-icons/react/linear/accessibility"
+import { ArmchairIcon } from "@solar-icons/react/linear/armchair"
+import { BasketballIcon } from "@solar-icons/react/linear/basketball"
+import { BathIcon } from "@solar-icons/react/linear/bath"
+import { BedIcon } from "@solar-icons/react/linear/bed"
+import { BookIcon } from "@solar-icons/react/linear/book"
+import { BoxIcon } from "@solar-icons/react/linear/box"
+import { CameraIcon } from "@solar-icons/react/linear/camera"
+import { ChefHatIcon } from "@solar-icons/react/linear/chef-hat"
+import { ClapperboardIcon } from "@solar-icons/react/linear/clapperboard"
+import { CupHotIcon } from "@solar-icons/react/linear/cup-hot"
+import { DumbbellIcon } from "@solar-icons/react/linear/dumbbell"
+import { ElectricRefuelingIcon } from "@solar-icons/react/linear/electric-refueling"
+import { FloorLampIcon } from "@solar-icons/react/linear/floor-lamp"
+import { FridgeIcon } from "@solar-icons/react/linear/fridge"
+import { GamepadIcon } from "@solar-icons/react/linear/gamepad"
+import { GolfIcon } from "@solar-icons/react/linear/golf"
+import { LaptopIcon } from "@solar-icons/react/linear/laptop"
+import { MailboxIcon } from "@solar-icons/react/linear/mailbox"
+import { PawIcon } from "@solar-icons/react/linear/paw"
+import { RunningIcon } from "@solar-icons/react/linear/running"
+import { ShieldIcon } from "@solar-icons/react/linear/shield"
+import { SnowflakeIcon } from "@solar-icons/react/linear/snowflake"
+import { SocketIcon } from "@solar-icons/react/linear/socket"
+import { SofaIcon } from "@solar-icons/react/linear/sofa"
+import { SwimmingIcon } from "@solar-icons/react/linear/swimming"
+import { TennisIcon } from "@solar-icons/react/linear/tennis"
+import { TvIcon } from "@solar-icons/react/linear/tv"
+import { UmbrellaIcon } from "@solar-icons/react/linear/umbrella"
+import { VolleyballIcon } from "@solar-icons/react/linear/volleyball"
+import { WashingMachineIcon } from "@solar-icons/react/linear/washing-machine"
+import { WaterdropIcon } from "@solar-icons/react/linear/waterdrop"
+import { WiFiRouterIcon } from "@solar-icons/react/linear/wi-fi-router"
 
 type SolarIcon = ComponentType<
   {
@@ -173,6 +207,46 @@ const PLATFORM_ICONS = {
   IconArrowRight: AltArrowRightIcon,
   IconGoogle: GoogleIcon,
   IconCopy: CopyIcon,
+  // Amenity palette (spec §5.1) — keys stored on amenity rows (amenity_icon enum).
+  // IconStar is shared with the default above. IconParking/IconHeating/IconOutdoor/
+  // IconRooftop reuse existing Solar imports (Garage/Flame/Leaf/Sun).
+  IconPool: SwimmingIcon,
+  IconGym: DumbbellIcon,
+  IconLaundry: WashingMachineIcon,
+  IconWifi: WiFiRouterIcon,
+  IconPets: PawIcon,
+  IconParking: GarageIcon,
+  IconEvCharging: ElectricRefuelingIcon,
+  IconAirConditioning: SnowflakeIcon,
+  IconHeating: FlameIcon,
+  IconFridge: FridgeIcon,
+  IconKitchen: ChefHatIcon,
+  IconBath: BathIcon,
+  IconBed: BedIcon,
+  IconFurnished: SofaIcon,
+  IconTv: TvIcon,
+  IconTheater: ClapperboardIcon,
+  IconSecurity: ShieldIcon,
+  IconCamera: CameraIcon,
+  IconOutlet: SocketIcon,
+  IconLighting: FloorLampIcon,
+  IconLounge: ArmchairIcon,
+  IconGameRoom: GamepadIcon,
+  IconBasketball: BasketballIcon,
+  IconTennis: TennisIcon,
+  IconGolf: GolfIcon,
+  IconVolleyball: VolleyballIcon,
+  IconWater: WaterdropIcon,
+  IconPackageLocker: BoxIcon,
+  IconMail: MailboxIcon,
+  IconCoworking: LaptopIcon,
+  IconCoffee: CupHotIcon,
+  IconOutdoor: LeafIcon,
+  IconPatio: UmbrellaIcon,
+  IconRooftop: SunIcon,
+  IconAccessible: AccessibilityIcon,
+  IconTrack: RunningIcon,
+  IconLibrary: BookIcon,
 } as const satisfies Record<string, SolarIcon>
 
 export type PlatformIconName = keyof typeof PLATFORM_ICONS
