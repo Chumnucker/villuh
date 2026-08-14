@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useParams } from "next/navigation"
 import { useForm } from "@tanstack/react-form"
 import { toast } from "sonner"
@@ -27,13 +28,17 @@ import {
   SkeletonBox,
   SkeletonLabel,
   StatusBadge,
-  type OverlayHandle,
+  type EntityOverlayHandle,
 } from "@villuh/ui"
 import { invalidateQueries, trpc } from "@villuh/api"
 import { createUnitInputSchema, updateUnitInputSchema } from "@villuh/server/schemas/units"
 import type { inferRouterOutputs } from "@trpc/server"
 import type { AppRouter } from "@villuh/server/router"
 import { getPlanLimitMeta, isPlanLimitError } from "@/modules/app/components/plan-limit/plan-limit-gate"
+import {
+  AmenityPicker,
+  type AmenityPickerItem,
+} from "@/modules/amenities/components/amenity-picker"
 
 type RouterOutput = inferRouterOutputs<AppRouter>
 export type UnitRow = RouterOutput["units"]["get"]["unit"]
@@ -68,26 +73,23 @@ function toFormValues(unit: UnitRow | undefined, lockedPropertyId: string | unde
 }
 
 /**
- * Dual-entry create/edit Sheet (Screen 5, D-10), driven entirely by an overlay
- * handle (D-06, D-09). The param value is the payload — an id for edit, the
- * literal `"new"` for create — so no parent ever hands this component a row
- * object. It fetches its own unit, gated on `isOpen` (D-36).
+ * Dual-entry create/edit Sheet, driven entirely by an overlay handle: the
+ * param value is the payload (`entityId` for edit, create mode otherwise), so
+ * no parent ever hands this component a row object. It fetches its own unit,
+ * gated on the overlay being open.
  */
-export function UnitFormSheet({ overlay }: { overlay: OverlayHandle }) {
-  // D-38: OPTIONAL generic. This overlay is reachable from /units (no
+export function UnitFormSheet({ overlay }: { overlay: EntityOverlayHandle }) {
+  // Optional param on purpose: this overlay is reachable from /units (no
   // propertyId), /properties/[propertyId]/units, and /units/[unitId].
-  // Declaring `{ propertyId: string }` here would be a lie on two of the three.
   const { propertyId } = useParams<{ propertyId?: string }>()
 
-  // D-05: the param value is the payload — an id for edit, the literal "new"
-  // for create. D-06: no parent ever hands this overlay a row object.
-  const unitId = overlay.value && overlay.value !== "new" ? overlay.value : null
+  const unitId = overlay.entityId
 
-  // D-36: gated. Ungated, this fires on EVERY authenticated page load, because
+  // Gated: ungated, this fires on EVERY authenticated page load, because
   // <AppOverlays> keeps the component mounted app-wide.
   const unitQuery = trpc.units.get.useQuery(
     { unitId: unitId ?? "" },
-    { enabled: overlay.isOpen && unitId !== null }
+    { enabled: unitId !== null }
   )
 
   return (
@@ -100,10 +102,9 @@ export function UnitFormSheet({ overlay }: { overlay: OverlayHandle }) {
           <UnitFormBody
             key="create"
             unit={undefined}
-            // D-14: mount context comes from the route, not a prop. On the
-            // property Units tab the Select is prefilled and disabled; on
-            // /units it is free. Edit mode never locks it — reassigning a unit
-            // to another property stays possible.
+            // Mount context comes from the route, not a prop: on the property
+            // Units tab the Select is prefilled and disabled; on /units it is
+            // free.
             lockedPropertyId={propertyId}
             onClose={overlay.close}
           />
@@ -150,18 +151,24 @@ function UnitFormBody({
   const mode = unit ? "edit" : "create"
   const utils = trpc.useUtils()
 
+  // Amenities staged locally during create; persisted to the new unit id right
+  // after `units.create` returns (mirrors PropertyForm's tags-after-create).
+  // In edit mode the AmenityPicker runs live against the existing unit id, so
+  // this staged array stays empty and unused.
+  const [stagedAmenities, setStagedAmenities] = useState<AmenityPickerItem[]>([])
+
   // No `enabled` flag: <SheetContent> renders nothing while the sheet is
-  // closed, so these never fire until the sheet is open. Do NOT hoist them into
-  // the shell above — there they would run app-wide, ungated (D-36).
+  // closed, so these never fire until the sheet is open. Do NOT hoist them
+  // into the shell above — there they would run app-wide, ungated.
   const { data: propertiesData } = trpc.properties.list.useQuery()
   const { data: statusesData } = trpc.unitStatuses.list.useQuery()
 
+  // Staged-amenity persistence (create path only). `set` for catalog-backed
+  // rows (bulk-replace on a fresh unit), `addFreeform` per freeform row.
+  const setUnitAmenities = trpc.amenities.unit.set.useMutation()
+  const addFreeformUnitAmenity = trpc.amenities.unit.addFreeform.useMutation()
+
   const createUnit = trpc.units.create.useMutation({
-    onSuccess: () =>
-      invalidateQueries(utils, [(u) => u.units.list, (u) => u.properties.get, (u) => u.me.get]).then(() => {
-        toast.success("Unit created")
-        onClose()
-      }),
     onError: (err) => {
       if (isPlanLimitError(err)) {
         const meta = getPlanLimitMeta(err)
@@ -202,7 +209,47 @@ function UnitFormBody({
       try {
         if (mode === "create") {
           const parsed = createUnitInputSchema.parse(base)
-          await createUnit.mutateAsync(parsed)
+          const created = await createUnit.mutateAsync(parsed)
+          const newUnitId = created.unit.id
+
+          // Persist staged amenities to the freshly created unit (D-41). Catalog
+          // rows via one `set`; freeform rows one-by-one. Non-fatal: the unit is
+          // already created, so a partial amenity failure only warns.
+          const catalogAmenityIds = stagedAmenities
+            .filter((a) => a.organizationAmenityId)
+            .map((a) => a.organizationAmenityId!)
+          const freeformAmenities = stagedAmenities.filter(
+            (a) => !a.organizationAmenityId
+          )
+          try {
+            if (catalogAmenityIds.length > 0) {
+              await setUnitAmenities.mutateAsync({
+                unitId: newUnitId,
+                organizationAmenityIds: catalogAmenityIds,
+              })
+            }
+            for (const amenity of freeformAmenities) {
+              await addFreeformUnitAmenity.mutateAsync({
+                unitId: newUnitId,
+                label: amenity.label,
+                iconKey: amenity.iconKey,
+                colorKey: amenity.colorKey,
+              })
+            }
+          } catch {
+            toast.error("Unit created, but some amenities could not be saved")
+          }
+
+          // D-38: refresh the units list + the per-property amenities map that
+          // feeds the new amenities column; keep properties.get + me.get quotas.
+          await invalidateQueries(utils, [
+            (u) => u.units.list,
+            (u) => u.amenities.unit.listByProperty,
+            (u) => u.properties.get,
+            (u) => u.me.get,
+          ])
+          toast.success("Unit created")
+          onClose()
         } else if (unit) {
           const parsed = updateUnitInputSchema.parse({ unitId: unit.id, ...base })
           await updateUnit.mutateAsync(parsed)
@@ -365,6 +412,16 @@ function UnitFormBody({
             )
           }}
         </form.Field>
+
+        {unit ? (
+          <AmenityPicker unitId={unit.id} />
+        ) : (
+          <AmenityPicker
+            context="unit"
+            value={stagedAmenities}
+            onChange={setStagedAmenities}
+          />
+        )}
       </form>
 
       <SheetFooter className="flex-row justify-end gap-2">
