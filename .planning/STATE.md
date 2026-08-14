@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03.3-04-PLAN.md
-last_updated: "2026-08-14T17:20:11.111Z"
+stopped_at: Completed 03.3-07-PLAN.md
+last_updated: "2026-08-14T17:37:48.003Z"
 last_activity: 2026-08-14
 progress:
   total_phases: 11
   completed_phases: 2
   total_plans: 52
-  completed_plans: 42
+  completed_plans: 43
   percent: 18
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 ## Current Position
 
 Phase: 03.3 (amenities) — EXECUTING
-Plan: 8 of 9
+Plan: 9 of 9
 Plans: 8, across waves 0–6. Approved by gsd-plan-checker on pass 3 of the revision loop.
 Status: Ready to execute
 URL state via `defineTable` + `useDataTableQueryState`, human-verify checkpoint
@@ -36,7 +36,7 @@ Last activity: 2026-08-14
 
 Phase 03 (properties-units) remains at plan 8 of 9 (03-09 completed out of order as Wave 4; 05-08 remain).
 
-Progress: [████████░░] 81%
+Progress: [████████░░] 83%
 
 ### Phase 03.1 planning notes
 
@@ -120,6 +120,7 @@ unknown flag, and a genuine pass are indistinguishable by exit code alone.
 | Phase 03.3 P05 | 12min | 3 tasks | 3 files |
 | Phase 03.3 P09 | 15min | 2 tasks | 1 files |
 | Phase 03.3 P06 | 30min | 2 tasks | 3 files |
+| Phase 03.3 P07 | 40min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -186,6 +187,7 @@ Recent decisions affecting current work:
 - [Phase 03.3]: 03.3-05: unit amenity assignments (amenities.unit.*) complete the amenities API — set/addFreeform/remove + single-query listByProperty (grouped by unitId, no N+1) + one-query idempotent bulkAdd (.onConflictDoNothing() on unit_amenity_catalog_unique, SC-4) and one-query bulkRemove (inArray). Scope via assertScopeAllows(scope,'unit') rejects property-scoped (D-34); requireUnit/requireUnitAmenity org filter is the IDOR guard (D-36). bulkAdd rejects unknown unit/catalog ids via set-size mismatch (NOT_FOUND). 22/22 amenities tests green.
 - [Phase ?]: [Phase 03.3-09]: About tab renders real amenities via amenities.property.list -> AmenityChipRow (read-only, D-23); grep proved NO tags-as-amenities stopgap existed (PropertyBadgeRow is legitimate property-tag display), so D-14 collapsed to add-only and PropertyBadgeRow was left untouched.
 - [Phase 03.3-06]: Reusable GalleryManager extracted (D-31): presentational, callbacks (onUpload/onDelete/onReorder) + explicit cap threaded to acceptImageFiles remainingSlots + at-cap message (never the 25 default, Pitfall 1). PropertyGalleryManager is now a thin wrapper at cap 25, no regression. AmenityPicker (D-41) is a TagPicker twin: staged (value/onChange) + live property/unit modes, scope-filters catalog to target|both (D-34, UX-only, server re-enforces). Unit single-attach uses idempotent unit.bulkAdd (no single add) to preserve existing rows (D-32); manage-overlay link omitted (no amenity catalog overlay yet).
+- [Phase ?]: [Phase 03.3-07]: Amenity sheet reads propertyId from useParams (not usePropertyDetail) — AppOverlays mounts overlay components outside PropertyDetailProvider so the context hook would throw app-wide; matches UnitFormSheet. URL-backed via createOverlays, cold-loads by id (SC-5); foreign id resolves to not-found via the org-scoped list (T-033-18). Catalog Restore uses a session-local recently-archived bucket since catalog.list returns active rows only and no archived-list endpoint exists. amenities/schemas.ts self-references @villuh/server/schemas/tags (not ../tags/schemas.js) so it resolves in the landlord client bundle.
 
 ### Roadmap Evolution
 
@@ -211,8 +213,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-14T17:19:55.224Z
-Stopped at: Completed 03.3-04-PLAN.md
+Last session: 2026-08-14T17:37:31.884Z
+Stopped at: Completed 03.3-07-PLAN.md
 Resume file: None
 
 03.2-06 built the floor-plan wizard (first 03.2 UI plan). `FloorPlanWizard` composes 03.2-05's `WizardDialog` for create (linear, Details→Photos→Review) and edit (free, Details→Photos), owning one form + a staged gallery that persists only on Confirm/Save (D-41). Also shipped: pure `lib/floor-plan-display.ts`, an owner-agnostic `persistStagedGallery` (D-43), and `StagedGalleryField` copy props. Monorepo typecheck 6/6, `dialog.tsx` zero-byte diff intact. The wizard has no mount point yet — 03.2-07 registers the `property.floorPlan` overlay and adds `FloorPlansSection`/`FloorPlanCard`.
