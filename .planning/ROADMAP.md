@@ -222,7 +222,7 @@ Plans:
   6. The property About tab renders real amenities and the tag-based amenity stopgap is removed
 **Plans**: 9 plans across 6 waves
 Plans:
-- [ ] 03.3-01-PLAN.md — Data foundation: 2 enums, 4 tables + RLS, full Zod contract, hand-authored 0019 migration (dual-DB apply) [BLOCKING wave 1]
+- [x] 03.3-01-PLAN.md — Data foundation: 2 enums, 4 tables + RLS, full Zod contract, hand-authored 0019 migration (dual-DB apply) [BLOCKING wave 1]
 - [ ] 03.3-02-PLAN.md — Catalog API + seed + rename propagation + promote + amenities.test.ts (catalog cases)
 - [ ] 03.3-03-PLAN.md — Icon foundation (38 PlatformIcon mappings) + icon-color picker + read-only chip row
 - [ ] 03.3-04-PLAN.md — Property assignment API + nested gallery + presignAmenityImage (10-cap) + tests
@@ -324,7 +324,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 3.2 → 3.3 → 4 →
 | 3. Properties & Units | 8/9 | In Progress|  |
 | 3.1 URL Query State (nuqs) | 0/TBD | Context ready | - |
 | 3.2 Floor Plans | 6/8 | In Progress|  |
-| 3.3 Amenities | 0/9 | Planned | - |
+| 3.3 Amenities | 1/9 | In Progress|  |
 | 4. Tenants, Leases & Documents | 0/TBD | Not started | - |
 | 5. Onboarding Flow Engine | 0/TBD | Not started | - |
 | 6. Rent Ledger | 0/TBD | Not started | - |
