@@ -1,5 +1,11 @@
 import { z } from 'zod'
-import { TAG_COLOR_KEYS, zTagColorKey } from '../tags/schemas.js'
+// Self-reference via the package export alias (mirrors units/schemas.ts →
+// @villuh/server/schemas/filters). A relative `../tags/schemas.js` import
+// fails to resolve when this file is pulled into the landlord client bundle by
+// the amenity overlays (Turbopack cannot map the explicit `.js` on a
+// cross-module relative path); the alias resolves in both Node ESM and the
+// client build.
+import { TAG_COLOR_KEYS, zTagColorKey } from '@villuh/server/schemas/tags'
 
 /**
  * Amenity scope — a catalog amenity applies to properties, units, or both (D-02).
