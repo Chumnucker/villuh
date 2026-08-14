@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 3: Properties & Units** - Full CRUD for properties and units, S3 image upload, custom tags/statuses, proration, lease expiry alerts
 - [ ] **Phase 3.1: URL Query State (nuqs)** *(INSERTED)* - Reusable nuqs primitives for overlay open/close state and data-table filter/sort/pagination state; migrate all landlord-web consumers
 - [ ] **Phase 3.2: Floor Plans** *(INSERTED)* - Reusable per-property unit layouts (beds/baths/default sq ft + 25-image gallery) that units inherit from, plus a new wide two-column `WizardDialog` primitive in `@villuh/ui`
-- [ ] **Phase 3.3: Amenities** *(INSERTED)* - Org amenity catalog scoped property/unit/both, property assignments with reservability + 10-image gallery, unit assignments with bulk apply; reservations designed but deferred past Phase 4
+- [x] **Phase 3.3: Amenities** *(INSERTED)* - Org amenity catalog scoped property/unit/both, property assignments with reservability + 10-image gallery, unit assignments with bulk apply; reservations designed but deferred past Phase 4 (completed 2026-08-14)
 - [ ] **Phase 4: Tenants, Leases & Documents** - Tenant profiles, co-tenants, lease entity, DocuSign integration, document lifecycle, signed PDF storage
 - [ ] **Phase 5: Onboarding Flow Engine** - Flow builder, 5 step types, conditional branching, tenant invite system, Stripe Connect payment step, preview mode
 - [ ] **Phase 6: Rent Ledger** - Auto-generated monthly entries, manual payment recording, partial payments, late fees, Railway Cron overdue job
@@ -229,7 +229,7 @@ Plans:
 - [x] 03.3-05-PLAN.md — Unit assignment API incl. one-query bulkAdd/bulkRemove/listByProperty + tests
 - [x] 03.3-06-PLAN.md — Dual-mode AmenityPicker + GalleryManager extraction (D-31)
 - [x] 03.3-07-PLAN.md — Property settings surface: overlay registry + amenity sheet + catalog dialog + card (+ checkpoint)
-- [ ] 03.3-08-PLAN.md — Units UI: DataTable row-selection extend + form picker + column + bulk-actions (+ checkpoint)
+- [x] 03.3-08-PLAN.md — Units UI: DataTable row-selection extend + form picker + column + bulk-actions (+ checkpoint)
 - [x] 03.3-09-PLAN.md — About-tab real amenity chips + tags-as-amenities stopgap removal (D-14)
 
 **Cross-cutting constraints:**
@@ -324,7 +324,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 3.2 → 3.3 → 4 →
 | 3. Properties & Units | 8/9 | In Progress|  |
 | 3.1 URL Query State (nuqs) | 0/TBD | Context ready | - |
 | 3.2 Floor Plans | 6/8 | In Progress|  |
-| 3.3 Amenities | 8/9 | In Progress|  |
+| 3.3 Amenities | 9/9 | Complete   | 2026-08-14 |
 | 4. Tenants, Leases & Documents | 0/TBD | Not started | - |
 | 5. Onboarding Flow Engine | 0/TBD | Not started | - |
 | 6. Rent Ledger | 0/TBD | Not started | - |

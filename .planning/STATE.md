@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
+status: verifying
 stopped_at: Completed 03.3-07-PLAN.md
-last_updated: "2026-08-14T17:37:48.003Z"
+last_updated: "2026-08-14T17:51:18.994Z"
 last_activity: 2026-08-14
 progress:
   total_phases: 11
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 52
-  completed_plans: 43
-  percent: 18
+  completed_plans: 44
+  percent: 27
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 Phase: 03.3 (amenities) — EXECUTING
 Plan: 9 of 9
 Plans: 8, across waves 0–6. Approved by gsd-plan-checker on pass 3 of the revision loop.
-Status: Ready to execute
+Status: Phase complete — ready for verification
 URL state via `defineTable` + `useDataTableQueryState`, human-verify checkpoint
 approved). Next: 03.1-06 (units overlay trio → URL-backed overlays), then 03.1-07
 and 03.1-08 (cleanup, deletes old `useDataTableQuery`).
@@ -36,7 +36,7 @@ Last activity: 2026-08-14
 
 Phase 03 (properties-units) remains at plan 8 of 9 (03-09 completed out of order as Wave 4; 05-08 remain).
 
-Progress: [████████░░] 83%
+Progress: [█████████░] 85%
 
 ### Phase 03.1 planning notes
 
@@ -121,6 +121,7 @@ unknown flag, and a genuine pass are indistinguishable by exit code alone.
 | Phase 03.3 P09 | 15min | 2 tasks | 1 files |
 | Phase 03.3 P06 | 30min | 2 tasks | 3 files |
 | Phase 03.3 P07 | 40min | 2 tasks | 7 files |
+| Phase 03.3 P08 | 40min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -188,6 +189,9 @@ Recent decisions affecting current work:
 - [Phase ?]: [Phase 03.3-09]: About tab renders real amenities via amenities.property.list -> AmenityChipRow (read-only, D-23); grep proved NO tags-as-amenities stopgap existed (PropertyBadgeRow is legitimate property-tag display), so D-14 collapsed to add-only and PropertyBadgeRow was left untouched.
 - [Phase 03.3-06]: Reusable GalleryManager extracted (D-31): presentational, callbacks (onUpload/onDelete/onReorder) + explicit cap threaded to acceptImageFiles remainingSlots + at-cap message (never the 25 default, Pitfall 1). PropertyGalleryManager is now a thin wrapper at cap 25, no regression. AmenityPicker (D-41) is a TagPicker twin: staged (value/onChange) + live property/unit modes, scope-filters catalog to target|both (D-34, UX-only, server re-enforces). Unit single-attach uses idempotent unit.bulkAdd (no single add) to preserve existing rows (D-32); manage-overlay link omitted (no amenity catalog overlay yet).
 - [Phase ?]: [Phase 03.3-07]: Amenity sheet reads propertyId from useParams (not usePropertyDetail) — AppOverlays mounts overlay components outside PropertyDetailProvider so the context hook would throw app-wide; matches UnitFormSheet. URL-backed via createOverlays, cold-loads by id (SC-5); foreign id resolves to not-found via the org-scoped list (T-033-18). Catalog Restore uses a session-local recently-archived bucket since catalog.list returns active rows only and no archived-list endpoint exists. amenities/schemas.ts self-references @villuh/server/schemas/tags (not ../tags/schemas.js) so it resolves in the landlord client bundle.
+- [Phase 03.3-08]: units amenities surface — opt-in DataTable row selection + selection-action-bar slot (default-off, additive; other tables byte-behavior-unchanged, T-033-20)
+- [Phase 03.3-08]: units amenities column fed by one amenities.unit.listByProperty query per distinct property via trpc.useQueries (no per-row N+1, D-33)
+- [Phase 03.3-08]: unit-form AmenityPicker staged-then-persist after units.create (mirrors PropertyForm tags-after-create); bulk bar fires one idempotent bulkAdd/bulkRemove each (SC-4)
 
 ### Roadmap Evolution
 
@@ -213,7 +217,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-14T17:37:31.884Z
+Last session: 2026-08-14T17:49:51.123Z
 Stopped at: Completed 03.3-07-PLAN.md
 Resume file: None
 
