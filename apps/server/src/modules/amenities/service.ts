@@ -1,9 +1,17 @@
-import { and, asc, eq, isNull } from 'drizzle-orm'
+import { and, asc, eq, isNotNull, isNull, sql } from 'drizzle-orm'
 import { organizationAmenity, propertyAmenity, unitAmenity } from '../../schema/amenities.js'
+import { properties } from '../../schema/properties.js'
 import { badRequest, notFound } from '../../domain/index.js'
 import { ensureDefaultAmenities } from '../../domain/amenities.js'
 import type { OrganizationTx } from '../../db/index.js'
-import type { CreateAmenityInput, UpdateAmenityInput } from './schemas.js'
+import type {
+  CreateAmenityInput,
+  UpdateAmenityInput,
+  AddPropertyAmenityInput,
+  AddFreeformPropertyAmenityInput,
+  UpdatePropertyAmenityInput,
+  SetPropertyAmenitiesInput,
+} from './schemas.js'
 
 export type OrganizationAmenityRow = typeof organizationAmenity.$inferSelect
 export type PropertyAmenityRow = typeof propertyAmenity.$inferSelect
@@ -267,4 +275,249 @@ export async function promoteFromUnit(
     .returning()
 
   return { amenity, unitAmenity: updated }
+}
+
+// ---------------------------------------------------------------------------
+// Property assignments (property_amenity) — D-23/D-32/D-34/D-35/D-36
+// ---------------------------------------------------------------------------
+
+// The partial unique index (D-22) `property_amenity_catalog_unique` (property_id,
+// organization_amenity_id WHERE organization_amenity_id IS NOT NULL) surfaces from Postgres as a
+// 23505. Attaching the same catalog amenity twice is user input, not a server fault — translate to
+// BAD_REQUEST (floor-plans / catalog precedent).
+function rethrowDuplicateAssignmentAsBadRequest(err: unknown): never {
+  const candidates = [err, (err as { cause?: unknown } | null)?.cause]
+  for (const candidate of candidates) {
+    if (
+      typeof candidate === 'object' &&
+      candidate !== null &&
+      (candidate as { code?: string }).code === '23505' &&
+      String(
+        (candidate as { constraint_name?: string; constraint?: string }).constraint_name ??
+          (candidate as { constraint?: string }).constraint ??
+          '',
+      ).includes('property_amenity_catalog_unique')
+    ) {
+      badRequest('This amenity is already assigned to the property.')
+    }
+  }
+  throw err
+}
+
+async function requireProperty(tx: OrganizationTx, organizationId: string, propertyId: string): Promise<void> {
+  const rows = await tx
+    .select({ id: properties.id })
+    .from(properties)
+    .where(and(eq(properties.id, propertyId), eq(properties.organizationId, organizationId)))
+    .limit(1)
+  if (!rows[0]) notFound('Property not found')
+}
+
+// In-org 404 AND (when a parent property is named) cross-entity guard: a property_amenity id that
+// belongs to a DIFFERENT property is rejected as not-found (D-36, IDOR mitigation T-033-10).
+async function requirePropertyAmenity(
+  tx: OrganizationTx,
+  organizationId: string,
+  propertyAmenityId: string,
+  expectedPropertyId?: string,
+): Promise<PropertyAmenityRow> {
+  const rows = await tx
+    .select()
+    .from(propertyAmenity)
+    .where(and(eq(propertyAmenity.id, propertyAmenityId), eq(propertyAmenity.organizationId, organizationId)))
+    .limit(1)
+  const row = rows[0]
+  if (!row) notFound('Property amenity not found')
+  if (expectedPropertyId !== undefined && row.propertyId !== expectedPropertyId) {
+    notFound('Property amenity not found')
+  }
+  return row
+}
+
+// Scope enforcement (D-34, Pitfall 7): a catalog amenity may attach to a target only when its scope
+// is exactly that target OR `both`. A unit-scoped amenity on a property → BAD_REQUEST.
+function assertScopeAllows(scope: OrganizationAmenityRow['scope'], target: 'property' | 'unit'): void {
+  if (scope !== 'both' && scope !== target) {
+    badRequest(`This amenity is scoped to "${scope}" and cannot be attached to a ${target}.`)
+  }
+}
+
+async function nextPropertyAmenitySortOrder(
+  tx: OrganizationTx,
+  organizationId: string,
+  propertyId: string,
+): Promise<number> {
+  const rows = await tx
+    .select({ count: sql<number>`count(*)::int` })
+    .from(propertyAmenity)
+    .where(and(eq(propertyAmenity.propertyId, propertyId), eq(propertyAmenity.organizationId, organizationId)))
+  return rows[0]?.count ?? 0
+}
+
+export async function listPropertyAmenities(
+  tx: OrganizationTx,
+  organizationId: string,
+  propertyId: string,
+): Promise<PropertyAmenityRow[]> {
+  await requireProperty(tx, organizationId, propertyId)
+  return tx
+    .select()
+    .from(propertyAmenity)
+    .where(and(eq(propertyAmenity.propertyId, propertyId), eq(propertyAmenity.organizationId, organizationId)))
+    .orderBy(asc(propertyAmenity.sortOrder), asc(propertyAmenity.createdAt))
+}
+
+// Attach a catalog amenity: validate scope, then denormalize label/description/icon/color from the
+// catalog row (D-23) so display never depends on a join.
+export async function addPropertyAmenity(
+  tx: OrganizationTx,
+  organizationId: string,
+  input: AddPropertyAmenityInput,
+): Promise<PropertyAmenityRow> {
+  await requireProperty(tx, organizationId, input.propertyId)
+  const catalog = await requireOrganizationAmenity(tx, organizationId, input.organizationAmenityId)
+  assertScopeAllows(catalog.scope, 'property')
+
+  const sortOrder = await nextPropertyAmenitySortOrder(tx, organizationId, input.propertyId)
+  const [row] = await tx
+    .insert(propertyAmenity)
+    .values({
+      organizationId,
+      propertyId: input.propertyId,
+      organizationAmenityId: catalog.id,
+      label: catalog.name,
+      description: catalog.description,
+      iconKey: catalog.iconKey,
+      colorKey: catalog.colorKey,
+      sortOrder,
+    })
+    .returning()
+    .catch(rethrowDuplicateAssignmentAsBadRequest)
+  return row
+}
+
+export async function addFreeformPropertyAmenity(
+  tx: OrganizationTx,
+  organizationId: string,
+  input: AddFreeformPropertyAmenityInput,
+): Promise<PropertyAmenityRow> {
+  await requireProperty(tx, organizationId, input.propertyId)
+
+  const sortOrder = await nextPropertyAmenitySortOrder(tx, organizationId, input.propertyId)
+  const [row] = await tx
+    .insert(propertyAmenity)
+    .values({
+      organizationId,
+      propertyId: input.propertyId,
+      // Freeform assignment — no catalog link (D-32); icon/color fall back to column defaults.
+      organizationAmenityId: null,
+      label: input.label,
+      description: input.description,
+      iconKey: input.iconKey,
+      colorKey: input.colorKey,
+      sortOrder,
+    })
+    .returning()
+  return row
+}
+
+// Patch ONLY this assignment (D-32) — never touches the catalog. Reservability config lives here.
+export async function updatePropertyAmenity(
+  tx: OrganizationTx,
+  organizationId: string,
+  input: UpdatePropertyAmenityInput,
+): Promise<PropertyAmenityRow> {
+  const { propertyAmenityId, ...rest } = input
+  await requirePropertyAmenity(tx, organizationId, propertyAmenityId)
+
+  const patch: Partial<typeof propertyAmenity.$inferInsert> = { updatedAt: new Date() }
+  if (rest.label !== undefined) patch.label = rest.label
+  if (rest.description !== undefined) patch.description = rest.description
+  if (rest.iconKey !== undefined) patch.iconKey = rest.iconKey
+  if (rest.colorKey !== undefined) patch.colorKey = rest.colorKey
+  if (rest.isReservable !== undefined) patch.isReservable = rest.isReservable
+  if (rest.requiresApproval !== undefined) patch.requiresApproval = rest.requiresApproval
+
+  const [row] = await tx
+    .update(propertyAmenity)
+    .set(patch)
+    .where(and(eq(propertyAmenity.id, propertyAmenityId), eq(propertyAmenity.organizationId, organizationId)))
+    .returning()
+  return row
+}
+
+export async function removePropertyAmenity(
+  tx: OrganizationTx,
+  organizationId: string,
+  propertyAmenityId: string,
+): Promise<{ ok: true }> {
+  await requirePropertyAmenity(tx, organizationId, propertyAmenityId)
+  await tx
+    .delete(propertyAmenity)
+    .where(and(eq(propertyAmenity.id, propertyAmenityId), eq(propertyAmenity.organizationId, organizationId)))
+  return { ok: true }
+}
+
+export async function reorderPropertyAmenities(
+  tx: OrganizationTx,
+  organizationId: string,
+  propertyId: string,
+  orderedIds: string[],
+): Promise<{ ok: true }> {
+  await requireProperty(tx, organizationId, propertyId)
+  for (let i = 0; i < orderedIds.length; i++) {
+    await tx
+      .update(propertyAmenity)
+      .set({ sortOrder: i, updatedAt: new Date() })
+      .where(
+        and(
+          eq(propertyAmenity.id, orderedIds[i]),
+          eq(propertyAmenity.propertyId, propertyId),
+          eq(propertyAmenity.organizationId, organizationId),
+        ),
+      )
+  }
+  return { ok: true }
+}
+
+// Bulk-replace catalog-backed assignments (multi-select) — delete only the rows WITH a catalog link
+// (isNotNull), then re-insert from ids. Freeform rows (organizationAmenityId IS NULL) survive (D-32).
+export async function setPropertyAmenities(
+  tx: OrganizationTx,
+  organizationId: string,
+  input: SetPropertyAmenitiesInput,
+): Promise<PropertyAmenityRow[]> {
+  await requireProperty(tx, organizationId, input.propertyId)
+
+  await tx
+    .delete(propertyAmenity)
+    .where(
+      and(
+        eq(propertyAmenity.propertyId, input.propertyId),
+        eq(propertyAmenity.organizationId, organizationId),
+        isNotNull(propertyAmenity.organizationAmenityId),
+      ),
+    )
+
+  const rows: PropertyAmenityRow[] = []
+  for (let i = 0; i < input.organizationAmenityIds.length; i++) {
+    const catalog = await requireOrganizationAmenity(tx, organizationId, input.organizationAmenityIds[i])
+    assertScopeAllows(catalog.scope, 'property')
+    const [row] = await tx
+      .insert(propertyAmenity)
+      .values({
+        organizationId,
+        propertyId: input.propertyId,
+        organizationAmenityId: catalog.id,
+        label: catalog.name,
+        description: catalog.description,
+        iconKey: catalog.iconKey,
+        colorKey: catalog.colorKey,
+        sortOrder: i,
+      })
+      .returning()
+      .catch(rethrowDuplicateAssignmentAsBadRequest)
+    if (row) rows.push(row)
+  }
+  return rows
 }
