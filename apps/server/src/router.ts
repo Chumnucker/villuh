@@ -11,6 +11,7 @@ import { unitsRouter } from './modules/units/router.js'
 import { unitStatusesRouter } from './modules/unit-statuses/router.js'
 import { tagsRouter } from './modules/tags/router.js'
 import { tenantsRouter } from './modules/tenants/router.js'
+import { amenitiesRouter } from './modules/amenities/router.js'
 import { router } from './trpc.js'
 
 export const appRouter = router({
@@ -27,6 +28,7 @@ export const appRouter = router({
   unitStatuses: unitStatusesRouter,
   tags: tagsRouter,
   tenants: tenantsRouter,
+  amenities: amenitiesRouter,
 })
 
 export type AppRouter = typeof appRouter
