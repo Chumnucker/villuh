@@ -93,9 +93,10 @@ export type DataTableProps<TData extends object> = {
   /** Controlled-selection change handler. Required only alongside `rowSelection`. */
   onRowSelectionChange?: (selection: RowSelectionState) => void
   /**
-   * Renders a selection action bar ABOVE the grid, only while a selection is
-   * non-empty (and only when `enableRowSelection` is on). Receives the selected
-   * row ids and a `clearSelection` callback.
+   * Renders a selection action toolbar FLOATING over the bottom-center of the
+   * grid, only while a selection is non-empty (and only when
+   * `enableRowSelection` is on). Receives the selected row ids and a
+   * `clearSelection` callback.
    */
   selectionActions?: (ctx: {
     selectedRowIds: string[]
@@ -320,51 +321,62 @@ export function DataTable<TData extends object>({
         action={toolbarAction}
       />
 
-      {selectionBar}
-
-      <DataGrid
-        table={table}
-        recordCount={recordCount}
-        isLoading={isLoading}
-        onRowClick={onRowClick}
-        tableLayout={{
-          width: "auto",
-          headerSticky: true,
-          columnsMovable: true,
-          ...tableLayout,
-        }}
-        // The empty state is centered over the grid body via the overlay
-        // below; the in-cell slot is left blank so it doesn't render twice.
-        emptyMessage={<></>}
-      >
-        <Card className="min-h-0 flex-1 gap-0 overflow-hidden p-0">
-          <DataGridContainer className="relative flex min-h-0 flex-1 flex-col">
-            <DataGridScrollArea>
-              <DataGridTable />
-            </DataGridScrollArea>
-            {isEmpty ? (
-              // Absolute overlay fills the grid body (definite height from the
-              // flex-1 card), so the message truly centers instead of pinning
-              // to the top of the short empty table. Header stays visible above.
-              <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-6">
-                <EmptyState
-                  icon={emptyContent.icon}
-                  title={emptyContent.title}
-                  description={emptyContent.description}
-                  action={emptyContent.action}
-                  className="pointer-events-auto"
-                />
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <DataGrid
+          table={table}
+          recordCount={recordCount}
+          isLoading={isLoading}
+          onRowClick={onRowClick}
+          tableLayout={{
+            width: "auto",
+            headerSticky: true,
+            columnsMovable: true,
+            ...tableLayout,
+          }}
+          // The empty state is centered over the grid body via the overlay
+          // below; the in-cell slot is left blank so it doesn't render twice.
+          emptyMessage={<></>}
+        >
+          <Card className="min-h-0 flex-1 gap-0 overflow-hidden p-0">
+            <DataGridContainer className="relative flex min-h-0 flex-1 flex-col">
+              <DataGridScrollArea>
+                <DataGridTable />
+              </DataGridScrollArea>
+              {isEmpty ? (
+                // Absolute overlay fills the grid body (definite height from the
+                // flex-1 card), so the message truly centers instead of pinning
+                // to the top of the short empty table. Header stays visible above.
+                <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-6">
+                  <EmptyState
+                    icon={emptyContent.icon}
+                    title={emptyContent.title}
+                    description={emptyContent.description}
+                    action={emptyContent.action}
+                    className="pointer-events-auto"
+                  />
+                </div>
+              ) : null}
+            </DataGridContainer>
+            {showPagination ? (
+              // Card footer styled to mirror the sticky table header.
+              <div className="shrink-0 border-t bg-background/90 px-3 py-2 backdrop-blur-xs">
+                <DataGridPagination sizes={DATA_TABLE_PAGE_SIZES} />
               </div>
             ) : null}
-          </DataGridContainer>
-          {showPagination ? (
-            // Card footer styled to mirror the sticky table header.
-            <div className="shrink-0 border-t bg-background/90 px-3 py-2 backdrop-blur-xs">
-              <DataGridPagination sizes={DATA_TABLE_PAGE_SIZES} />
+          </Card>
+        </DataGrid>
+
+        {selectionBar ? (
+          // Floating selection toolbar, bottom-center over the grid. The wrapper
+          // is click-through (pointer-events-none) so it never blocks the table;
+          // only the toolbar itself captures pointer events.
+          <div className="pointer-events-none absolute inset-x-0 bottom-6 z-20 flex justify-center px-4">
+            <div className="pointer-events-auto animate-in fade-in slide-in-from-bottom-2 duration-200">
+              {selectionBar}
             </div>
-          ) : null}
-        </Card>
-      </DataGrid>
+          </div>
+        ) : null}
+      </div>
     </div>
   )
 }

@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { useParams } from "next/navigation"
 import { useForm } from "@tanstack/react-form"
 import { toast } from "sonner"
@@ -35,10 +34,6 @@ import { createUnitInputSchema, updateUnitInputSchema } from "@villuh/server/sch
 import type { inferRouterOutputs } from "@trpc/server"
 import type { AppRouter } from "@villuh/server/router"
 import { getPlanLimitMeta, isPlanLimitError } from "@/modules/app/components/plan-limit/plan-limit-gate"
-import {
-  AmenityPicker,
-  type AmenityPickerItem,
-} from "@/modules/amenities/components/amenity-picker"
 
 type RouterOutput = inferRouterOutputs<AppRouter>
 export type UnitRow = RouterOutput["units"]["get"]["unit"]
@@ -154,22 +149,11 @@ function UnitFormBody({
   const mode = unit ? "edit" : "create"
   const utils = trpc.useUtils()
 
-  // Amenities staged locally during create; persisted to the new unit id right
-  // after `units.create` returns (mirrors PropertyForm's tags-after-create).
-  // In edit mode the AmenityPicker runs live against the existing unit id, so
-  // this staged array stays empty and unused.
-  const [stagedAmenities, setStagedAmenities] = useState<AmenityPickerItem[]>([])
-
   // No `enabled` flag: <SheetContent> renders nothing while the sheet is
   // closed, so these never fire until the sheet is open. Do NOT hoist them
   // into the shell above — there they would run app-wide, ungated.
   const { data: propertiesData } = trpc.properties.list.useQuery()
   const { data: statusesData } = trpc.unitStatuses.list.useQuery()
-
-  // Staged-amenity persistence (create path only). `set` for catalog-backed
-  // rows (bulk-replace on a fresh unit), `addFreeform` per freeform row.
-  const setUnitAmenities = trpc.amenities.unit.set.useMutation()
-  const addFreeformUnitAmenity = trpc.amenities.unit.addFreeform.useMutation()
 
   const createUnit = trpc.units.create.useMutation({
     onError: (err) => {
@@ -212,36 +196,7 @@ function UnitFormBody({
       try {
         if (mode === "create") {
           const parsed = createUnitInputSchema.parse(base)
-          const created = await createUnit.mutateAsync(parsed)
-          const newUnitId = created.unit.id
-
-          // Persist staged amenities to the freshly created unit (D-41). Catalog
-          // rows via one `set`; freeform rows one-by-one. Non-fatal: the unit is
-          // already created, so a partial amenity failure only warns.
-          const catalogAmenityIds = stagedAmenities
-            .filter((a) => a.organizationAmenityId)
-            .map((a) => a.organizationAmenityId!)
-          const freeformAmenities = stagedAmenities.filter(
-            (a) => !a.organizationAmenityId
-          )
-          try {
-            if (catalogAmenityIds.length > 0) {
-              await setUnitAmenities.mutateAsync({
-                unitId: newUnitId,
-                organizationAmenityIds: catalogAmenityIds,
-              })
-            }
-            for (const amenity of freeformAmenities) {
-              await addFreeformUnitAmenity.mutateAsync({
-                unitId: newUnitId,
-                label: amenity.label,
-                iconKey: amenity.iconKey,
-                colorKey: amenity.colorKey,
-              })
-            }
-          } catch {
-            toast.error("Unit created, but some amenities could not be saved")
-          }
+          await createUnit.mutateAsync(parsed)
 
           // D-38: refresh the units list + the per-property amenities map that
           // feeds the new amenities column; keep properties.get + me.get quotas.
@@ -415,16 +370,6 @@ function UnitFormBody({
             )
           }}
         </form.Field>
-
-        {unit ? (
-          <AmenityPicker unitId={unit.id} />
-        ) : (
-          <AmenityPicker
-            context="unit"
-            value={stagedAmenities}
-            onChange={setStagedAmenities}
-          />
-        )}
       </form>
 
       <SheetFooter className="flex-row justify-end gap-2">
