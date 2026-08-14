@@ -311,3 +311,229 @@ describe('AMEN-02 Catalog: rename propagation + archive-intact + promote', () =>
     expect(auditCount).toBeGreaterThanOrEqual(3)
   })
 })
+
+describe('AMEN-04 Property assignments: scope + ownership + cross-entity (SC-5)', () => {
+  it('§9.3 scope: unit-scoped catalog amenity rejected on a property; both + property accepted', async () => {
+    const { caller } = await setupOwner('amen-scope@test.local')
+    const property = await createProperty(caller, 'Scope Property')
+
+    const { amenity: unitScoped } = await caller.amenities.catalog.create({ name: 'In-Unit Washer', scope: 'unit' })
+    const { amenity: bothScoped } = await caller.amenities.catalog.create({ name: 'Parking', scope: 'both' })
+    const { amenity: propScoped } = await caller.amenities.catalog.create({ name: 'Rooftop', scope: 'property' })
+
+    // A unit-scoped amenity cannot be attached to a property (D-34, Pitfall 7).
+    await expect(
+      caller.amenities.property.add({ propertyId: property.id, organizationAmenityId: unitScoped.id }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+
+    // A both-scoped amenity is accepted, and denormalizes label/icon/color from the catalog (D-23).
+    const both = await caller.amenities.property.add({ propertyId: property.id, organizationAmenityId: bothScoped.id })
+    expect(both.amenity.label).toBe('Parking')
+    expect(both.amenity.organizationAmenityId).toBe(bothScoped.id)
+
+    // A property-scoped amenity is accepted.
+    const prop = await caller.amenities.property.add({ propertyId: property.id, organizationAmenityId: propScoped.id })
+    expect(prop.amenity.label).toBe('Rooftop')
+
+    const { amenities } = await caller.amenities.property.list({ propertyId: property.id })
+    expect(amenities.map((a) => a.label).sort()).toEqual(['Parking', 'Rooftop'])
+  })
+
+  it('§9.3 unknown property or amenity → 404 (D-35); duplicate catalog attach → BAD_REQUEST (D-22)', async () => {
+    const { caller } = await setupOwner('amen-own@test.local')
+    const property = await createProperty(caller, 'Ownership Property')
+    const { amenity } = await caller.amenities.catalog.create({ name: 'Gym', scope: 'both' })
+
+    const missingId = '00000000-0000-0000-0000-000000000000'
+    await expect(
+      caller.amenities.property.add({ propertyId: missingId, organizationAmenityId: amenity.id }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+    await expect(
+      caller.amenities.property.add({ propertyId: property.id, organizationAmenityId: missingId }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+
+    await caller.amenities.property.add({ propertyId: property.id, organizationAmenityId: amenity.id })
+    // The partial unique index rejects a second catalog-backed row for the same amenity (D-22).
+    await expect(
+      caller.amenities.property.add({ propertyId: property.id, organizationAmenityId: amenity.id }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+  })
+
+  it('§9.10 cross-entity/IDOR: another org cannot update or remove a property assignment (D-36)', async () => {
+    const { caller: callerA } = await setupOwner('amen-idor-a@test.local')
+    const propertyA = await createProperty(callerA, 'IDOR Property A')
+    const { amenity } = await callerA.amenities.catalog.create({ name: 'Sauna', scope: 'property' })
+    const { amenity: assignment } = await callerA.amenities.property.add({
+      propertyId: propertyA.id,
+      organizationAmenityId: amenity.id,
+    })
+
+    const { caller: callerB } = await setupOwner('amen-idor-b@test.local')
+    // Org B holds an id that resolves to a DIFFERENT org's property — rejected as not-found.
+    await expect(
+      callerB.amenities.property.update({ propertyAmenityId: assignment.id, label: 'Hijacked' }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+    await expect(
+      callerB.amenities.property.remove({ propertyAmenityId: assignment.id }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+
+    // The assignment is untouched for its true owner.
+    const { amenities } = await callerA.amenities.property.list({ propertyId: propertyA.id })
+    expect(amenities.some((a) => a.id === assignment.id && a.label === 'Sauna')).toBe(true)
+  })
+
+  it('§9.2 set bulk-replaces catalog-backed assignments and leaves freeform rows untouched (D-32)', async () => {
+    const { caller } = await setupOwner('amen-set@test.local')
+    const property = await createProperty(caller, 'Set Property')
+    const { amenity: a1 } = await caller.amenities.catalog.create({ name: 'Pool', scope: 'both' })
+    const { amenity: a2 } = await caller.amenities.catalog.create({ name: 'Elevator', scope: 'property' })
+
+    await caller.amenities.property.add({ propertyId: property.id, organizationAmenityId: a1.id })
+    const { amenity: freeform } = await caller.amenities.property.addFreeform({
+      propertyId: property.id,
+      label: 'Secret Garden',
+    })
+    expect(freeform.organizationAmenityId).toBeNull()
+
+    // Replace catalog-backed set with just a2 — a1 goes, freeform stays.
+    await caller.amenities.property.set({ propertyId: property.id, organizationAmenityIds: [a2.id] })
+
+    const { amenities } = await caller.amenities.property.list({ propertyId: property.id })
+    const labels = amenities.map((a) => a.label).sort()
+    expect(labels).toEqual(['Elevator', 'Secret Garden'])
+    expect(amenities.some((a) => a.label === 'Pool')).toBe(false)
+  })
+
+  it('§9.5 update patches ONE assignment and never touches the catalog (D-32)', async () => {
+    const { caller } = await setupOwner('amen-patch@test.local')
+    const property = await createProperty(caller, 'Patch Property')
+    const { amenity: catalog } = await caller.amenities.catalog.create({ name: 'Lounge', scope: 'property' })
+    const { amenity: assignment } = await caller.amenities.property.add({
+      propertyId: property.id,
+      organizationAmenityId: catalog.id,
+    })
+
+    const { amenity: patched } = await caller.amenities.property.update({
+      propertyAmenityId: assignment.id,
+      label: 'VIP Lounge',
+      isReservable: true,
+      requiresApproval: false,
+    })
+    expect(patched.label).toBe('VIP Lounge')
+    expect(patched.isReservable).toBe(true)
+    expect(patched.requiresApproval).toBe(false)
+
+    // The catalog row name is unchanged — update never touches the catalog.
+    const { amenities: catalogRows } = await caller.amenities.catalog.list()
+    expect(catalogRows.find((a) => a.id === catalog.id)?.name).toBe('Lounge')
+  })
+})
+
+describe('AMEN-04 Property amenity gallery: 10-cap + audit (SC-3)', () => {
+  async function setupAssignment(email: string) {
+    const { caller, orgId } = await setupOwner(email)
+    const property = await createProperty(caller, 'Gallery Amenity Property')
+    const { amenity } = await caller.amenities.catalog.create({ name: 'Party Room', scope: 'property' })
+    const { amenity: assignment } = await caller.amenities.property.add({
+      propertyId: property.id,
+      organizationAmenityId: amenity.id,
+    })
+    return { caller, orgId, property, assignment }
+  }
+
+  it('§9.6 add 10 images, then 11th via gallery.add AND presignAmenityImage → BAD_REQUEST', async () => {
+    const { caller, assignment } = await setupAssignment('amen-gallery-cap@test.local')
+
+    for (let i = 0; i < 10; i++) {
+      await caller.amenities.property.gallery.add({
+        propertyAmenityId: assignment.id,
+        objectKey: `orgtest/amenities/${assignment.id}/gallery/img-${i}.jpg`,
+        contentType: 'image/jpeg',
+        byteLength: 1000,
+      })
+    }
+
+    // Enforcement point 1: gallery.add rejects the 11th.
+    await expect(
+      caller.amenities.property.gallery.add({
+        propertyAmenityId: assignment.id,
+        objectKey: `orgtest/amenities/${assignment.id}/gallery/img-10.jpg`,
+        contentType: 'image/jpeg',
+        byteLength: 1000,
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+
+    // Enforcement point 2: presignAmenityImage rejects the 11th too (double-enforced, D-26).
+    await expect(
+      caller.uploads.presignAmenityImage({
+        propertyAmenityId: assignment.id,
+        contentType: 'image/jpeg',
+        byteLength: 1000,
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+  })
+
+  it('§9.6 presignAmenityImage returns objectKey only (never a URL) under the parent property key', async () => {
+    const { caller, property, assignment } = await setupAssignment('amen-gallery-presign@test.local')
+
+    const { uploadUrl, objectKey } = await caller.uploads.presignAmenityImage({
+      propertyAmenityId: assignment.id,
+      contentType: 'image/jpeg',
+      byteLength: 2048,
+    })
+    expect(uploadUrl).toBe('https://s3.mock/presigned-url')
+    expect(objectKey).not.toMatch(/^https?:\/\//)
+    expect(objectKey).toContain(`properties/${property.id}/amenities/${assignment.id}/gallery/`)
+
+    const { image } = await caller.amenities.property.gallery.add({
+      propertyAmenityId: assignment.id,
+      objectKey,
+      contentType: 'image/jpeg',
+      byteLength: 2048,
+    })
+    expect(image.objectKey).toBe(objectKey)
+
+    // Read attaches a presigned GET URL at response time (never stored, D-26).
+    const { images } = await caller.amenities.property.gallery.list({ propertyAmenityId: assignment.id })
+    expect(images.find((img) => img.id === image.id)?.url).toBe('https://s3.mock/presigned-url')
+  })
+
+  it('§9.6 remove issues an S3 DeleteObjectCommand and drops the DB row', async () => {
+    const { DeleteObjectCommand } = await import('@aws-sdk/client-s3')
+    const { caller, assignment } = await setupAssignment('amen-gallery-remove@test.local')
+
+    const { image } = await caller.amenities.property.gallery.add({
+      propertyAmenityId: assignment.id,
+      objectKey: 'to-delete.jpg',
+      contentType: 'image/jpeg',
+      byteLength: 1000,
+    })
+
+    await caller.amenities.property.gallery.remove({ imageId: image.id })
+    expect(DeleteObjectCommand).toHaveBeenCalled()
+
+    const { images } = await caller.amenities.property.gallery.list({ propertyAmenityId: assignment.id })
+    expect(images.find((img) => img.id === image.id)).toBeUndefined()
+  })
+
+  it('§9.11 property_amenity + property_amenity_image mutations write audit rows', async () => {
+    const { caller, orgId, assignment } = await setupAssignment('amen-gallery-audit@test.local')
+    await caller.amenities.property.update({ propertyAmenityId: assignment.id, label: 'Renamed Room' })
+    const { image } = await caller.amenities.property.gallery.add({
+      propertyAmenityId: assignment.id,
+      objectKey: 'audit.jpg',
+      contentType: 'image/jpeg',
+      byteLength: 1000,
+    })
+
+    const paCount = await countRows(
+      sql`SELECT count(*)::int AS c FROM audit_log WHERE organization_id = ${orgId} AND table_name = 'property_amenity' AND row_id = ${assignment.id}`,
+    )
+    expect(paCount).toBeGreaterThanOrEqual(2)
+
+    const imgCount = await countRows(
+      sql`SELECT count(*)::int AS c FROM audit_log WHERE organization_id = ${orgId} AND table_name = 'property_amenity_image' AND row_id = ${image.id}`,
+    )
+    expect(imgCount).toBeGreaterThanOrEqual(1)
+  })
+})
