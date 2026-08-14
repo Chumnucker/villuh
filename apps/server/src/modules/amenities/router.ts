@@ -22,6 +22,8 @@ import {
   setUnitAmenitiesInputSchema,
   addFreeformUnitAmenityInputSchema,
   removeUnitAmenityInputSchema,
+  bulkAddUnitAmenitiesInputSchema,
+  bulkRemoveUnitAmenitiesInputSchema,
 } from './schemas.js'
 import {
   listCatalog,
@@ -47,6 +49,8 @@ import {
   setUnitAmenities,
   addFreeformUnitAmenity,
   removeUnitAmenity,
+  bulkAddUnitAmenities,
+  bulkRemoveUnitAmenities,
 } from './service.js'
 
 // Org catalog sub-router (amenities.catalog.*). Reads = protectedProcedure; every mutation =
@@ -276,6 +280,26 @@ const unitRouter = router({
       const { organizationId, userId } = ctx
       return withOrganization(organizationId, userId, (tx) =>
         removeUnitAmenity(tx, organizationId, input.unitAmenityId),
+      )
+    }),
+
+  // Bulk apply across many units in ONE idempotent insert (D-33, SC-4) — the design's answer to the
+  // 200-unit problem in place of floor-plan inheritance.
+  bulkAdd: permissionProcedure('write')
+    .input(bulkAddUnitAmenitiesInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { organizationId, userId } = ctx
+      return withOrganization(organizationId, userId, (tx) =>
+        bulkAddUnitAmenities(tx, organizationId, input),
+      )
+    }),
+
+  bulkRemove: permissionProcedure('write')
+    .input(bulkRemoveUnitAmenitiesInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { organizationId, userId } = ctx
+      return withOrganization(organizationId, userId, (tx) =>
+        bulkRemoveUnitAmenities(tx, organizationId, input),
       )
     }),
 })
