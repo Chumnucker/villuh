@@ -220,15 +220,25 @@ Plans:
   4. A landlord can assign unit amenities from the unit form and in bulk from a multi-row units table selection; re-applying an amenity to units that already have it is idempotent rather than an error
   5. A `unit`-scoped amenity is rejected server-side on a property (and vice versa), cross-organization access is blocked by RLS, and the amenity detail sheet cold-loads open from a pasted URL
   6. The property About tab renders real amenities and the tag-based amenity stopgap is removed
-**Plans**: TBD
+**Plans**: 9 plans across 6 waves
+Plans:
+- [ ] 03.3-01-PLAN.md — Data foundation: 2 enums, 4 tables + RLS, full Zod contract, hand-authored 0019 migration (dual-DB apply) [BLOCKING wave 1]
+- [ ] 03.3-02-PLAN.md — Catalog API + seed + rename propagation + promote + amenities.test.ts (catalog cases)
+- [ ] 03.3-03-PLAN.md — Icon foundation (38 PlatformIcon mappings) + icon-color picker + read-only chip row
+- [ ] 03.3-04-PLAN.md — Property assignment API + nested gallery + presignAmenityImage (10-cap) + tests
+- [ ] 03.3-05-PLAN.md — Unit assignment API incl. one-query bulkAdd/bulkRemove/listByProperty + tests
+- [ ] 03.3-06-PLAN.md — Dual-mode AmenityPicker + GalleryManager extraction (D-31)
+- [ ] 03.3-07-PLAN.md — Property settings surface: overlay registry + amenity sheet + catalog dialog + card (+ checkpoint)
+- [ ] 03.3-08-PLAN.md — Units UI: DataTable row-selection extend + form picker + column + bulk-actions (+ checkpoint)
+- [ ] 03.3-09-PLAN.md — About-tab real amenity chips + tags-as-amenities stopgap removal (D-14)
 
 **Cross-cutting constraints:**
-- **Phase 3.1 must be complete first.** The units amenities column touches `units-columns.tsx`, which 3.1 forbids modifying (3.1 D-05, D-28). The amenity sheet uses `createOverlays`; any reservations table uses `defineTable`.
-- All four new tables need hand-written audit triggers appended to the generated migration — Drizzle does not emit them.
+- **Phase 3.1 must be complete first (COMPLETE).** The units amenities column touches the 3.1-migrated units table (`list/columns.tsx`, `list/index.tsx`). The amenity sheet uses `createOverlays`; any reservations table uses `defineTable`.
+- All four new tables need hand-written audit triggers appended to the hand-authored migration — Drizzle does not emit them (and `drizzle-kit generate` is blocked; migration 0019 is hand-authored).
 - Gallery rows persist `objectKey` only, with presigned GET at read time.
 - Catalog archives, never deletes — deleting must not strip an amenity and its photos from every property using it.
 - Reservations are explicitly **out of scope** — designed in the spec, built in a later phase after Phase 4 (they require tenants and a resident request surface).
-- Every shell command in every plan must run in Windows PowerShell 5.1 (D-49/D-50). Note: PowerShell has no heredoc — use `@'…'@`.
+- **Shell environment for this phase is Linux + bash with `rg` on PATH; git base branch is `master` (D-48 — supersedes the Windows PowerShell 5.1 guidance in D-49/D-50 for Phase 3.3).** Every acceptance command is POSIX bash and must be executed before its result is recorded, especially any expected to return non-zero.
 
 **Spec**: `docs/superpowers/specs/2026-08-13-amenities-design.md`
 **UI hint**: yes — amenities settings page, amenity detail sheet, catalog dialog, unit picker, units-table bulk actions, About tab chips
@@ -314,7 +324,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 3.2 → 3.3 → 4 →
 | 3. Properties & Units | 8/9 | In Progress|  |
 | 3.1 URL Query State (nuqs) | 0/TBD | Context ready | - |
 | 3.2 Floor Plans | 6/8 | In Progress|  |
-| 3.3 Amenities | 0/TBD | Spec approved | - |
+| 3.3 Amenities | 0/9 | Planned | - |
 | 4. Tenants, Leases & Documents | 0/TBD | Not started | - |
 | 5. Onboarding Flow Engine | 0/TBD | Not started | - |
 | 6. Rent Ledger | 0/TBD | Not started | - |
