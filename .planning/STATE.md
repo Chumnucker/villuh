@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03.2-06-PLAN.md
-last_updated: "2026-08-14T16:42:24.570Z"
+stopped_at: Completed 03.3-04-PLAN.md
+last_updated: "2026-08-14T16:53:49.497Z"
 last_activity: 2026-08-14
 progress:
   total_phases: 11
   completed_phases: 2
   total_plans: 52
-  completed_plans: 37
+  completed_plans: 39
   percent: 18
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 ## Current Position
 
 Phase: 03.3 (amenities) — EXECUTING
-Plan: 4 of 9
+Plan: 5 of 9
 Plans: 8, across waves 0–6. Approved by gsd-plan-checker on pass 3 of the revision loop.
 Status: Ready to execute
 URL state via `defineTable` + `useDataTableQueryState`, human-verify checkpoint
@@ -36,7 +36,7 @@ Last activity: 2026-08-14
 
 Phase 03 (properties-units) remains at plan 8 of 9 (03-09 completed out of order as Wave 4; 05-08 remain).
 
-Progress: [███████░░░] 71%
+Progress: [████████░░] 75%
 
 ### Phase 03.1 planning notes
 
@@ -116,6 +116,7 @@ unknown flag, and a genuine pass are indistinguishable by exit code alone.
 | Phase 03.3 P01 | 15min | 3 tasks | 7 files |
 | Phase 03.3 P02 | 15min | 3 tasks | 5 files |
 | Phase 03.3 P03 | 20min | 3 tasks | 4 files |
+| Phase 03.3 P04 | 12min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -178,6 +179,7 @@ Recent decisions affecting current work:
 - [Phase 03.2-06]: `FloorPlanWizard` composes 03.2-05's `WizardDialog` as two independent roots switched on `overlay.value` (`new`|id) — create=`linear` (Details→Photos→Review), edit=`free` (Details→Photos, no Review, D-42). One `@tanstack/react-form` spans each wizard; Review reads live values via `useStore` (D-35). Images stage in memory and persist only on Confirm/Save via the now owner-agnostic `persistStagedGallery` (propertyId dropped, callbacks close over the id, D-43). Duplicate-name BAD_REQUEST maps onto the Name field + jumps to Details (D-09). No org-quota invalidation (floor plans uncapped, D-28/D-47). Pure `lib/floor-plan-display.ts` (Studio, quarter baths, thousands sq ft, ` · `) is the single formatter (D-39). Two scope additions vs `files_modified`: `property-form.tsx` retargeted to the new persist signature, and `wizard/floor-plan-form.ts` added to break the panel↔wizard type cycle (mirrors `property-form-shared.ts`). Wizard has no mount point until 03.2-07 registers the `property.floorPlan` overlay.
 - [Phase ?]: [Phase 03.3-01]: Amenities data layer landed — 2 pgEnums (amenity_scope, 38-key amenity_icon) from the same as-const arrays backing the Zod contract (D-04); colorKey reuses TAG_COLOR_KEYS. Four RLS tables (organization_amenity catalog + property_amenity/unit_amenity assignments + property_amenity_image gallery); nullable catalog FKs onDelete set null; is_reservable/requires_approval inert on property_amenity only (D-05); unit_amenity thin (D-24); no reservation enum (D-20). 0019_amenities.sql hand-authored (generate blocked) with 2 partial unique indexes + 4 audit triggers, applied to dev + villuh_test (D-27a). Contract at @villuh/server/schemas/amenities (D-30).
 - [Phase ?]: [Phase 03.3-03]: All 38 amenity icon keys resolve through PlatformIcon (D-19) — IconStar shares the default, IconParking/IconHeating/IconOutdoor/IconRooftop reuse existing Garage/Flame/Leaf/Sun imports, 33 new Solar Linear imports added. amenity-icons.ts reuses the 8 shared tag_color swatch/ink maps (D-04, no new palette). AmenityIconColorPicker mirrors TagIconColorPicker with a scrollable 38-icon grid emitting {iconKey,colorKey} (D-42); AmenityChipRow is a read-only denormalized chip primitive with optional +N overflow and no data hooks (D-14/D-23).
+- [Phase 03.3]: 03.3-04: property amenity assignments (amenities.property.*) replicate the tags attach/set pattern — denormalize label/icon/color from catalog (D-23), set deletes isNotNull(catalog) rows then re-inserts (freeform survives, D-32); assertScopeAllows rejects unit-scoped on property (D-34); requirePropertyAmenity org filter is the IDOR guard (D-36, update/remove carry no propertyId). Gallery uses a SEPARATE MAX_AMENITY_GALLERY_IMAGES=10 (Pitfall 1) double-enforced in presignAmenityImage + gallery.add; nested S3 key {org}/properties/{propertyId}/amenities/{propertyAmenityId}/gallery/. 17/17 amenities tests green.
 
 ### Roadmap Evolution
 
@@ -203,8 +205,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-14T16:42:16.230Z
-Stopped at: Completed 03.2-06-PLAN.md
+Last session: 2026-08-14T16:53:49.272Z
+Stopped at: Completed 03.3-04-PLAN.md
 Resume file: None
 
 03.2-06 built the floor-plan wizard (first 03.2 UI plan). `FloorPlanWizard` composes 03.2-05's `WizardDialog` for create (linear, Details→Photos→Review) and edit (free, Details→Photos), owning one form + a staged gallery that persists only on Confirm/Save (D-41). Also shipped: pure `lib/floor-plan-display.ts`, an owner-agnostic `persistStagedGallery` (D-43), and `StagedGalleryField` copy props. Monorepo typecheck 6/6, `dialog.tsx` zero-byte diff intact. The wizard has no mount point yet — 03.2-07 registers the `property.floorPlan` overlay and adds `FloorPlansSection`/`FloorPlanCard`.
