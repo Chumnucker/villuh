@@ -8,12 +8,15 @@ import {
   type ColumnVisibilityState,
   type ExpandedState,
   type PaginationState,
+  type RowSelectionState,
   type SortingState,
   type Updater,
 } from "@tanstack/react-table"
 
 import { cn } from "../utils"
 import { Card } from "./card"
+import { EmptyState } from "./empty-state"
+import { type PlatformIconName } from "./icon"
 import {
   DataGrid,
   DataGridContainer,
@@ -24,7 +27,11 @@ import {
 import { DataGridColumnHeader } from "./data-grid/data-grid-column-header"
 import { DataGridPagination } from "./data-grid/data-grid-pagination"
 import { DataGridScrollArea } from "./data-grid/data-grid-scroll-area"
-import { DataGridTable } from "./data-grid/data-grid-table"
+import {
+  DataGridTable,
+  DataGridTableRowSelect,
+  DataGridTableRowSelectAll,
+} from "./data-grid/data-grid-table"
 import { DataTableToolbar } from "./data-table-toolbar"
 import {
   hasActiveDataTableQuery,
@@ -41,8 +48,12 @@ export function createDataTableColumnHelper<TData extends object>() {
 }
 
 export type DataTableEmptyContent = {
+  /** Any icon key from the shared icon set, centered above the title. */
+  icon?: PlatformIconName
   title: string
   description?: string
+  /** Rendered under the copy — e.g. an "Add tenant" button. */
+  action?: React.ReactNode
 }
 
 export type DataTableProps<TData extends object> = {
@@ -69,6 +80,27 @@ export type DataTableProps<TData extends object> = {
   emptyFiltered?: DataTableEmptyContent
   /** Defaults to `row.id` when present, else the row index. */
   getRowId?: (originalRow: TData, index: number) => string
+  /**
+   * Opt-in row selection (default OFF). When falsy — every existing call site —
+   * no checkbox column is prepended, no selection state is wired, and the
+   * selection bar never renders, so those tables are byte-behavior-unchanged.
+   * When true, a leading checkbox column is added and selection state is
+   * tracked internally (or controlled via `rowSelection`/`onRowSelectionChange`).
+   */
+  enableRowSelection?: boolean
+  /** Controlled selection map (`{ [rowId]: true }`). Omit to use internal state. */
+  rowSelection?: RowSelectionState
+  /** Controlled-selection change handler. Required only alongside `rowSelection`. */
+  onRowSelectionChange?: (selection: RowSelectionState) => void
+  /**
+   * Renders a selection action bar ABOVE the grid, only while a selection is
+   * non-empty (and only when `enableRowSelection` is on). Receives the selected
+   * row ids and a `clearSelection` callback.
+   */
+  selectionActions?: (ctx: {
+    selectedRowIds: string[]
+    clearSelection: () => void
+  }) => React.ReactNode
   /** Enables tree rows: return a row's children to make it expandable. */
   getSubRows?: (row: TData) => TData[] | undefined
   /** Initial expansion for tree tables, e.g. `true` (all) or `{ rowId: true }`. */
@@ -117,6 +149,10 @@ export function DataTable<TData extends object>({
     description: "Try adjusting your search or filters.",
   },
   getRowId = defaultGetRowId,
+  enableRowSelection = false,
+  rowSelection: controlledRowSelection,
+  onRowSelectionChange,
+  selectionActions,
   getSubRows,
   defaultExpanded = {},
   pagination: showPagination = true,
@@ -128,31 +164,59 @@ export function DataTable<TData extends object>({
     React.useState<ColumnVisibilityState>({})
   const [expanded, setExpanded] = React.useState<ExpandedState>(defaultExpanded)
 
+  // Selection is opt-in; when disabled none of this touches the table instance.
+  const [internalRowSelection, setInternalRowSelection] =
+    React.useState<RowSelectionState>({})
+  const rowSelection = controlledRowSelection ?? internalRowSelection
+  const setRowSelection = React.useCallback(
+    (next: RowSelectionState) => {
+      if (onRowSelectionChange) onRowSelectionChange(next)
+      if (controlledRowSelection === undefined) setInternalRowSelection(next)
+    },
+    [onRowSelectionChange, controlledRowSelection]
+  )
+
   // Plain string headers get the interactive header for free: sort menu when
   // the column is sortable (`enableSorting: false` opts out), move actions
   // unless locked via `meta.enableMoving: false`. Function headers render
   // as-is for full control.
-  const resolvedColumns = React.useMemo(
-    () =>
-      columns.map((column) => {
-        if (typeof column.header !== "string") return column
-        const title = column.header
-        const resolved = {
-          ...column,
-          // A string header doubles as the column id in v9; preserve it when
-          // neither an explicit id nor an accessorKey identifies the column.
-          id: column.id ?? ("accessorKey" in column ? undefined : title),
-          header: ({
-            column: headerColumn,
-          }: {
-            column: Parameters<typeof DataGridColumnHeader>[0]["column"]
-          }) => <DataGridColumnHeader title={title} column={headerColumn} />,
-          meta: { headerTitle: title, ...column.meta },
-        }
-        return resolved as unknown as ColumnDef<DataGridFeatures, TData>
-      }),
-    [columns]
-  )
+  const resolvedColumns = React.useMemo(() => {
+    const mapped = columns.map((column) => {
+      if (typeof column.header !== "string") return column
+      const title = column.header
+      const resolved = {
+        ...column,
+        // A string header doubles as the column id in v9; preserve it when
+        // neither an explicit id nor an accessorKey identifies the column.
+        id: column.id ?? ("accessorKey" in column ? undefined : title),
+        header: ({
+          column: headerColumn,
+        }: {
+          column: Parameters<typeof DataGridColumnHeader>[0]["column"]
+        }) => <DataGridColumnHeader title={title} column={headerColumn} />,
+        meta: { headerTitle: title, ...column.meta },
+      }
+      return resolved as unknown as ColumnDef<DataGridFeatures, TData>
+    })
+
+    if (!enableRowSelection) return mapped
+
+    // Leading checkbox column — only present when selection is opted in, so the
+    // column set (and therefore layout) of every other table is unchanged.
+    const selectColumn = {
+      id: "select",
+      header: () => <DataGridTableRowSelectAll />,
+      cell: ({ row }: { row: Parameters<typeof DataGridTableRowSelect>[0]["row"] }) => (
+        <DataGridTableRowSelect row={row} />
+      ),
+      enableSorting: false,
+      enableResizing: false,
+      size: 44,
+      meta: { enableMoving: false, headerClassName: "w-11", cellClassName: "w-11" },
+    } as unknown as ColumnDef<DataGridFeatures, TData>
+
+    return [selectColumn, ...mapped]
+  }, [columns, enableRowSelection])
 
   const rows = data ?? NO_ROWS
   const recordCount = total ?? rows.length
@@ -198,6 +262,14 @@ export function DataTable<TData extends object>({
     },
     onColumnVisibilityChange: setColumnVisibility,
     onExpandedChange: setExpanded,
+    ...(enableRowSelection
+      ? {
+          enableRowSelection: true,
+          onRowSelectionChange: (updater: Updater<RowSelectionState>) => {
+            setRowSelection(resolveUpdater(updater, rowSelection))
+          },
+        }
+      : {}),
     onPaginationChange: (updater) => {
       const next = resolveUpdater(updater, pagination)
       onQueryChange({
@@ -212,10 +284,28 @@ export function DataTable<TData extends object>({
       columnVisibility,
       expanded,
       pagination,
+      ...(enableRowSelection ? { rowSelection } : {}),
     },
   })
 
   const emptyContent = hasActiveDataTableQuery(query) ? emptyFiltered : empty
+  const isEmpty = !isLoading && recordCount === 0
+
+  const selectedRowIds = React.useMemo(
+    () =>
+      enableRowSelection
+        ? Object.keys(rowSelection).filter((id) => rowSelection[id])
+        : [],
+    [enableRowSelection, rowSelection]
+  )
+  const clearSelection = React.useCallback(
+    () => setRowSelection({}),
+    [setRowSelection]
+  )
+  const selectionBar =
+    enableRowSelection && selectionActions && selectedRowIds.length > 0
+      ? selectionActions({ selectedRowIds, clearSelection })
+      : null
 
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col gap-4", className)}>
@@ -230,6 +320,8 @@ export function DataTable<TData extends object>({
         action={toolbarAction}
       />
 
+      {selectionBar}
+
       <DataGrid
         table={table}
         recordCount={recordCount}
@@ -241,24 +333,29 @@ export function DataTable<TData extends object>({
           columnsMovable: true,
           ...tableLayout,
         }}
-        emptyMessage={
-          <div className="flex flex-col items-center gap-1 py-10 text-center">
-            <p className="text-sm font-medium text-foreground">
-              {emptyContent.title}
-            </p>
-            {emptyContent.description ? (
-              <p className="text-sm text-muted-foreground">
-                {emptyContent.description}
-              </p>
-            ) : null}
-          </div>
-        }
+        // The empty state is centered over the grid body via the overlay
+        // below; the in-cell slot is left blank so it doesn't render twice.
+        emptyMessage={<></>}
       >
         <Card className="min-h-0 flex-1 gap-0 overflow-hidden p-0">
-          <DataGridContainer className="flex min-h-0 flex-1 flex-col">
+          <DataGridContainer className="relative flex min-h-0 flex-1 flex-col">
             <DataGridScrollArea>
               <DataGridTable />
             </DataGridScrollArea>
+            {isEmpty ? (
+              // Absolute overlay fills the grid body (definite height from the
+              // flex-1 card), so the message truly centers instead of pinning
+              // to the top of the short empty table. Header stays visible above.
+              <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-6">
+                <EmptyState
+                  icon={emptyContent.icon}
+                  title={emptyContent.title}
+                  description={emptyContent.description}
+                  action={emptyContent.action}
+                  className="pointer-events-auto"
+                />
+              </div>
+            ) : null}
           </DataGridContainer>
           {showPagination ? (
             // Card footer styled to mirror the sticky table header.
