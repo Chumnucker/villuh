@@ -151,6 +151,17 @@ export { TAG_COLOR_KEYS, zTagColorKey }
 // Catalog (organization_amenity) inputs
 // ---------------------------------------------------------------------------
 
+// Narrow the catalog to amenities attachable to a given context —
+// `scope IN (attachableTo, 'both')` — so pickers fetch only what they can use
+// instead of over-fetching and filtering client-side. Omit for the full catalog
+// (e.g. org-settings management).
+export const catalogListInputSchema = z
+  .object({
+    attachableTo: z.enum(['property', 'unit']).optional(),
+  })
+  .optional()
+export type CatalogListInput = z.infer<typeof catalogListInputSchema>
+
 export const createAmenityInputSchema = z.object({
   name: z.string().trim().min(1, 'Amenity name is required').max(100, 'Name must be at most 100 characters'),
   description: z.string().trim().max(2000).optional(),

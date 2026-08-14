@@ -1,6 +1,7 @@
 import { router, protectedProcedure, permissionProcedure } from '../../trpc.js'
 import { withOrganization } from '../../db/index.js'
 import {
+  catalogListInputSchema,
   createAmenityInputSchema,
   updateAmenityInputSchema,
   amenityIdInputSchema,
@@ -57,10 +58,10 @@ import {
 // permissionProcedure('write') (D-28), each body inside withOrganization. Property/unit sub-routers
 // (with the nested gallery) are added by Plans 04/05.
 const catalogRouter = router({
-  list: protectedProcedure.query(async ({ ctx }) => {
+  list: protectedProcedure.input(catalogListInputSchema).query(async ({ ctx, input }) => {
     const { organizationId, userId } = ctx
     return withOrganization(organizationId, userId, async (tx) => ({
-      amenities: await listCatalog(tx, organizationId),
+      amenities: await listCatalog(tx, organizationId, input?.attachableTo),
     }))
   }),
 

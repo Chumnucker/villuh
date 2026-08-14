@@ -1,7 +1,9 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useState } from "react"
+import { useForm } from "@tanstack/react-form"
 import { toast } from "sonner"
+import { z } from "zod"
 import {
   Button,
   Dialog,
@@ -11,6 +13,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  Field,
+  FieldError,
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
@@ -21,6 +25,11 @@ import {
   isPlatformIconName,
 } from "@villuh/ui"
 import { invalidateQueries, trpc } from "@villuh/api"
+import {
+  createAmenityInputSchema,
+  zAmenityIconKey,
+  zTagColorKey,
+} from "@villuh/server/schemas/amenities"
 import type { inferRouterOutputs } from "@trpc/server"
 import type { AppRouter } from "@villuh/server/router"
 import { useUser } from "@/modules/app/providers/me-provider"
@@ -37,16 +46,24 @@ type RouterOutput = inferRouterOutputs<AppRouter>
 type CatalogRow =
   RouterOutput["amenities"]["catalog"]["list"]["amenities"][number]
 
-/** Which side of the catalog scope a dialog targets. Drives both the catalog
- * filter (`scope | both`) and the scope new amenities are created with. */
+/** Which side of the catalog a dialog targets. The server filters the catalog
+ * to `scope IN (scope, 'both')` and new amenities are created with this scope. */
 export type AmenityScope = "property" | "unit"
+
+// The inline "create a new amenity" form — name reuses the catalog schema's own
+// rule; icon/color are constrained to the shared palettes.
+const createAmenityFormSchema = z.object({
+  name: createAmenityInputSchema.shape.name,
+  iconKey: zAmenityIconKey,
+  colorKey: zTagColorKey,
+})
 
 export type AmenitiesSelectDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: string
   description?: string
-  /** Filters the catalog to attachable rows + scopes inline creation. */
+  /** Scopes the (server-side) catalog filter + inline creation. */
   scope: AmenityScope
   /** Catalog ids to pre-select when the dialog opens (baseline). */
   initialSelectedIds?: readonly string[]
@@ -110,17 +127,11 @@ function AmenitiesSelectForm({
   const canCreate = allowCreate && canWrite
   const utils = trpc.useUtils()
 
-  const catalogQuery = trpc.amenities.catalog.list.useQuery()
-
-  const catalog: CatalogRow[] = useMemo(
-    () =>
-      (catalogQuery.data?.amenities ?? []).filter((row) =>
-        scope === "property"
-          ? row.scope === "property" || row.scope === "both"
-          : row.scope === "unit" || row.scope === "both"
-      ),
-    [catalogQuery.data, scope]
-  )
+  // The server returns only rows attachable to this scope — no client filtering.
+  const catalogQuery = trpc.amenities.catalog.list.useQuery({
+    attachableTo: scope,
+  })
+  const catalog: CatalogRow[] = catalogQuery.data?.amenities ?? []
 
   // `null` = untouched, so selection derives from `initialSelectedIds` (which
   // can arrive late while a query loads). The first toggle/create snapshots that
@@ -128,12 +139,32 @@ function AmenitiesSelectForm({
   const [override, setOverride] = useState<Set<string> | null>(null)
   const selected = override ?? new Set(initialSelectedIds ?? [])
 
-  const [newName, setNewName] = useState("")
-  const [newIcon, setNewIcon] = useState<AmenityIconKey>(AMENITY_ICON_KEYS[0])
-  const [newColor, setNewColor] = useState<TagColorKey>(TAG_COLOR_KEYS[0])
-
   const createAmenity = trpc.amenities.catalog.create.useMutation({
     onError: (err) => toast.error(err.message || "Could not create amenity"),
+  })
+
+  const createForm = useForm({
+    defaultValues: {
+      name: "",
+      iconKey: AMENITY_ICON_KEYS[0] as AmenityIconKey,
+      colorKey: TAG_COLOR_KEYS[0] as TagColorKey,
+    },
+    validators: { onSubmit: createAmenityFormSchema },
+    onSubmit: async ({ value }) => {
+      const { amenity } = await createAmenity.mutateAsync({
+        name: value.name,
+        scope,
+        iconKey: value.iconKey,
+        colorKey: value.colorKey,
+      })
+      await invalidateQueries(utils, [(u) => u.amenities.catalog.list])
+      setOverride((prev) => {
+        const next = new Set(prev ?? initialSelectedIds ?? [])
+        next.add(amenity.id)
+        return next
+      })
+      createForm.reset()
+    },
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -145,30 +176,6 @@ function AmenitiesSelectForm({
       else next.add(catalogId)
       return next
     })
-  }
-
-  async function submitNewAmenity() {
-    const name = newName.trim()
-    if (!name || createAmenity.isPending) return
-    try {
-      const { amenity } = await createAmenity.mutateAsync({
-        name,
-        scope,
-        iconKey: newIcon,
-        colorKey: newColor,
-      })
-      await invalidateQueries(utils, [(u) => u.amenities.catalog.list])
-      setOverride((prev) => {
-        const next = new Set(prev ?? initialSelectedIds ?? [])
-        next.add(amenity.id)
-        return next
-      })
-      setNewName("")
-      setNewIcon(AMENITY_ICON_KEYS[0])
-      setNewColor(TAG_COLOR_KEYS[0])
-    } catch {
-      // toast handled in onError
-    }
   }
 
   async function handleSubmit() {
@@ -197,40 +204,106 @@ function AmenitiesSelectForm({
 
       <DialogContent>
         {canCreate ? (
-          <InputGroup>
-            <InputGroupAddon align="inline-start">
-              <AmenityIconColorPicker
-                size="sm"
-                iconKey={newIcon}
-                colorKey={newColor}
-                onChange={({ iconKey, colorKey }) => {
-                  setNewIcon(iconKey)
-                  setNewColor(colorKey)
-                }}
-              />
-            </InputGroupAddon>
-            <InputGroupInput
-              placeholder="Create a new amenity"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault()
-                  void submitNewAmenity()
-                }
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              void createForm.handleSubmit()
+            }}
+          >
+            <createForm.Field
+              name="name"
+              validators={{
+                onChange: ({ value }) => {
+                  const parsed =
+                    createAmenityFormSchema.shape.name.safeParse(value)
+                  return parsed.success
+                    ? undefined
+                    : parsed.error.issues[0]?.message
+                },
               }}
-            />
-            <InputGroupAddon align="inline-end">
-              <InputGroupButton
-                type="button"
-                size="sm"
-                disabled={!newName.trim() || createAmenity.isPending}
-                onClick={() => void submitNewAmenity()}
-              >
-                Create
-              </InputGroupButton>
-            </InputGroupAddon>
-          </InputGroup>
+            >
+              {(field) => {
+                const isInvalid =
+                  field.state.meta.isTouched && !field.state.meta.isValid
+                return (
+                  <Field data-invalid={isInvalid || undefined}>
+                    <InputGroup>
+                      <InputGroupAddon align="inline-start">
+                        <createForm.Subscribe
+                          selector={(state) =>
+                            [
+                              state.values.iconKey,
+                              state.values.colorKey,
+                            ] as const
+                          }
+                        >
+                          {([iconKey, colorKey]) => (
+                            <AmenityIconColorPicker
+                              size="sm"
+                              iconKey={iconKey}
+                              colorKey={colorKey}
+                              onChange={(next) => {
+                                createForm.setFieldValue("iconKey", next.iconKey)
+                                createForm.setFieldValue(
+                                  "colorKey",
+                                  next.colorKey
+                                )
+                              }}
+                            />
+                          )}
+                        </createForm.Subscribe>
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        id={field.name}
+                        name={field.name}
+                        placeholder="Create a new amenity"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        aria-invalid={isInvalid || undefined}
+                      />
+                      <InputGroupAddon align="inline-end">
+                        <createForm.Subscribe
+                          selector={(state) =>
+                            [
+                              state.canSubmit,
+                              state.isSubmitting,
+                              state.values.name,
+                            ] as const
+                          }
+                        >
+                          {([canSubmit, isCreating, name]) => (
+                            <InputGroupButton
+                              type="submit"
+                              size="sm"
+                              disabled={
+                                !canSubmit ||
+                                isCreating ||
+                                createAmenity.isPending ||
+                                !name.trim()
+                              }
+                            >
+                              Create
+                            </InputGroupButton>
+                          )}
+                        </createForm.Subscribe>
+                      </InputGroupAddon>
+                    </InputGroup>
+                    {isInvalid ? (
+                      <FieldError
+                        errors={field.state.meta.errors.map((err) =>
+                          typeof err === "string"
+                            ? { message: err }
+                            : { message: err?.message }
+                        )}
+                      />
+                    ) : null}
+                  </Field>
+                )
+              }}
+            </createForm.Field>
+          </form>
         ) : null}
 
         <ScrollArea className="max-h-96 rounded-3xl bg-input">

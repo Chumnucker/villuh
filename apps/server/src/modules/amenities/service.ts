@@ -69,12 +69,21 @@ async function requireOrganizationAmenity(
 export async function listCatalog(
   tx: OrganizationTx,
   organizationId: string,
+  attachableTo?: 'property' | 'unit',
 ): Promise<OrganizationAmenityRow[]> {
   await ensureDefaultAmenities(organizationId, tx)
   return tx
     .select()
     .from(organizationAmenity)
-    .where(and(eq(organizationAmenity.organizationId, organizationId), isNull(organizationAmenity.archivedAt)))
+    .where(
+      and(
+        eq(organizationAmenity.organizationId, organizationId),
+        isNull(organizationAmenity.archivedAt),
+        // A `property`/`unit` picker only wants rows it can attach — scope
+        // matching that context or the ambidextrous `both`.
+        attachableTo ? inArray(organizationAmenity.scope, [attachableTo, 'both']) : undefined,
+      ),
+    )
     .orderBy(asc(organizationAmenity.sortOrder), asc(organizationAmenity.name))
 }
 
