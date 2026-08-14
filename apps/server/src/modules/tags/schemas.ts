@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 /**
  * Fixed tag palette (D-21, UI-SPEC "Tag & status palette") — Zod enum rejects free hex /
- * arbitrary icon names at the API boundary (T-03-16), matching the locked 14 icon / 8 color
+ * arbitrary icon names at the API boundary (T-03-16), matching the locked 14 icon / 16 color
  * keys. Shared by `tags.*` mutations, unit statuses, and the landlord TagPicker UI (Plan 07).
  * Also backs the `tag_icon` / `tag_color` Postgres enums (see schema/enums.ts), so adding a
  * key needs a migration alongside the edit here.
@@ -27,7 +27,24 @@ export const TAG_ICON_KEYS = [
 export const zTagIconKey = z.enum(TAG_ICON_KEYS)
 export type TagIconKey = z.infer<typeof zTagIconKey>
 
-export const TAG_COLOR_KEYS = ['slate', 'blue', 'green', 'amber', 'orange', 'red', 'violet', 'teal'] as const
+export const TAG_COLOR_KEYS = [
+  'slate',
+  'blue',
+  'green',
+  'amber',
+  'orange',
+  'red',
+  'violet',
+  'teal',
+  'cyan',
+  'sky',
+  'indigo',
+  'purple',
+  'pink',
+  'rose',
+  'lime',
+  'yellow',
+] as const
 
 export const zTagColorKey = z.enum(TAG_COLOR_KEYS)
 export type TagColorKey = z.infer<typeof zTagColorKey>

@@ -25,6 +25,14 @@ const TAG_SWATCH_CLASSES: Record<TagColorKey, string> = {
   red: "bg-red-500",
   violet: "bg-violet-500",
   teal: "bg-teal-500",
+  cyan: "bg-cyan-500",
+  sky: "bg-sky-500",
+  indigo: "bg-indigo-500",
+  purple: "bg-purple-500",
+  pink: "bg-pink-500",
+  rose: "bg-rose-500",
+  lime: "bg-lime-500",
+  yellow: "bg-yellow-500",
 }
 
 /** Icon ink matches the picked palette color. */
@@ -37,6 +45,14 @@ const TAG_ICON_COLOR_CLASSES: Record<TagColorKey, string> = {
   red: "text-red-500",
   violet: "text-violet-500",
   teal: "text-teal-500",
+  cyan: "text-cyan-500",
+  sky: "text-sky-500",
+  indigo: "text-indigo-500",
+  purple: "text-purple-500",
+  pink: "text-pink-500",
+  rose: "text-rose-500",
+  lime: "text-lime-500",
+  yellow: "text-yellow-500",
 }
 
 /**

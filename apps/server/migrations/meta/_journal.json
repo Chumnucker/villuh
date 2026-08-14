@@ -141,6 +141,13 @@
       "when": 1786993740000,
       "tag": "0019_amenities",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1786993800000,
+      "tag": "0020_amenity_palette",
+      "breakpoints": true
     }
   ]
 }

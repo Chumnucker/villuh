@@ -88,6 +88,82 @@ import { VolleyballIcon } from "@solar-icons/react/linear/volleyball"
 import { WashingMachineIcon } from "@solar-icons/react/linear/washing-machine"
 import { WaterdropIcon } from "@solar-icons/react/linear/waterdrop"
 import { WiFiRouterIcon } from "@solar-icons/react/linear/wi-fi-router"
+// Expanded general-purpose palette — verified Solar Linear glyphs.
+import { BuildingsIcon } from "@solar-icons/react/linear/buildings"
+import { CityIcon } from "@solar-icons/react/linear/city"
+import { SmartHomeIcon } from "@solar-icons/react/linear/smart-home"
+import { ChairIcon } from "@solar-icons/react/linear/chair"
+import { ClosetIcon } from "@solar-icons/react/linear/closet"
+import { LampIcon } from "@solar-icons/react/linear/lamp"
+import { MirrorIcon } from "@solar-icons/react/linear/mirror"
+import { HangerIcon } from "@solar-icons/react/linear/hanger"
+import { ConditionerIcon } from "@solar-icons/react/linear/conditioner"
+import { ThermometerIcon } from "@solar-icons/react/linear/thermometer"
+import { TemperatureIcon } from "@solar-icons/react/linear/temperature"
+import { LightbulbIcon } from "@solar-icons/react/linear/lightbulb"
+import { WalletIcon } from "@solar-icons/react/linear/wallet"
+import { CartIcon } from "@solar-icons/react/linear/cart"
+import { ShopIcon } from "@solar-icons/react/linear/shop"
+import { TagIcon } from "@solar-icons/react/linear/tag"
+import { GiftIcon } from "@solar-icons/react/linear/gift"
+import { Safe2Icon } from "@solar-icons/react/linear/safe-2"
+import { BanknoteIcon } from "@solar-icons/react/linear/banknote"
+import { TicketIcon } from "@solar-icons/react/linear/ticket"
+import { ChatRoundIcon } from "@solar-icons/react/linear/chat-round"
+import { LetterIcon } from "@solar-icons/react/linear/letter"
+import { GlobalIcon } from "@solar-icons/react/linear/global"
+import { GlobeIcon } from "@solar-icons/react/linear/globe"
+import { EarthIcon } from "@solar-icons/react/linear/earth"
+import { CloudIcon } from "@solar-icons/react/linear/cloud"
+import { ServerIcon } from "@solar-icons/react/linear/server"
+import { MonitorIcon } from "@solar-icons/react/linear/monitor"
+import { SmartphoneIcon } from "@solar-icons/react/linear/smartphone"
+import { HeadphonesRoundIcon } from "@solar-icons/react/linear/headphones-round"
+import { MicrophoneIcon } from "@solar-icons/react/linear/microphone"
+import { PrinterIcon } from "@solar-icons/react/linear/printer"
+import { KeyboardIcon } from "@solar-icons/react/linear/keyboard"
+import { MusicNoteIcon } from "@solar-icons/react/linear/music-note"
+import { VideocameraIcon } from "@solar-icons/react/linear/videocamera"
+import { GalleryIcon } from "@solar-icons/react/linear/gallery"
+import { PaletteIcon } from "@solar-icons/react/linear/palette"
+import { ConfettiIcon } from "@solar-icons/react/linear/confetti"
+import { StarsIcon } from "@solar-icons/react/linear/stars"
+import { CrownIcon } from "@solar-icons/react/linear/crown"
+import { MedalStarIcon } from "@solar-icons/react/linear/medal-star"
+import { TargetIcon } from "@solar-icons/react/linear/target"
+import { RocketIcon } from "@solar-icons/react/linear/rocket"
+import { MagnetIcon } from "@solar-icons/react/linear/magnet"
+import { CompassIcon } from "@solar-icons/react/linear/compass"
+import { MapIcon } from "@solar-icons/react/linear/map"
+import { RouteIcon } from "@solar-icons/react/linear/route"
+import { TelescopeIcon } from "@solar-icons/react/linear/telescope"
+import { WindIcon } from "@solar-icons/react/linear/wind"
+import { CloudRainIcon } from "@solar-icons/react/linear/cloud-rain"
+import { FireIcon } from "@solar-icons/react/linear/fire"
+import { BusIcon } from "@solar-icons/react/linear/bus"
+import { TramIcon } from "@solar-icons/react/linear/tram"
+import { ScooterIcon } from "@solar-icons/react/linear/scooter"
+import { BicyclingIcon } from "@solar-icons/react/linear/bicycling"
+import { PlaneIcon } from "@solar-icons/react/linear/plane"
+import { WineglassIcon } from "@solar-icons/react/linear/wineglass"
+import { MugIcon } from "@solar-icons/react/linear/mug"
+import { TeaCupIcon } from "@solar-icons/react/linear/tea-cup"
+import { PlateIcon } from "@solar-icons/react/linear/plate"
+import { DonutIcon } from "@solar-icons/react/linear/donut"
+import { ClockCircleIcon } from "@solar-icons/react/linear/clock-circle"
+import { Book2Icon } from "@solar-icons/react/linear/book-2"
+import { SquareAcademicCapIcon } from "@solar-icons/react/linear/square-academic-cap"
+import { MedicalKitIcon } from "@solar-icons/react/linear/medical-kit"
+import { HealthIcon } from "@solar-icons/react/linear/health"
+import { StethoscopeIcon } from "@solar-icons/react/linear/stethoscope"
+import { PillIcon } from "@solar-icons/react/linear/pill"
+import { MeditationIcon } from "@solar-icons/react/linear/meditation"
+import { WalkingIcon } from "@solar-icons/react/linear/walking"
+import { HikingIcon } from "@solar-icons/react/linear/hiking"
+import { SkateboardIcon } from "@solar-icons/react/linear/skateboard"
+import { TreadmillIcon } from "@solar-icons/react/linear/treadmill"
+import { FootballIcon } from "@solar-icons/react/linear/football"
+import { BowlingIcon } from "@solar-icons/react/linear/bowling"
 
 type SolarIcon = ComponentType<
   {
@@ -247,6 +323,82 @@ const PLATFORM_ICONS = {
   IconAccessible: AccessibilityIcon,
   IconTrack: RunningIcon,
   IconLibrary: BookIcon,
+  // Expanded general-purpose palette (amenity_icon enum, migration 0020).
+  IconBuilding: BuildingsIcon,
+  IconCity: CityIcon,
+  IconSmartHome: SmartHomeIcon,
+  IconChair: ChairIcon,
+  IconCloset: ClosetIcon,
+  IconLamp: LampIcon,
+  IconMirror: MirrorIcon,
+  IconHanger: HangerIcon,
+  IconConditioner: ConditionerIcon,
+  IconThermometer: ThermometerIcon,
+  IconTemperature: TemperatureIcon,
+  IconLightbulb: LightbulbIcon,
+  IconWallet: WalletIcon,
+  IconCart: CartIcon,
+  IconShop: ShopIcon,
+  IconTag: TagIcon,
+  IconGift: GiftIcon,
+  IconSafe: Safe2Icon,
+  IconBanknote: BanknoteIcon,
+  IconTicket: TicketIcon,
+  IconChat: ChatRoundIcon,
+  IconLetter: LetterIcon,
+  IconGlobal: GlobalIcon,
+  IconGlobe: GlobeIcon,
+  IconEarth: EarthIcon,
+  IconCloud: CloudIcon,
+  IconServer: ServerIcon,
+  IconMonitor: MonitorIcon,
+  IconSmartphone: SmartphoneIcon,
+  IconHeadphones: HeadphonesRoundIcon,
+  IconMicrophone: MicrophoneIcon,
+  IconPrinter: PrinterIcon,
+  IconKeyboard: KeyboardIcon,
+  IconMusic: MusicNoteIcon,
+  IconVideoCamera: VideocameraIcon,
+  IconGallery: GalleryIcon,
+  IconPalette: PaletteIcon,
+  IconConfetti: ConfettiIcon,
+  IconStars: StarsIcon,
+  IconCrown: CrownIcon,
+  IconMedal: MedalStarIcon,
+  IconTarget: TargetIcon,
+  IconRocket: RocketIcon,
+  IconMagnet: MagnetIcon,
+  IconCompass: CompassIcon,
+  IconMap: MapIcon,
+  IconRoute: RouteIcon,
+  IconTelescope: TelescopeIcon,
+  IconWind: WindIcon,
+  IconCloudRain: CloudRainIcon,
+  IconFire: FireIcon,
+  IconBus: BusIcon,
+  IconTram: TramIcon,
+  IconScooter: ScooterIcon,
+  IconBicycle: BicyclingIcon,
+  IconPlane: PlaneIcon,
+  IconWine: WineglassIcon,
+  IconMug: MugIcon,
+  IconTeaCup: TeaCupIcon,
+  IconPlate: PlateIcon,
+  IconDonut: DonutIcon,
+  IconClock: ClockCircleIcon,
+  IconBook: Book2Icon,
+  IconGraduation: SquareAcademicCapIcon,
+  IconMedicalKit: MedicalKitIcon,
+  IconHealth: HealthIcon,
+  IconStethoscope: StethoscopeIcon,
+  IconPill: PillIcon,
+  IconMeditation: MeditationIcon,
+  IconWalking: WalkingIcon,
+  IconHiking: HikingIcon,
+  IconSkateboard: SkateboardIcon,
+  IconTreadmill: TreadmillIcon,
+  IconFootball: FootballIcon,
+  IconBowling: BowlingIcon,
 } as const satisfies Record<string, SolarIcon>
 
 export type PlatformIconName = keyof typeof PLATFORM_ICONS

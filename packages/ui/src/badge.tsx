@@ -70,6 +70,14 @@ const tagBadgeVariants = cva("border-transparent", {
       red: "bg-red-500/15 text-red-700 dark:text-red-300",
       violet: "bg-violet-500/15 text-violet-700 dark:text-violet-300",
       teal: "bg-teal-500/15 text-teal-700 dark:text-teal-300",
+      cyan: "bg-cyan-500/15 text-cyan-700 dark:text-cyan-300",
+      sky: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
+      indigo: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300",
+      purple: "bg-purple-500/15 text-purple-700 dark:text-purple-300",
+      pink: "bg-pink-500/15 text-pink-700 dark:text-pink-300",
+      rose: "bg-rose-500/15 text-rose-700 dark:text-rose-300",
+      lime: "bg-lime-500/15 text-lime-700 dark:text-lime-300",
+      yellow: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-300",
 
       single_family: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
       duplex: "bg-teal-500/15 text-teal-700 dark:text-teal-300",
@@ -102,6 +110,14 @@ export type TagBadgeColor =
   | "red"
   | "violet"
   | "teal"
+  | "cyan"
+  | "sky"
+  | "indigo"
+  | "purple"
+  | "pink"
+  | "rose"
+  | "lime"
+  | "yellow"
 
 export type TagBadgeProps = Omit<React.ComponentProps<typeof Badge>, "variant"> &
   VariantProps<typeof tagBadgeVariants> & {
@@ -144,6 +160,14 @@ function toTagBadgeVariant(
     case "red":
     case "violet":
     case "teal":
+    case "cyan":
+    case "sky":
+    case "indigo":
+    case "purple":
+    case "pink":
+    case "rose":
+    case "lime":
+    case "yellow":
       return colorKey
     default:
       return "slate"
