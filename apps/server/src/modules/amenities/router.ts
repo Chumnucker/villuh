@@ -17,6 +17,11 @@ import {
   amenityGalleryAddInputSchema,
   amenityGalleryReorderInputSchema,
   amenityGalleryRemoveInputSchema,
+  unitAmenityListInputSchema,
+  unitAmenityListByPropertyInputSchema,
+  setUnitAmenitiesInputSchema,
+  addFreeformUnitAmenityInputSchema,
+  removeUnitAmenityInputSchema,
 } from './schemas.js'
 import {
   listCatalog,
@@ -37,6 +42,11 @@ import {
   addGalleryImage,
   reorderGalleryImages,
   removeGalleryImage,
+  listUnitAmenities,
+  listUnitAmenitiesByProperty,
+  setUnitAmenities,
+  addFreeformUnitAmenity,
+  removeUnitAmenity,
 } from './service.js'
 
 // Org catalog sub-router (amenities.catalog.*). Reads = protectedProcedure; every mutation =
@@ -219,7 +229,59 @@ const propertyRouter = router({
   gallery: galleryRouter,
 })
 
+// Unit assignment sub-router (amenities.unit.*). Reads = protectedProcedure; every mutation =
+// permissionProcedure('write') (D-28), each body inside withOrganization. bulk* added by Plan 05
+// Task 2. Unit rows are thin (label/icon/color, D-24); floor-plan inheritance is deferred (D-03).
+const unitRouter = router({
+  list: protectedProcedure.input(unitAmenityListInputSchema).query(async ({ ctx, input }) => {
+    const { organizationId, userId } = ctx
+    return withOrganization(organizationId, userId, async (tx) => ({
+      amenities: await listUnitAmenities(tx, organizationId, input.unitId),
+    }))
+  }),
+
+  // Single-query, no N+1 (D-33): every unit's amenities for one property, keyed by unitId.
+  listByProperty: protectedProcedure
+    .input(unitAmenityListByPropertyInputSchema)
+    .query(async ({ ctx, input }) => {
+      const { organizationId, userId } = ctx
+      return withOrganization(organizationId, userId, async (tx) => ({
+        byUnit: await listUnitAmenitiesByProperty(tx, organizationId, input.propertyId),
+      }))
+    }),
+
+  set: permissionProcedure('write')
+    .input(setUnitAmenitiesInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { organizationId, userId } = ctx
+      const amenities = await withOrganization(organizationId, userId, (tx) =>
+        setUnitAmenities(tx, organizationId, input),
+      )
+      return { amenities }
+    }),
+
+  addFreeform: permissionProcedure('write')
+    .input(addFreeformUnitAmenityInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { organizationId, userId } = ctx
+      const amenity = await withOrganization(organizationId, userId, (tx) =>
+        addFreeformUnitAmenity(tx, organizationId, input),
+      )
+      return { amenity }
+    }),
+
+  remove: permissionProcedure('write')
+    .input(removeUnitAmenityInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { organizationId, userId } = ctx
+      return withOrganization(organizationId, userId, (tx) =>
+        removeUnitAmenity(tx, organizationId, input.unitAmenityId),
+      )
+    }),
+})
+
 export const amenitiesRouter = router({
   catalog: catalogRouter,
   property: propertyRouter,
+  unit: unitRouter,
 })
