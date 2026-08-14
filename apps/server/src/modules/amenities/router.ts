@@ -13,6 +13,10 @@ import {
   removePropertyAmenityInputSchema,
   reorderPropertyAmenitiesInputSchema,
   setPropertyAmenitiesInputSchema,
+  amenityGalleryListInputSchema,
+  amenityGalleryAddInputSchema,
+  amenityGalleryReorderInputSchema,
+  amenityGalleryRemoveInputSchema,
 } from './schemas.js'
 import {
   listCatalog,
@@ -29,6 +33,10 @@ import {
   removePropertyAmenity,
   reorderPropertyAmenities,
   setPropertyAmenities,
+  listGalleryImages,
+  addGalleryImage,
+  reorderGalleryImages,
+  removeGalleryImage,
 } from './service.js'
 
 // Org catalog sub-router (amenities.catalog.*). Reads = protectedProcedure; every mutation =
@@ -101,9 +109,47 @@ const catalogRouter = router({
     }),
 })
 
+// Nested gallery sub-router (amenities.property.gallery.*). Reads = protectedProcedure; mutations =
+// permissionProcedure('write') (D-28). objectKey persisted only; presigned GET at read (D-26).
+const galleryRouter = router({
+  list: protectedProcedure.input(amenityGalleryListInputSchema).query(async ({ ctx, input }) => {
+    const { organizationId, userId } = ctx
+    return withOrganization(organizationId, userId, async (tx) => ({
+      images: await listGalleryImages(tx, organizationId, input.propertyAmenityId),
+    }))
+  }),
+
+  add: permissionProcedure('write')
+    .input(amenityGalleryAddInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { organizationId, userId } = ctx
+      const image = await withOrganization(organizationId, userId, (tx) =>
+        addGalleryImage(tx, organizationId, input),
+      )
+      return { image }
+    }),
+
+  reorder: permissionProcedure('write')
+    .input(amenityGalleryReorderInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { organizationId, userId } = ctx
+      return withOrganization(organizationId, userId, (tx) =>
+        reorderGalleryImages(tx, organizationId, input.propertyAmenityId, input.orderedIds),
+      )
+    }),
+
+  remove: permissionProcedure('write')
+    .input(amenityGalleryRemoveInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { organizationId, userId } = ctx
+      return withOrganization(organizationId, userId, (tx) =>
+        removeGalleryImage(tx, organizationId, input.imageId),
+      )
+    }),
+})
+
 // Property assignment sub-router (amenities.property.*). Reads = protectedProcedure; every mutation
-// = permissionProcedure('write') (D-28), each body inside withOrganization. The nested gallery
-// (amenities.property.gallery.*) is added by Task 2.
+// = permissionProcedure('write') (D-28), each body inside withOrganization.
 const propertyRouter = router({
   list: protectedProcedure.input(propertyAmenityListInputSchema).query(async ({ ctx, input }) => {
     const { organizationId, userId } = ctx
@@ -169,6 +215,8 @@ const propertyRouter = router({
       )
       return { amenities }
     }),
+
+  gallery: galleryRouter,
 })
 
 export const amenitiesRouter = router({

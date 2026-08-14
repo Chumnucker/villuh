@@ -4,12 +4,15 @@ import { router, permissionProcedure } from '../../trpc.js'
 import { withOrganization } from '../../db/index.js'
 import { properties, propertyImages } from '../../schema/properties.js'
 import { floorPlans, floorPlanImages } from '../../schema/floor-plans.js'
+import { propertyAmenity, propertyAmenityImage } from '../../schema/amenities.js'
 import { badRequest, notFound } from '../../domain/index.js'
 import { presignPut } from './s3.js'
 import {
   presignPropertyImageInputSchema,
   presignFloorPlanImageInputSchema,
+  presignAmenityImageInputSchema,
   MAX_GALLERY_IMAGES,
+  MAX_AMENITY_GALLERY_IMAGES,
 } from './schemas.js'
 
 const EXTENSION_BY_CONTENT_TYPE: Record<string, string> = {
@@ -86,6 +89,45 @@ export const uploadsRouter = router({
 
         const ext = EXTENSION_BY_CONTENT_TYPE[input.contentType] ?? 'bin'
         const objectKey = `${organizationId}/properties/${floorPlan.propertyId}/floor-plans/${input.floorPlanId}/gallery/${randomUUID()}.${ext}`
+        const uploadUrl = await presignPut({ objectKey, contentType: input.contentType })
+        return { uploadUrl, objectKey }
+      })
+    }),
+
+  presignAmenityImage: permissionProcedure('write')
+    .input(presignAmenityImageInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { organizationId, userId } = ctx
+
+      return withOrganization(organizationId, userId, async (tx) => {
+        // Load the parent property_amenity in-org to resolve its property for the nested S3 key (D-26).
+        const amenityRows = await tx
+          .select({ id: propertyAmenity.id, propertyId: propertyAmenity.propertyId })
+          .from(propertyAmenity)
+          .where(
+            and(eq(propertyAmenity.id, input.propertyAmenityId), eq(propertyAmenity.organizationId, organizationId)),
+          )
+          .limit(1)
+        const amenity = amenityRows[0]
+        if (!amenity) notFound('Property amenity not found')
+
+        const countRows = await tx
+          .select({ count: sql<number>`count(*)::int` })
+          .from(propertyAmenityImage)
+          .where(
+            and(
+              eq(propertyAmenityImage.propertyAmenityId, input.propertyAmenityId),
+              eq(propertyAmenityImage.organizationId, organizationId),
+            ),
+          )
+        const current = countRows[0]?.count ?? 0
+        // Double-enforced cap (presign + gallery.add) — reject the 11th image (D-26).
+        if (current >= MAX_AMENITY_GALLERY_IMAGES) {
+          badRequest(`Gallery limit reached (max ${MAX_AMENITY_GALLERY_IMAGES} images)`)
+        }
+
+        const ext = EXTENSION_BY_CONTENT_TYPE[input.contentType] ?? 'bin'
+        const objectKey = `${organizationId}/properties/${amenity.propertyId}/amenities/${input.propertyAmenityId}/gallery/${randomUUID()}.${ext}`
         const uploadUrl = await presignPut({ objectKey, contentType: input.contentType })
         return { uploadUrl, objectKey }
       })

@@ -1,8 +1,10 @@
 import { and, asc, eq, isNotNull, isNull, sql } from 'drizzle-orm'
-import { organizationAmenity, propertyAmenity, unitAmenity } from '../../schema/amenities.js'
+import { organizationAmenity, propertyAmenity, propertyAmenityImage, unitAmenity } from '../../schema/amenities.js'
 import { properties } from '../../schema/properties.js'
 import { badRequest, notFound } from '../../domain/index.js'
 import { ensureDefaultAmenities } from '../../domain/amenities.js'
+import { presignGet, deleteObject } from '../uploads/s3.js'
+import { MAX_AMENITY_GALLERY_IMAGES } from '../uploads/schemas.js'
 import type { OrganizationTx } from '../../db/index.js'
 import type {
   CreateAmenityInput,
@@ -15,6 +17,7 @@ import type {
 
 export type OrganizationAmenityRow = typeof organizationAmenity.$inferSelect
 export type PropertyAmenityRow = typeof propertyAmenity.$inferSelect
+export type PropertyAmenityImageRow = typeof propertyAmenityImage.$inferSelect
 export type UnitAmenityRow = typeof unitAmenity.$inferSelect
 
 // The (organization_id, name) unique constraint (D-17) surfaces from Postgres as a 23505 error.
@@ -520,4 +523,114 @@ export async function setPropertyAmenities(
     if (row) rows.push(row)
   }
   return rows
+}
+
+// ---------------------------------------------------------------------------
+// Property amenity gallery (property_amenity_image) — D-26
+// objectKey persisted only; presigned GET generated at read (never stored). 10-cap double-enforced
+// (presign + add). Cover = first by sortOrder. Remove = S3 delete then hard row delete.
+// ---------------------------------------------------------------------------
+
+export async function listGalleryImages(
+  tx: OrganizationTx,
+  organizationId: string,
+  propertyAmenityId: string,
+): Promise<(PropertyAmenityImageRow & { url: string })[]> {
+  await requirePropertyAmenity(tx, organizationId, propertyAmenityId)
+  const rows = await tx
+    .select()
+    .from(propertyAmenityImage)
+    .where(
+      and(
+        eq(propertyAmenityImage.propertyAmenityId, propertyAmenityId),
+        eq(propertyAmenityImage.organizationId, organizationId),
+      ),
+    )
+    .orderBy(asc(propertyAmenityImage.sortOrder))
+
+  // Presigned GET URLs attached at read time only — never stored (D-26 / CLAUDE.md S3 rule).
+  return Promise.all(
+    rows.map(async (row) => ({ ...row, url: await presignGet({ objectKey: row.objectKey }) })),
+  )
+}
+
+export async function addGalleryImage(
+  tx: OrganizationTx,
+  organizationId: string,
+  input: { propertyAmenityId: string; objectKey: string; contentType: string; byteLength: number },
+): Promise<PropertyAmenityImageRow> {
+  await requirePropertyAmenity(tx, organizationId, input.propertyAmenityId)
+
+  const countRows = await tx
+    .select({ count: sql<number>`count(*)::int` })
+    .from(propertyAmenityImage)
+    .where(
+      and(
+        eq(propertyAmenityImage.propertyAmenityId, input.propertyAmenityId),
+        eq(propertyAmenityImage.organizationId, organizationId),
+      ),
+    )
+  const current = countRows[0]?.count ?? 0
+  // Double-enforced cap (presign + add) — reject the 11th image (D-26).
+  if (current >= MAX_AMENITY_GALLERY_IMAGES) {
+    badRequest(`Gallery limit reached (max ${MAX_AMENITY_GALLERY_IMAGES} images)`)
+  }
+
+  const [row] = await tx
+    .insert(propertyAmenityImage)
+    .values({
+      organizationId,
+      propertyAmenityId: input.propertyAmenityId,
+      objectKey: input.objectKey,
+      contentType: input.contentType,
+      byteLength: input.byteLength,
+      // First upload = sort_order 0 = cover; later reorders explicitly renumber.
+      sortOrder: current,
+    })
+    .returning()
+  return row
+}
+
+export async function reorderGalleryImages(
+  tx: OrganizationTx,
+  organizationId: string,
+  propertyAmenityId: string,
+  imageIds: string[],
+): Promise<{ ok: true }> {
+  await requirePropertyAmenity(tx, organizationId, propertyAmenityId)
+
+  for (let i = 0; i < imageIds.length; i++) {
+    await tx
+      .update(propertyAmenityImage)
+      .set({ sortOrder: i })
+      .where(
+        and(
+          eq(propertyAmenityImage.id, imageIds[i]),
+          eq(propertyAmenityImage.propertyAmenityId, propertyAmenityId),
+          eq(propertyAmenityImage.organizationId, organizationId),
+        ),
+      )
+  }
+  return { ok: true }
+}
+
+export async function removeGalleryImage(
+  tx: OrganizationTx,
+  organizationId: string,
+  imageId: string,
+): Promise<{ ok: true }> {
+  const rows = await tx
+    .select()
+    .from(propertyAmenityImage)
+    .where(and(eq(propertyAmenityImage.id, imageId), eq(propertyAmenityImage.organizationId, organizationId)))
+    .limit(1)
+  const image = rows[0]
+  if (!image) notFound('Image not found')
+
+  // Immediate S3 object delete + DB row removal — no soft-delete for gallery rows (D-26).
+  await deleteObject({ objectKey: image.objectKey })
+  await tx
+    .delete(propertyAmenityImage)
+    .where(and(eq(propertyAmenityImage.id, imageId), eq(propertyAmenityImage.organizationId, organizationId)))
+  return { ok: true }
 }
