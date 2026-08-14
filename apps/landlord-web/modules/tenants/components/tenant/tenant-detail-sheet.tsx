@@ -37,11 +37,14 @@ type ActivityEntry = RouterOutput["tenants"]["activity"]["entries"][number]
  * `unit-detail-tabs.tsx`.
  */
 export function TenantDetailSheet({ overlay }: { overlay: EntityOverlayHandle }) {
-  const tenantId = overlay.entityId
+  // `heldEntityId` keeps the tenant resolved through the close animation
+  // (`entityId` is null by then, which would blank the body mid-close). Query
+  // stays gated on `isOpen` so it never fires while closed.
+  const tenantId = overlay.heldEntityId
 
   const tenantQuery = trpc.tenants.get.useQuery(
     { tenantId: tenantId ?? "" },
-    { enabled: tenantId !== null }
+    { enabled: overlay.isOpen && tenantId !== null }
   )
 
   return (

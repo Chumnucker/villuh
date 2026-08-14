@@ -68,10 +68,14 @@ const AMENITY_GALLERY_CAP = 10
  */
 export function AmenitySheet({ overlay }: { overlay: EntityOverlayHandle }) {
   const { propertyId } = useParams<{ propertyId?: string }>()
-  const propertyAmenityId = overlay.entityId
+  // `heldEntityId` (not `entityId`) so the sheet keeps resolving its amenity
+  // through the close animation — `entityId` is already null by then, which
+  // would flip the body to the not-found fallback mid-close.
+  const propertyAmenityId = overlay.heldEntityId
 
-  // Gated: ungated, this fires on EVERY authenticated page load, because
-  // <AppOverlays> keeps the component mounted app-wide.
+  // Gated on `isOpen` (live): ungated, this fires on EVERY authenticated page
+  // load, because <AppOverlays> keeps the component mounted app-wide. On close
+  // the query disables but its cached data stays, so the body doesn't blank.
   const listQuery = trpc.amenities.property.list.useQuery(
     { propertyId: propertyId ?? "" },
     { enabled: overlay.isOpen && propertyAmenityId !== null && !!propertyId }

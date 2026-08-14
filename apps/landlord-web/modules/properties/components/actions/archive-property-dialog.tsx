@@ -20,7 +20,7 @@ import {
   SkeletonBox,
   SkeletonLabel,
   StatusBadge,
-  type OverlayHandle,
+  type EntityOverlayHandle,
 } from "@villuh/ui"
 import { invalidateQueries, trpc } from "@villuh/api"
 import type { inferRouterOutputs } from "@trpc/server"
@@ -31,19 +31,24 @@ type PropertyGet = inferRouterOutputs<AppRouter>["properties"]["get"]
 type UnitStatusList = inferRouterOutputs<AppRouter>["unitStatuses"]["list"]
 
 /**
- * Phase 3 D-30/D-31/D-33: property archive is a cascade soft-archive of every active unit. The
- * confirm UX deliberately lists each affected unit and requires typing the exact property name
- * before the destructive CTA enables, to prevent an accidental multi-unit archive from one click.
- * (These are Phase 3 decision ids — this phase's own D-31/D-33 are unrelated.)
- *
- * Overlay-driven (this phase D-06, D-09, D-35): the property name and unit cascade are fetched by
- * id, gated on open (D-36); both data props are dropped at zero extra network cost.
+ * Property archive is a cascade soft-archive of every active unit. The
+ * confirm UX deliberately lists each affected unit and requires typing the
+ * exact property name before the destructive CTA enables, to prevent an
+ * accidental multi-unit archive from one click. The property name and unit
+ * cascade are fetched by id, gated on open.
  */
-export function ArchivePropertyDialog({ overlay }: { overlay: OverlayHandle }) {
-  const propertyId = overlay.value
+export function ArchivePropertyDialog({
+  overlay,
+}: {
+  overlay: EntityOverlayHandle
+}) {
+  // `heldEntityId` keeps the property (and the body's `key`) stable through the
+  // close animation, so the confirm doesn't remount/flash mid-close. Query
+  // stays gated on `isOpen` (live) so it never fires while closed.
+  const propertyId = overlay.heldEntityId
 
-  // D-35: `properties.get` already carries `property.name` and the unit list,
-  // so dropping the two props costs no extra request. D-36: gated.
+  // `properties.get` already carries `property.name` and the unit list, so no
+  // parent passes data in at any extra network cost.
   const propertyQuery = trpc.properties.get.useQuery(
     { propertyId: propertyId ?? "" },
     { enabled: overlay.isOpen && propertyId !== null }
@@ -94,15 +99,14 @@ function ArchivePropertyConfirm({
   property: PropertyGet["property"]
   units: PropertyGet["units"]
   statuses: UnitStatusList | undefined
-  overlay: OverlayHandle
+  overlay: EntityOverlayHandle
 }) {
   const router = useRouter()
   const utils = trpc.useUtils()
-  // D-16 (this phase): the type-the-name confirm is NOT linkable state. A URL
-  // that pre-fills a destructive confirmation would defeat the entire point of
-  // Phase 3 D-33's type-the-name guard. Local useState, reset by the `key` on
-  // this component (keyed on propertyId in the shell) — no onOpenChange wrapper,
-  // no manual clear in Cancel.
+  // The type-the-name confirm is deliberately NOT linkable state — a URL that
+  // pre-fills a destructive confirmation would defeat the guard. Local
+  // useState, reset by the `key` on this component (keyed on propertyId in
+  // the shell).
   const [confirmName, setConfirmName] = useState("")
 
   const statusesById = new Map(

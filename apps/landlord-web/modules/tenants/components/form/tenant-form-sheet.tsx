@@ -73,13 +73,16 @@ function toFormValues(tenant: TenantRow | undefined): FormValues {
  * open. Mirrors `unit-form-sheet.tsx`.
  */
 export function TenantFormSheet({ overlay }: { overlay: EntityOverlayHandle }) {
-  const tenantId = overlay.entityId
+  // `heldEntityId` (not `entityId`) so create/edit mode + the fetched tenant
+  // stay stable through the close animation — otherwise closing an edit flips
+  // the body to an empty create form mid-close. Query gated on `isOpen` (live).
+  const tenantId = overlay.heldEntityId
 
   // Gated on open: <AppOverlays> keeps this mounted app-wide, so an ungated
   // query would fire on every authenticated page load.
   const tenantQuery = trpc.tenants.get.useQuery(
     { tenantId: tenantId ?? "" },
-    { enabled: tenantId !== null }
+    { enabled: overlay.isOpen && tenantId !== null }
   )
 
   return (

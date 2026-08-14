@@ -83,13 +83,16 @@ export function UnitFormSheet({ overlay }: { overlay: EntityOverlayHandle }) {
   // propertyId), /properties/[propertyId]/units, and /units/[unitId].
   const { propertyId } = useParams<{ propertyId?: string }>()
 
-  const unitId = overlay.entityId
+  // `heldEntityId` (not `entityId`) so create/edit mode + the fetched unit stay
+  // stable through the close animation — otherwise closing an edit flips the
+  // body to an empty create form mid-close. Query gated on `isOpen` (live).
+  const unitId = overlay.heldEntityId
 
   // Gated: ungated, this fires on EVERY authenticated page load, because
   // <AppOverlays> keeps the component mounted app-wide.
   const unitQuery = trpc.units.get.useQuery(
     { unitId: unitId ?? "" },
-    { enabled: unitId !== null }
+    { enabled: overlay.isOpen && unitId !== null }
   )
 
   return (

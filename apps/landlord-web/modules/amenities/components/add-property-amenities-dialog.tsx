@@ -8,7 +8,6 @@ import {
   Dialog,
   DialogContainer,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
