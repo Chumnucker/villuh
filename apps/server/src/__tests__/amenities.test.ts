@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import { sql } from 'drizzle-orm'
 import { propertyAmenity } from '../schema/amenities.js'
+import { units } from '../schema/units.js'
 import {
   signUpTestUser,
   markUserEmailVerified,
@@ -86,6 +87,24 @@ async function insertPropertyAmenity(
           colorKey: values.colorKey ?? 'slate',
         })
         .returning({ id: propertyAmenity.id })
+      return row!
+    })
+  } finally {
+    await app.end()
+  }
+}
+
+// Units are created directly through the RLS-enforced app connection (org context set) rather than
+// caller.units.create — this keeps the 40-unit idempotency case fast and free of the Stripe
+// subscription-quantity sync that units.create fires on every insert.
+async function insertUnit(orgId: string, propertyId: string, label: string): Promise<{ id: string }> {
+  const app = createAppClient()
+  try {
+    return await withTestOrganization(app.db, orgId, 'system', async (tx) => {
+      const [row] = await tx
+        .insert(units)
+        .values({ organizationId: orgId, propertyId, label, baseRent: 100000 })
+        .returning({ id: units.id })
       return row!
     })
   } finally {
@@ -535,5 +554,136 @@ describe('AMEN-04 Property amenity gallery: 10-cap + audit (SC-3)', () => {
       sql`SELECT count(*)::int AS c FROM audit_log WHERE organization_id = ${orgId} AND table_name = 'property_amenity_image' AND row_id = ${image.id}`,
     )
     expect(imgCount).toBeGreaterThanOrEqual(1)
+  })
+})
+
+describe('AMEN-05 Unit assignments: scope + cross-entity (SC-5)', () => {
+  it('§9.3 unit scope: property-scoped rejected on a unit; unit-scoped + both accepted (D-34)', async () => {
+    const { caller, orgId } = await setupOwner('amen-unit-scope@test.local')
+    const property = await createProperty(caller, 'Unit Scope Property')
+    const unit = await insertUnit(orgId, property.id, 'Unit A')
+
+    const { amenity: unitScoped } = await caller.amenities.catalog.create({ name: 'In-Unit Dryer', scope: 'unit' })
+    const { amenity: bothScoped } = await caller.amenities.catalog.create({ name: 'Balcony', scope: 'both' })
+    const { amenity: propScoped } = await caller.amenities.catalog.create({ name: 'Lobby', scope: 'property' })
+
+    // A property-scoped amenity cannot be attached to a unit (D-34, Pitfall 7).
+    await expect(
+      caller.amenities.unit.set({ unitId: unit.id, organizationAmenityIds: [propScoped.id] }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+
+    // unit-scoped + both are accepted and denormalize label/icon/color from the catalog (D-23/D-24).
+    const { amenities } = await caller.amenities.unit.set({
+      unitId: unit.id,
+      organizationAmenityIds: [unitScoped.id, bothScoped.id],
+    })
+    expect(amenities.map((a) => a.label).sort()).toEqual(['Balcony', 'In-Unit Dryer'])
+
+    const { amenities: listed } = await caller.amenities.unit.list({ unitId: unit.id })
+    expect(listed.map((a) => a.label).sort()).toEqual(['Balcony', 'In-Unit Dryer'])
+  })
+
+  it('§9.10 cross-entity/IDOR: another org cannot remove a unit assignment (D-36)', async () => {
+    const { caller: callerA, orgId: orgA } = await setupOwner('amen-unit-idor-a@test.local')
+    const propertyA = await createProperty(callerA, 'Unit IDOR Property A')
+    const unitA = await insertUnit(orgA, propertyA.id, 'Unit A')
+    const { amenity } = await callerA.amenities.catalog.create({ name: 'Smart Lock', scope: 'unit' })
+    const { amenities } = await callerA.amenities.unit.set({
+      unitId: unitA.id,
+      organizationAmenityIds: [amenity.id],
+    })
+    const assignment = amenities[0]!
+
+    const { caller: callerB } = await setupOwner('amen-unit-idor-b@test.local')
+    // Org B holds an id that resolves to a DIFFERENT org's unit amenity — rejected as not-found.
+    await expect(
+      callerB.amenities.unit.remove({ unitAmenityId: assignment.id }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+
+    // The assignment is untouched for its true owner.
+    const { amenities: stillThere } = await callerA.amenities.unit.list({ unitId: unitA.id })
+    expect(stillThere.some((a) => a.id === assignment.id && a.label === 'Smart Lock')).toBe(true)
+  })
+
+  it('§9.3 listByProperty returns every unit\'s amenities in one query, keyed by unitId (D-33)', async () => {
+    const { caller, orgId } = await setupOwner('amen-unit-listbyprop@test.local')
+    const property = await createProperty(caller, 'ListByProperty Property')
+    const unit1 = await insertUnit(orgId, property.id, 'Unit 1')
+    const unit2 = await insertUnit(orgId, property.id, 'Unit 2')
+    const { amenity: x } = await caller.amenities.catalog.create({ name: 'Skylight', scope: 'unit' })
+    const { amenity: y } = await caller.amenities.catalog.create({ name: 'Hardwood', scope: 'both' })
+
+    await caller.amenities.unit.set({ unitId: unit1.id, organizationAmenityIds: [x.id, y.id] })
+    await caller.amenities.unit.set({ unitId: unit2.id, organizationAmenityIds: [y.id] })
+
+    const { byUnit } = await caller.amenities.unit.listByProperty({ propertyId: property.id })
+    expect(byUnit[unit1.id]?.map((a) => a.label).sort()).toEqual(['Hardwood', 'Skylight'])
+    expect(byUnit[unit2.id]?.map((a) => a.label)).toEqual(['Hardwood'])
+  })
+})
+
+describe('AMEN-05 Unit bulk apply: one idempotent query (SC-4, §9.5)', () => {
+  it('§9.5 bulkAdd across 40 units with 12 pre-existing is idempotent — no error, no duplicates', async () => {
+    const { caller, orgId } = await setupOwner('amen-unit-bulk@test.local')
+    const property = await createProperty(caller, 'Bulk Apply Property')
+
+    const unitIds: string[] = []
+    for (let i = 0; i < 40; i++) {
+      const unit = await insertUnit(orgId, property.id, `Bulk Unit ${i}`)
+      unitIds.push(unit.id)
+    }
+
+    const { amenity: x } = await caller.amenities.catalog.create({ name: 'Central AC', scope: 'unit' })
+
+    // Pre-seed 12 units with X so the bulk call collides on the partial unique index for them.
+    const preExisting = unitIds.slice(0, 12)
+    await caller.amenities.unit.bulkAdd({ unitIds: preExisting, organizationAmenityIds: [x.id] })
+
+    // ONE idempotent bulk apply to ALL 40 — the 12 collisions are silently skipped, not errors.
+    await expect(
+      caller.amenities.unit.bulkAdd({ unitIds, organizationAmenityIds: [x.id] }),
+    ).resolves.toMatchObject({ ok: true })
+
+    const totalAfter = await countRows(
+      sql`SELECT count(*)::int AS c FROM unit_amenity WHERE organization_id = ${orgId} AND organization_amenity_id = ${x.id}`,
+    )
+    // Exactly one X row per unit — no duplicates (SC-4).
+    expect(totalAfter).toBe(40)
+
+    // Re-running the bulk apply stays idempotent.
+    await caller.amenities.unit.bulkAdd({ unitIds, organizationAmenityIds: [x.id] })
+    const totalRerun = await countRows(
+      sql`SELECT count(*)::int AS c FROM unit_amenity WHERE organization_id = ${orgId} AND organization_amenity_id = ${x.id}`,
+    )
+    expect(totalRerun).toBe(40)
+
+    // listByProperty confirms one X per unit across all 40 in a single query (D-33).
+    const { byUnit } = await caller.amenities.unit.listByProperty({ propertyId: property.id })
+    const grouped = Object.values(byUnit)
+    expect(grouped.length).toBe(40)
+    expect(grouped.every((rows) => rows.length === 1)).toBe(true)
+  })
+
+  it('§9.5 bulkRemove is one delete across unitIds × amenityIds', async () => {
+    const { caller, orgId } = await setupOwner('amen-unit-bulkremove@test.local')
+    const property = await createProperty(caller, 'Bulk Remove Property')
+    const unitIds: string[] = []
+    for (let i = 0; i < 5; i++) {
+      const unit = await insertUnit(orgId, property.id, `Remove Unit ${i}`)
+      unitIds.push(unit.id)
+    }
+    const { amenity: x } = await caller.amenities.catalog.create({ name: 'Dishwasher', scope: 'unit' })
+
+    await caller.amenities.unit.bulkAdd({ unitIds, organizationAmenityIds: [x.id] })
+    const before = await countRows(
+      sql`SELECT count(*)::int AS c FROM unit_amenity WHERE organization_id = ${orgId} AND organization_amenity_id = ${x.id}`,
+    )
+    expect(before).toBe(5)
+
+    await caller.amenities.unit.bulkRemove({ unitIds, organizationAmenityIds: [x.id] })
+    const after = await countRows(
+      sql`SELECT count(*)::int AS c FROM unit_amenity WHERE organization_id = ${orgId} AND organization_amenity_id = ${x.id}`,
+    )
+    expect(after).toBe(0)
   })
 })
