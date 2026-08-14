@@ -36,7 +36,8 @@ import {
 import { AmenityIconColorPicker } from "./amenity-icon-color-picker"
 
 type RouterOutput = inferRouterOutputs<AppRouter>
-type CatalogRow = RouterOutput["amenities"]["catalog"]["list"]["amenities"][number]
+type CatalogRow =
+  RouterOutput["amenities"]["catalog"]["list"]["amenities"][number]
 type PropertyAmenity =
   RouterOutput["amenities"]["property"]["list"]["amenities"][number]
 
@@ -46,8 +47,11 @@ type PropertyAmenity =
  * `?amenity.add=open`, so `propertyId` comes from the route (`useParams`) exactly
  * like {@link AmenitySheet} — this component sits OUTSIDE `PropertyDetailProvider`.
  *
- * The form body only mounts while the dialog is open (fresh state per open, so no
- * seeding effect is needed — the repo forbids `setState` inside an effect).
+ * The form is rendered as a child of `DialogContainer` (Radix `Content`), which is
+ * itself presence-gated: it only mounts while the dialog is open AND stays mounted
+ * through the close animation, then unmounts. So the form's state (and its queries)
+ * are naturally fresh per open WITHOUT gating the JSX on `overlay.isOpen` — and never
+ * blanks to a bare header mid-close. Gate the QUERY, never the JSX (see overlays.tsx).
  */
 export function AddPropertyAmenitiesDialog({
   overlay,
@@ -59,7 +63,7 @@ export function AddPropertyAmenitiesDialog({
   return (
     <Dialog {...overlay.dialogProps}>
       <DialogContainer className="sm:max-w-lg">
-        {overlay.isOpen && propertyId ? (
+        {propertyId ? (
           <AddPropertyAmenitiesForm overlay={overlay} propertyId={propertyId} />
         ) : (
           <DialogHeader>
@@ -210,15 +214,10 @@ function AddPropertyAmenitiesForm({
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Add amenities</DialogTitle>
+        <DialogTitle>Add Property Amenities</DialogTitle>
       </DialogHeader>
 
       <DialogContent>
-        <DialogDescription>
-          Choose the amenities this property offers. Selected amenities are saved
-          when you press Save.
-        </DialogDescription>
-
         {canWrite ? (
           <InputGroup>
             <InputGroupAddon align="inline-start">
@@ -256,8 +255,8 @@ function AddPropertyAmenitiesForm({
           </InputGroup>
         ) : null}
 
-        <ScrollArea className="max-h-96">
-          <div className="flex flex-col gap-1 rounded-3xl bg-input p-2.5">
+        <ScrollArea className="max-h-96 rounded-3xl bg-input">
+          <div className="flex flex-col gap-1 p-2.5">
             {isLoading ? (
               <div className="flex flex-col gap-2">
                 {Array.from({ length: 4 }).map((_, i) => (
@@ -282,13 +281,13 @@ function AddPropertyAmenitiesForm({
                     onClick={() => toggle(row.id)}
                     className={cn(
                       "flex items-center gap-3 rounded-2xl px-2.5 py-2 text-left transition-colors",
-                      "hover:bg-accent disabled:cursor-default disabled:hover:bg-transparent",
-                      isSelected && "bg-accent"
+                      "hover:bg-muted disabled:cursor-default disabled:hover:bg-transparent",
+                      isSelected && "bg-muted"
                     )}
                   >
                     <span
                       className={cn(
-                        "flex size-8 shrink-0 items-center justify-center rounded-xl bg-muted",
+                        "flex size-8 shrink-0 items-center justify-center rounded-xl bg-card",
                         AMENITY_ICON_COLOR_CLASSES[row.colorKey as TagColorKey]
                       )}
                     >
