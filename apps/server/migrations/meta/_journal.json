@@ -134,6 +134,13 @@
       "when": 1786993680000,
       "tag": "0018_tenants",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1786993740000,
+      "tag": "0019_amenities",
+      "breakpoints": true
     }
   ]
 }
