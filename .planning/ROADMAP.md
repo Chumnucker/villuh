@@ -227,7 +227,7 @@ Plans:
 - [x] 03.3-03-PLAN.md — Icon foundation (38 PlatformIcon mappings) + icon-color picker + read-only chip row
 - [x] 03.3-04-PLAN.md — Property assignment API + nested gallery + presignAmenityImage (10-cap) + tests
 - [x] 03.3-05-PLAN.md — Unit assignment API incl. one-query bulkAdd/bulkRemove/listByProperty + tests
-- [ ] 03.3-06-PLAN.md — Dual-mode AmenityPicker + GalleryManager extraction (D-31)
+- [x] 03.3-06-PLAN.md — Dual-mode AmenityPicker + GalleryManager extraction (D-31)
 - [ ] 03.3-07-PLAN.md — Property settings surface: overlay registry + amenity sheet + catalog dialog + card (+ checkpoint)
 - [ ] 03.3-08-PLAN.md — Units UI: DataTable row-selection extend + form picker + column + bulk-actions (+ checkpoint)
 - [x] 03.3-09-PLAN.md — About-tab real amenity chips + tags-as-amenities stopgap removal (D-14)
@@ -324,7 +324,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 3.1 → 3.2 → 3.3 → 4 →
 | 3. Properties & Units | 8/9 | In Progress|  |
 | 3.1 URL Query State (nuqs) | 0/TBD | Context ready | - |
 | 3.2 Floor Plans | 6/8 | In Progress|  |
-| 3.3 Amenities | 6/9 | In Progress|  |
+| 3.3 Amenities | 7/9 | In Progress|  |
 | 4. Tenants, Leases & Documents | 0/TBD | Not started | - |
 | 5. Onboarding Flow Engine | 0/TBD | Not started | - |
 | 6. Rent Ledger | 0/TBD | Not started | - |
