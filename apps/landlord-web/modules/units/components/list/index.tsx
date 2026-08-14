@@ -17,6 +17,7 @@ import { useUser } from "@/modules/app/providers/me-provider"
 import { unitOverlays } from "@/modules/units/lib/units.overlays"
 import { unitsTable } from "@/modules/units/lib/units.table"
 import type { AmenityChip } from "@/modules/amenities/components/amenity-chip-row"
+import { UnitAmenitiesBulkActions } from "@/modules/amenities/components/unit-amenities-bulk-actions"
 import { createUnitsColumns } from "./columns"
 
 // Module scope so the array identity is stable across renders.
@@ -107,6 +108,14 @@ export function UnitsList({ lockedPropertyId, filterDisplay }: UnitsListProps) {
       onQueryChange={setQuery}
       filterFields={filterFields}
       filterDisplay={filterDisplay}
+      enableRowSelection
+      getRowId={(unit) => unit.id}
+      selectionActions={({ selectedRowIds, clearSelection }) => (
+        <UnitAmenitiesBulkActions
+          selectedUnitIds={selectedRowIds}
+          clearSelection={clearSelection}
+        />
+      )}
       toolbarAction={
         <div className="flex items-center gap-2">
           <PlanLimitGate resource="units" action="Adding a unit">
