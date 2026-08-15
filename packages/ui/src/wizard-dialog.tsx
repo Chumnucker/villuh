@@ -203,7 +203,7 @@ function WizardDialogContainer({
     <DialogContainer
       data-slot="wizard-dialog-container"
       className={cn(
-        "max-h-[85vh] sm:max-w-4xl flex-col sm:flex-row",
+        "max-h-[85vh] sm:max-w-4xl flex-col sm:flex-row sm:items-stretch",
         className
       )}
       {...props}
@@ -214,7 +214,8 @@ function WizardDialogContainer({
 /**
  * `DialogHeader` rotated 90°: byte-identical `gap-2.5` / `px-4 py-4` /
  * `bg-secondary`, a `border-b` that becomes `sm:border-r sm:border-b-0`, and a
- * fixed `sm:w-64` column above `sm`. `pr-12` clears the container's close button
+ * fixed `sm:w-64 sm:basis-64 sm:flex-none` column above `sm` so long copy cannot
+ * grow the pane to half the dialog. `pr-12` clears the container's close button
  * on mobile. Renders the compact `Step n of m · label` line below `sm` (D-32).
  */
 function WizardDialogSidebar({
@@ -228,7 +229,7 @@ function WizardDialogSidebar({
     <div
       data-slot="wizard-dialog-sidebar"
       className={cn(
-        "flex shrink-0 flex-col gap-2.5 border-b bg-secondary p-6 pr-12 sm:w-64 sm:border-r sm:border-b-0",
+        "flex w-full shrink-0 flex-col gap-2.5 border-b bg-secondary px-4 py-4 pr-12 sm:w-64 sm:flex-none sm:basis-64 sm:border-r sm:border-b-0 sm:pr-4",
         className
       )}
       {...props}
@@ -242,7 +243,7 @@ function WizardDialogSidebar({
 }
 
 function WizardDialogTitle(props: React.ComponentProps<typeof DialogTitle>) {
-  return <DialogTitle {...props} className={cn("font-semibold", props.className)} />
+  return <DialogTitle {...props} />
 }
 
 /** `DialogDescription`, hidden below `sm` where the sidebar is a compact top bar (D-32). */
@@ -252,7 +253,7 @@ function WizardDialogDescription({
 }: React.ComponentProps<typeof DialogDescription>) {
   return (
     <DialogDescription
-      className={cn("hidden sm:block", className)}
+      className={cn("hidden min-w-0 sm:block", className)}
       {...props}
     />
   )
@@ -354,7 +355,10 @@ function WizardDialogForm({
   return (
     <form
       data-slot="wizard-dialog-form"
-      className={cn("flex min-w-0 flex-1 flex-col outline-none", className)}
+      className={cn(
+        "flex min-h-0 min-w-0 flex-1 flex-col outline-none",
+        className
+      )}
       onSubmit={(e) => {
         e.preventDefault()
         e.stopPropagation()
@@ -424,7 +428,7 @@ function WizardDialogSteps({
       className={cn("mt-4 hidden sm:block", className)}
       {...props}
     >
-      <ol className="flex flex-col">
+      <ol className="flex list-none flex-col p-0">
         {steps.map((s, index) => {
           const isCurrent = s.id === activeId
           const isCompleted = visited.has(s.id) && !isCurrent
