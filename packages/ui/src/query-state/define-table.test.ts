@@ -4,9 +4,6 @@ import { idFilterOperators, numericFilterOperators } from "../data-table-query"
 import { defineTable, ids, numeric } from "./define-table"
 import { __resetQueryStateKeyRegistry } from "./key-registry"
 
-/** Minimal parse-surface of a nuqs SingleParserBuilder, enough for these tests. */
-type ParseSurface = { parse: (query: string) => unknown }
-
 function statusField() {
   return ids({
     label: "Status",
@@ -42,7 +39,7 @@ beforeEach(() => {
 
 describe("defineTable — urlKeys namespacing", () => {
   it("emits unprefixed keys when namespace is null", () => {
-    const table = defineTable("units", null, {
+    const table = defineTable("units", {
       fields: { status: statusField(), baseRent: baseRentField() },
       sortable: ["baseRent"],
     })
@@ -58,7 +55,8 @@ describe("defineTable — urlKeys namespacing", () => {
   })
 
   it("`:`-prefixes every key when a namespace is given", () => {
-    const table = defineTable("units", "units", {
+    const table = defineTable("units", {
+      namespace: "units",
       fields: { status: statusField() },
       sortable: [],
     })
@@ -76,9 +74,9 @@ describe("defineTable — urlKeys namespacing", () => {
   })
 })
 
-describe("defineTable — frozen module-scope map (D-41)", () => {
+describe("defineTable — frozen module-scope map", () => {
   it("freezes both parsers and urlKeys", () => {
-    const table = defineTable("units", null, {
+    const table = defineTable("units", {
       fields: { status: statusField() },
       sortable: [],
     })
@@ -88,7 +86,7 @@ describe("defineTable — frozen module-scope map (D-41)", () => {
   })
 
   it("keeps parser-map identity stable across accesses (never rebuilt)", () => {
-    const table = defineTable("units", null, {
+    const table = defineTable("units", {
       fields: { status: statusField() },
       sortable: [],
     })
@@ -97,10 +95,10 @@ describe("defineTable — frozen module-scope map (D-41)", () => {
   })
 })
 
-describe("defineTable — key registry / D-29 collision guard", () => {
+describe("defineTable — key scheme guard", () => {
   it("does not throw when the same name re-registers (HMR re-evaluation)", () => {
     const build = () =>
-      defineTable("units", null, {
+      defineTable("units", {
         fields: { status: statusField() },
         sortable: [],
       })
@@ -109,44 +107,47 @@ describe("defineTable — key registry / D-29 collision guard", () => {
     expect(build).not.toThrow()
   })
 
-  it("throws when a second UNPREFIXED table claims the shared `q` key", () => {
-    defineTable("units", null, {
-      fields: { status: statusField() },
-      sortable: [],
-    })
-
-    let message = ""
-    try {
-      defineTable("leases", null, {
-        fields: { status: statusField() },
-        sortable: [],
-      })
-    } catch (error) {
-      message = error instanceof Error ? error.message : String(error)
-    }
-
-    expect(message).toContain("q")
-    expect(message).toContain("units")
-    expect(message).toContain("leases")
-  })
-
-  it("does not throw for two namespaced tables with different names", () => {
+  it("lets two UNPREFIXED tables coexist at module scope — collision is checked at mount time", () => {
     expect(() => {
-      defineTable("a", "a", {
+      defineTable("units", {
         fields: { status: statusField() },
         sortable: [],
       })
-      defineTable("b", "b", {
+      defineTable("leases", {
         fields: { status: statusField() },
         sortable: [],
       })
     }).not.toThrow()
   })
+
+  it("does not throw for two namespaced tables with different names", () => {
+    expect(() => {
+      defineTable("a", {
+        namespace: "a",
+        fields: { status: statusField() },
+        sortable: [],
+      })
+      defineTable("b", {
+        namespace: "b",
+        fields: { status: statusField() },
+        sortable: [],
+      })
+    }).not.toThrow()
+  })
+
+  it("rejects a filter field named after a reserved core param", () => {
+    expect(() =>
+      defineTable("units", {
+        fields: { sort: statusField() },
+        sortable: [],
+      })
+    ).toThrow(/reserved/)
+  })
 })
 
 describe("defineTable — toFieldParams (inverse of the parse side)", () => {
   it("returns null for every field when there are no filters", () => {
-    const table = defineTable("units", null, {
+    const table = defineTable("units", {
       fields: { status: statusField(), baseRent: baseRentField() },
       sortable: ["baseRent"],
     })
@@ -155,7 +156,7 @@ describe("defineTable — toFieldParams (inverse of the parse side)", () => {
   })
 
   it("maps a field's predicates and leaves other fields null", () => {
-    const table = defineTable("units", null, {
+    const table = defineTable("units", {
       fields: { status: statusField(), baseRent: baseRentField() },
       sortable: ["baseRent"],
     })
@@ -176,29 +177,29 @@ describe("defineTable — toFieldParams (inverse of the parse side)", () => {
   })
 })
 
-describe("defineTable — operator allow-list threads into the parser (D-19/D-21)", () => {
+describe("defineTable — operator allow-list threads into the parser", () => {
   it("drops `empty` for a field declared with nullable:false", () => {
-    const table = defineTable("units", null, {
+    const table = defineTable("units", {
       fields: { property: propertyField() },
       sortable: [],
     })
 
-    const parser = table.parsers.property as ParseSurface
     // `empty` is not in idFilterOperators({ nullable: false }) — parser drops it.
-    expect(parser.parse("empty")).toBeNull()
+    expect(table.parsers.property.parse("empty")).toBeNull()
     // A permitted operator still parses.
-    expect(parser.parse("any:p1")).toEqual([
+    expect(table.parsers.property.parse("any:p1")).toEqual([
       { operator: "is_any_of", values: ["p1"] },
     ])
   })
 
   it("keeps `empty` for a nullable id field", () => {
-    const table = defineTable("units", null, {
+    const table = defineTable("units", {
       fields: { status: statusField() },
       sortable: [],
     })
 
-    const parser = table.parsers.status as ParseSurface
-    expect(parser.parse("empty")).toEqual([{ operator: "empty", values: [] }])
+    expect(table.parsers.status.parse("empty")).toEqual([
+      { operator: "empty", values: [] },
+    ])
   })
 })

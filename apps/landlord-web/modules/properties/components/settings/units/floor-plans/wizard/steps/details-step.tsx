@@ -12,54 +12,56 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@villuh/ui"
-import { createFloorPlanInputSchema } from "@villuh/server/schemas/floor-plans"
-import { fieldError } from "@/modules/properties/components/form/property-form-shared"
 import {
   BATHROOM_OPTIONS,
   BEDROOM_OPTIONS,
+  fieldError,
+  floorPlanFieldValidators,
   type FloorPlanFormApi,
-} from "./floor-plan-form"
+} from "../floor-plan-form"
 
 /**
  * Details step (UI-SPEC §4.1): Name + Bedrooms/Bathrooms selects + optional
  * default square footage. The selects offer 0–10 while the schema accepts 0–20
- * — deliberate and locked (D-40). Select values are strings; the wizard
- * converts them at the form boundary (D-07).
+ * — deliberate and locked (D-40). The form stores real numbers; the string↔number
+ * conversion is confined to each Select/number-input edge (the DOM is string-keyed).
+ *
+ * Every error — client validation and the server duplicate-name collision (D-09)
+ * — comes from the form's own field meta. The collision error is written to the
+ * Name field's `onSubmit` meta by the wizard and cleared here on the next edit.
  */
-export function DetailsStep({
-  form,
-  nameError,
-  onNameChange,
-}: {
-  form: FloorPlanFormApi
-  /** Server-side error (e.g. duplicate name, D-09) surfaced under the Name field. */
-  nameError?: string | null
-  /** Called when the user edits Name, so the wizard can clear a stale server error. */
-  onNameChange?: () => void
-}) {
+export function DetailsStep({ form }: { form: FloorPlanFormApi }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <form.Field
         name="name"
         validators={{
-          onChange: createFloorPlanInputSchema.shape.name,
-          onBlur: createFloorPlanInputSchema.shape.name,
+          onChange: floorPlanFieldValidators.name,
+          onBlur: floorPlanFieldValidators.name,
+        }}
+        listeners={{
+          // Clear the server collision error as soon as the name changes.
+          onChange: ({ fieldApi }) =>
+            fieldApi.setMeta((prev) => ({
+              ...prev,
+              errorMap: { ...prev.errorMap, onSubmit: undefined },
+            })),
         }}
       >
         {(field) => {
-          const error = nameError ?? fieldError(field.state.meta)
+          const error = fieldError(field.state.meta)
           return (
-            <Field className="sm:col-span-2" data-invalid={error ? true : undefined}>
+            <Field
+              className="sm:col-span-2"
+              data-invalid={error ? true : undefined}
+            >
               <FieldLabel htmlFor={field.name}>Name</FieldLabel>
               <Input
                 id={field.name}
                 name={field.name}
                 value={field.state.value}
                 onBlur={field.handleBlur}
-                onChange={(e) => {
-                  field.handleChange(e.target.value)
-                  onNameChange?.()
-                }}
+                onChange={(e) => field.handleChange(e.target.value)}
                 placeholder="2 bed / 2 bath"
                 aria-invalid={error ? true : undefined}
               />
@@ -69,11 +71,19 @@ export function DetailsStep({
         }}
       </form.Field>
 
-      <form.Field name="bedrooms">
+      <form.Field
+        name="bedrooms"
+        validators={{ onChange: floorPlanFieldValidators.requiredNumber }}
+      >
         {(field) => (
-          <Field>
+          <Field data-invalid={fieldError(field.state.meta) ? true : undefined}>
             <FieldLabel htmlFor={field.name}>Bedrooms</FieldLabel>
-            <Select value={field.state.value} onValueChange={field.handleChange}>
+            <Select
+              value={
+                field.state.value === undefined ? "" : String(field.state.value)
+              }
+              onValueChange={(v) => field.handleChange(Number(v))}
+            >
               <SelectTrigger id={field.name} className="w-full">
                 <SelectValue placeholder="Select" />
               </SelectTrigger>
@@ -89,17 +99,25 @@ export function DetailsStep({
         )}
       </form.Field>
 
-      <form.Field name="bathrooms">
+      <form.Field
+        name="bathrooms"
+        validators={{ onChange: floorPlanFieldValidators.requiredNumber }}
+      >
         {(field) => (
-          <Field>
+          <Field data-invalid={fieldError(field.state.meta) ? true : undefined}>
             <FieldLabel htmlFor={field.name}>Bathrooms</FieldLabel>
-            <Select value={field.state.value} onValueChange={field.handleChange}>
+            <Select
+              value={
+                field.state.value === undefined ? "" : String(field.state.value)
+              }
+              onValueChange={(v) => field.handleChange(Number(v))}
+            >
               <SelectTrigger id={field.name} className="w-full">
                 <SelectValue placeholder="Select" />
               </SelectTrigger>
               <SelectContent>
                 {BATHROOM_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
+                  <SelectItem key={option.value} value={String(option.value)}>
                     {option.label}
                   </SelectItem>
                 ))}
@@ -119,11 +137,19 @@ export function DetailsStep({
               type="number"
               min={0}
               inputMode="numeric"
-              value={field.state.value}
+              value={
+                field.state.value === undefined ? "" : String(field.state.value)
+              }
               onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
+              onChange={(e) =>
+                field.handleChange(
+                  e.target.value === "" ? undefined : Number(e.target.value)
+                )
+              }
             />
-            <FieldDescription>Optional. Units can override this.</FieldDescription>
+            <FieldDescription>
+              Optional. Units can override this.
+            </FieldDescription>
           </Field>
         )}
       </form.Field>

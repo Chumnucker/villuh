@@ -111,7 +111,6 @@ export function PropertyDetailHeader() {
       <Page.Header>
         <div className="flex min-w-0 flex-col gap-3.5">
           <Page.Title>{property.name}</Page.Title>
-
           <PropertyBadgeRow />
         </div>
 

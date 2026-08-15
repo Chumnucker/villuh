@@ -14,7 +14,7 @@ import {
   searchParser,
   sizeParser,
 } from "./table-params"
-import type { FieldFilter } from "./types"
+import type { FieldFilter } from "./table-params"
 
 /** The real vocabularies from `data-table-query.ts` — not a second one (D-19). */
 const ID_OPS = idFilterOperators({ nullable: false }).map((op) => op.value)

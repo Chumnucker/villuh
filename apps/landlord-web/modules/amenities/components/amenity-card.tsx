@@ -1,11 +1,6 @@
 "use client"
 
-import {
-  Badge,
-  PlatformIcon,
-  cn,
-  isPlatformIconName,
-} from "@villuh/ui"
+import { Badge, Button, PlatformIcon, cn, isPlatformIconName } from "@villuh/ui"
 import { amenityOverlays } from "@/modules/amenities/lib/amenities.overlays"
 import {
   AMENITY_ICON_COLOR_CLASSES,
@@ -32,20 +27,23 @@ export function AmenityCard({ amenity }: { amenity: AmenityCardData }) {
   const sheet = amenityOverlays.use("sheet")
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="accent"
+      size="sm"
       onClick={() => sheet.open(amenity.id)}
-      className="flex w-full items-start gap-3 rounded-2xl border border-border bg-card p-3 text-left transition-colors hover:border-ring/40 hover:bg-accent/40"
+      className="flex h-auto w-full items-center gap-3 p-3 text-left"
     >
       <span
         className={cn(
-          "flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted",
+          "flex shrink-0 items-center justify-center rounded-xl",
           AMENITY_ICON_COLOR_CLASSES[amenity.colorKey as TagColorKey]
         )}
       >
         <PlatformIcon
-          icon={isPlatformIconName(amenity.iconKey) ? amenity.iconKey : "IconStar"}
-          size={18}
+          icon={
+            isPlatformIconName(amenity.iconKey) ? amenity.iconKey : "IconStar"
+          }
+          size={16}
         />
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -57,17 +55,12 @@ export function AmenityCard({ amenity }: { amenity: AmenityCardData }) {
             </Badge>
           ) : null}
         </div>
-        {amenity.description ? (
-          <p className="line-clamp-2 text-xs text-muted-foreground">
-            {amenity.description}
-          </p>
-        ) : null}
       </div>
       <PlatformIcon
         icon="IconChevronRight"
         size={16}
-        className="mt-1 shrink-0 text-muted-foreground"
+        className="shrink-0 text-muted-foreground"
       />
-    </button>
+    </Button>
   )
 }

@@ -83,7 +83,12 @@ export function AmenityIconColorPicker({
           <span className="sr-only">Choose icon and color</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-72" align="start">
+      <PopoverContent
+        className="w-72"
+        align="start"
+        alignOffset={-9}
+        sideOffset={12}
+      >
         <div className="flex flex-col gap-3">
           <div>
             <p className="mb-1.5 text-xs text-muted-foreground">Icon</p>
@@ -91,7 +96,7 @@ export function AmenityIconColorPicker({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search icons…"
-              size="sm"
+              size="xs"
               className="mb-2"
               aria-label="Search icons"
             />

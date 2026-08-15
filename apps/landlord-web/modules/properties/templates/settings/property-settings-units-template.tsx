@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation"
 import { Button, EmptyState, Page } from "@villuh/ui"
-import { FloorPlansSection } from "@/modules/properties/components/floor-plans/floor-plans-section"
+import { FloorPlansSection } from "@/modules/properties/components/settings/units/floor-plans"
 import { SettingsSection } from "@/modules/properties/components/settings/section"
 import { unitOverlays } from "@/modules/units/lib/units.overlays"
 
@@ -25,11 +25,7 @@ export function PropertySettingsUnitsTemplate() {
         description="Values pre-filled whenever a new unit is added to this property."
         className="grid-cols-1 sm:grid-cols-1"
         action={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => statuses.open()}
-          >
+          <Button variant="outline" size="sm" onClick={() => statuses.open()}>
             Unit statuses
           </Button>
         }

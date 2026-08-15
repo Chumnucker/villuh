@@ -10,7 +10,7 @@ import {
 } from "@villuh/ui"
 import { tenantOverlays } from "@/modules/tenants/lib/tenants.overlays"
 import { tenantsTable } from "@/modules/tenants/lib/tenants.table"
-import { createTenantsColumns } from "./tenants-columns"
+import { createTenantsColumns } from "./columns"
 
 // Module scope so the array identity is stable across renders.
 const HIDE_UNIT = ["unit"] as const
@@ -24,34 +24,36 @@ export type TenantsListProps = {
    */
   lockedUnitId?: string
   /**
-   * Multi-unit generalization of `lockedUnitId`: scopes the table to a set of
-   * units (e.g. every unit in a property). The server query is always filtered
-   * to these units and the redundant Unit filter chip is hidden. When both are
-   * provided, `lockedUnitId` wins.
+   * When set, scopes the table to a single property: the server query is always
+   * filtered to tenants whose current unit belongs to this property (can't be
+   * changed) and the Unit filter chip is hidden (its options would span the
+   * whole org, not just this property).
    */
-  lockedUnitIds?: string[]
+  lockedPropertyId?: string
   /** Filters presentation for the toolbar — use "compact" in narrow layouts. */
   filterDisplay?: "inline" | "compact"
 }
 
 export function TenantsList({
   lockedUnitId,
-  lockedUnitIds,
+  lockedPropertyId,
   filterDisplay,
 }: TenantsListProps) {
   const { form, archive, detail } = tenantOverlays.useGroup()
 
-  const lockedUnits = lockedUnitId ? [lockedUnitId] : lockedUnitIds
-  const isUnitLocked = lockedUnits !== undefined
+  const isScoped = lockedUnitId !== undefined || lockedPropertyId !== undefined
 
-  const { query, setQuery, serverInput, filterFields } =
-    useDataTableQueryState(tenantsTable, {
-      hide: isUnitLocked ? HIDE_UNIT : HIDE_NOTHING,
-    })
+  const { query, setQuery, serverInput, filterFields } = useDataTableQueryState(
+    tenantsTable,
+    {
+      hide: isScoped ? HIDE_UNIT : HIDE_NOTHING,
+    }
+  )
 
   const { data, isLoading } = trpc.tenants.list.useQuery({
     ...serverInput,
-    ...(lockedUnits ? { unitIds: lockedUnits } : {}),
+    ...(lockedUnitId ? { unitIds: [lockedUnitId] } : {}),
+    ...(lockedPropertyId ? { propertyIds: [lockedPropertyId] } : {}),
   })
 
   const columns = useMemo(
@@ -76,16 +78,32 @@ export function TenantsList({
       filterDisplay={filterDisplay}
       toolbarAction={
         <Button size="sm" onClick={() => form.open()}>
-          <PlatformIcon icon="IconPlusSmall" size={16} data-icon="inline-start" />
+          <PlatformIcon
+            icon="IconPlusSmall"
+            size={16}
+            data-icon="inline-start"
+          />
           Add tenant
         </Button>
       }
       searchPlaceholder="Search tenants..."
       empty={{
+        icon: "IconTeam",
         title: "No tenants yet",
         description: "Add a tenant, then assign them to a unit.",
+        action: (
+          <Button size="sm" onClick={() => form.open()}>
+            <PlatformIcon
+              icon="IconPlusSmall"
+              size={16}
+              data-icon="inline-start"
+            />
+            Add tenant
+          </Button>
+        ),
       }}
       emptyFiltered={{
+        icon: "IconMagnifyingGlass",
         title: "No matching tenants",
         description: "Try adjusting your search or filters.",
       }}
@@ -93,4 +111,4 @@ export function TenantsList({
   )
 }
 
-export { createTenantsColumns, type TenantsTableRow } from "./tenants-columns"
+export { createTenantsColumns, type TenantsTableRow } from "./columns"

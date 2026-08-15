@@ -24,28 +24,18 @@ function toOptions(rows: OptionRow[] | undefined): Option[] {
 }
 
 /**
- * The units DataTable, top to bottom (D-21). Adding a filter is one entry here:
- * URL parsing, operator validation, the picker UI, and the tRPC input mapping
- * all derive from the declaration.
+ * The units DataTable, top to bottom. Adding a filter is one entry here: URL
+ * parsing, operator validation, the picker UI, and the tRPC input mapping all
+ * derive from the declaration. Both mounts — /units and the property Units
+ * tab — host exactly one table, so keys stay unprefixed and a shared link
+ * reads `?q=main&status=any:s1,s2&baseRent=gte:1500&sort=-baseRent&page=2`.
  *
- * `name` is `"units"` — the definition-unique registry owner (D-29). It is NOT
- * the URL prefix and must not be confused with `namespace`; it is what makes the
- * collision assert fire if a second unprefixed table is ever added to a page
- * that already renders this one.
- *
- * `namespace` is null (D-29): both mounts — /units and the property Units tab —
- * host exactly one table, so keys stay unprefixed and a shared link reads
- * `?q=main&status=any:s1,s2&baseRent=gte:1500&sort=-baseRent&page=2`. Give this
- * a namespace only if a page ever hosts two tables at once.
- *
- * D-23: unlike `createUnitsFilterFields`, the field SET is fixed at module
- * evaluation — only the option labels arrive asynchronously. The Property and
- * Status chips are therefore present from first paint (with an empty option
- * list for a beat) rather than popping in once tRPC resolves. That is the point:
- * it is what makes URL parsing consistent on a cold deep link. Do not restore
- * the `if (properties?.length)` guards.
+ * The field SET is fixed at module evaluation — only the option labels arrive
+ * asynchronously — so every chip is present from first paint and URL parsing
+ * is consistent on a cold deep link. Do not guard fields on their options
+ * having loaded.
  */
-export const unitsTable = defineTable("units", null, {
+export const unitsTable = defineTable("units", {
   sortable: ["label", "propertyName", "status", "baseRent", "squareFootage"],
   fields: {
     property: ids({
@@ -60,9 +50,8 @@ export const unitsTable = defineTable("units", null, {
         param: "propertyIds",
         excludeParam: "excludePropertyIds",
       },
-      // D-22: called on EVERY render including when hidden, so the hook
-      // sequence is fixed; `hidden` gates the network call, not the call site.
-      // This reproduces today's `enabled: !lockedPropertyId` exactly.
+      // Called on EVERY render including when hidden (fixed hook sequence);
+      // `hidden` gates the network call, not the call site.
       useOptions: (hidden) => {
         const { data } = trpc.properties.list.useQuery(undefined, {
           enabled: !hidden,

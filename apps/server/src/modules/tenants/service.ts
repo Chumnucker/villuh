@@ -84,6 +84,7 @@ export async function listTenants(
       tenantId: tenancyMembers.tenantId,
       unitId: units.id,
       unitLabel: units.label,
+      propertyId: units.propertyId,
       status: tenancies.status,
     })
     .from(tenancyMembers)
@@ -104,6 +105,7 @@ export async function listTenants(
     eq(tenants.organizationId, organizationId),
     isNull(tenants.archivedAt),
     idFilter(currentTenancy.unitId, { include: input?.unitIds, exclude: input?.excludeUnitIds, empty: input?.unitEmpty }),
+    idFilter(currentTenancy.propertyId, { include: input?.propertyIds }),
     input?.statusIn?.length ? inArray(currentTenancy.status, input.statusIn) : undefined,
     searchCondition(input?.search, [tenants.firstName, tenants.lastName, tenants.email]),
   )

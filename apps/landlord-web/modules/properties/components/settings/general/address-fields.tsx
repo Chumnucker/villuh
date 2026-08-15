@@ -10,7 +10,7 @@ import {
   mapboxAutofillPopoverOptions,
   mapboxAutofillTheme,
 } from "@villuh/ui"
-import type { PropertyFormApi } from "./property-form-shared"
+import type { PropertyFormApi } from "./property-form-state"
 import {
   COUNTRIES,
   regionsForCountry,

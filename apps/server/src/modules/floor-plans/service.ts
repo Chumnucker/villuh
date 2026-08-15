@@ -107,8 +107,20 @@ export async function getFloorPlan(
   tx: OrganizationTx,
   organizationId: string,
   floorPlanId: string,
-): Promise<FloorPlanRow> {
-  return requireFloorPlan(tx, organizationId, floorPlanId)
+): Promise<FloorPlanRow & { unitCount: number }> {
+  const floorPlan = await requireFloorPlan(tx, organizationId, floorPlanId)
+  // Active units assigned to this plan — powers the archive confirm copy (D-44).
+  const [countRow] = await tx
+    .select({ count: sql<number>`count(*)::int` })
+    .from(units)
+    .where(
+      and(
+        eq(units.organizationId, organizationId),
+        eq(units.floorPlanId, floorPlanId),
+        isNull(units.archivedAt),
+      ),
+    )
+  return { ...floorPlan, unitCount: countRow?.count ?? 0 }
 }
 
 export async function createFloorPlan(

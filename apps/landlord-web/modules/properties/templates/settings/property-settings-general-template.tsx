@@ -1,7 +1,7 @@
 "use client"
 
 import { Page } from "@villuh/ui"
-import { PropertyGeneralForm } from "@/modules/properties/components/settings/general-form"
+import { PropertyGeneralForm } from "@/modules/properties/components/settings/general"
 
 export function PropertySettingsGeneralTemplate() {
   return (

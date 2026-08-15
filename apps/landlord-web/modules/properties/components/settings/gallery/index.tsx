@@ -9,8 +9,8 @@ import {
   GalleryManager,
   type GalleryImage,
   type GalleryUploadFile,
-} from "@/modules/amenities/components/gallery-manager"
-import { SettingsSection } from "./section"
+} from "@/modules/app/components/shared/gallery-manager"
+import { SettingsSection } from "../section"
 
 /**
  * Property gallery tab editor — now a thin wrapper over the reusable

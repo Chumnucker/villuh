@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext } from "react"
+import { createContext, useContext, useMemo } from "react"
 import { trpc } from "@villuh/api"
 import { Page } from "@villuh/ui"
 import type { inferRouterOutputs } from "@trpc/server"
@@ -37,14 +37,36 @@ export function PropertyDetailProvider({
 
   return (
     <Page.Boundary query={query} pending={pending}>
-      {(data) => (
-        <PropertyDetailContext.Provider
-          value={{ property: data.property, units: data.units }}
-        >
-          {children}
-        </PropertyDetailContext.Provider>
-      )}
+      {(data) => <PropertyDetailValue data={data}>{children}</PropertyDetailValue>}
     </Page.Boundary>
+  )
+}
+
+/**
+ * Memoizes the context value against the query's `property`/`units` references
+ * (both stable across renders while the data is unchanged, since TanStack Query
+ * returns the same objects). Without this, an unrelated URL change — e.g. an
+ * overlay opening via nuqs — re-renders this provider through Next's router
+ * context, mints a fresh value object, and forces EVERY `usePropertyDetail()`
+ * consumer to re-render, dragging the heavy TipTap notes editor with it. That
+ * ~400ms synchronous re-render lands in an overlay's animation window and makes
+ * it snap open/closed instead of fading (see the tags-dialog investigation).
+ */
+function PropertyDetailValue({
+  data,
+  children,
+}: {
+  data: { property: PropertyDetail; units: PropertyUnit[] }
+  children: React.ReactNode
+}) {
+  const value = useMemo(
+    () => ({ property: data.property, units: data.units }),
+    [data.property, data.units]
+  )
+  return (
+    <PropertyDetailContext.Provider value={value}>
+      {children}
+    </PropertyDetailContext.Provider>
   )
 }
 

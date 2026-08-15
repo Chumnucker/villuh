@@ -2,8 +2,13 @@
 
 import * as React from "react"
 
-import type { Filter, FilterFieldConfig } from "../filters"
-import { PlatformIcon } from "../icon"
+import type {
+  Filter,
+  FilterFieldConfig,
+  FilterOperator,
+  FilterServerMapping,
+} from "../filters"
+import { PlatformIcon, type PlatformIconName } from "../icon"
 import { registerQueryStateKeys } from "./key-registry"
 import {
   pageParser,
@@ -11,19 +16,41 @@ import {
   parseAsSort,
   searchParser,
   sizeParser,
+  type FieldFilter,
 } from "./table-params"
-import type {
-  FieldFilter,
-  FilterOptionItem,
-  TableConfig,
-  TableDefinition,
-  TableFieldDef,
-  TableFieldUi,
-} from "./types"
 
-const EMPTY_OPTIONS: FilterOptionItem[] = Object.freeze(
-  []
-) as unknown as FilterOptionItem[]
+/* ── Field declarations ────────────────────────────────────────────────── */
+
+export type FilterOptionItem = { value: string; label: string }
+
+/** Presentation props forwarded verbatim onto the emitted `FilterFieldConfig`. */
+export type TableFieldUi = Omit<
+  FilterFieldConfig,
+  "key" | "icon" | "options" | "operators" | "server"
+> & {
+  label: string
+  /** Icon by NAME, not JSX, so table configs stay plain `.ts`. */
+  icon?: PlatformIconName
+}
+
+/**
+ * One filter field declaration. Carries everything the URL parser, the
+ * operator validator, the picker UI, and the tRPC input mapping need.
+ */
+export type TableFieldDef = TableFieldUi & {
+  kind: "ids" | "numeric"
+  /** The URL parser validates against exactly this list; anything else is dropped. */
+  operators: FilterOperator[]
+  /** Fed unchanged into `buildDataTableServerInput`. */
+  server: FilterServerMapping
+  /**
+   * Options source. The binder calls this for EVERY field on EVERY render —
+   * never conditionally — so the hook sequence is fixed. `hidden` lets the
+   * hook gate its own tRPC query (`enabled: !hidden`) without changing the
+   * hook count.
+   */
+  useOptions?: (hidden: boolean) => FilterOptionItem[]
+}
 
 /** Id-list (multiselect) filter field. Pair with `idFilterOperators()`. */
 export function ids(
@@ -47,74 +74,130 @@ export function numeric(
   return { ...def, kind: "numeric" }
 }
 
+/* ── Table definition ──────────────────────────────────────────────────── */
+
+/** Reserved by the core table params; a filter field cannot claim them. */
+const RESERVED_FIELD_KEYS = new Set(["q", "sort", "page", "size"])
+
 /**
- * One config object per table (D-21).
- *
- * `name` is a definition-unique identifier — `"units"`, `"leases"` — and is
- * INDEPENDENT of `namespace`. It is the owner string this definition registers
- * its URL keys under. Do not derive it from `namespace`; see the note on the
- * `registerQueryStateKeys` call below for why that breaks D-29.
- *
- * `namespace` is `null` for the normal case — one table per page, so keys read
- * best unprefixed (`?q=main&status=any:s1&sort=-baseRent&page=2&size=50`).
- * Pass a namespace only when a single page hosts two tables; keys then become
- * `${namespace}:${key}` (D-29 — table prefixes use `:`, overlay namespaces use
- * `.`, so the two schemes can never converge).
- *
- * Everything below runs ONCE, at module evaluation. The parser map and the
- * urlKeys object are frozen and never rebuilt, which is requirement 2 of D-41 —
- * a keyMap rebuilt per render destabilizes nuqs's `stableKeyMap` and
- * permanently re-arms DataTableToolbar's 300 ms search debounce.
+ * The concrete parser map a definition carries: the four core params plus one
+ * field-filter parser per declared field. Fully typed so `useQueryStates`
+ * infers the values shape with no casts anywhere downstream.
+ */
+export type TableParsers<F extends Record<string, TableFieldDef>> = {
+  q: typeof searchParser
+  sort: ReturnType<typeof parseAsSort>
+  page: typeof pageParser
+  size: typeof sizeParser
+} & { [K in keyof F & string]: ReturnType<typeof parseAsFieldFilters> }
+
+export type TableConfig<
+  F extends Record<string, TableFieldDef> = Record<string, TableFieldDef>,
+> = {
+  fields: F
+  /** Column ids `sort` is validated against. Must match the server's sort key enum. */
+  sortable: readonly string[]
+  /**
+   * URL key prefix. Omit for the normal case — one table per page, unprefixed
+   * keys (`?q=…&status=…&sort=…`). Set it only when a single page hosts two
+   * tables; keys then become `${namespace}:${key}` (table prefixes use `:`,
+   * overlay namespaces use `.`, so the two schemes can never converge).
+   */
+  namespace?: string
+}
+
+export type TableDefinition<
+  F extends Record<string, TableFieldDef> = Record<string, TableFieldDef>,
+> = {
+  /**
+   * Definition-unique identifier, independent of `namespace` — the OWNER
+   * string in the mount-time key guard. It cannot be derived from
+   * `namespace`: the collision the guard exists to catch is two mounted
+   * tables that are BOTH unprefixed, and a namespace-derived owner would
+   * read that as the same table mounted twice and stay silent.
+   */
+  name: string
+  namespace: string | null
+  fieldKeys: readonly (keyof F & string)[]
+  /** Frozen at module scope — required for nuqs setter stability. */
+  parsers: Readonly<TableParsers<F>>
+  urlKeys: Readonly<Record<keyof TableParsers<F> & string, string>>
+  /** Options binder. `hide` filters the RESULT, never the hook iteration. */
+  useFilterFields: (options?: {
+    hide?: readonly string[]
+  }) => FilterFieldConfig[]
+  /** Inverse of the parse side: `DataTableQuery.filters` -> one param value per field. */
+  toFieldParams: (filters: Filter[]) => Record<keyof F & string, FieldFilter[] | null>
+}
+
+const EMPTY_OPTIONS: FilterOptionItem[] = Object.freeze(
+  []
+) as unknown as FilterOptionItem[]
+
+/**
+ * One config object per table: URL parsing, operator validation, the picker
+ * UI, and the tRPC input mapping all derive from the declaration. Call it at
+ * module scope only — the parser map and urlKeys are frozen and never
+ * rebuilt, which is what keeps nuqs's setter identity stable (a keyMap
+ * rebuilt per render permanently re-arms DataTableToolbar's search debounce).
  */
 export function defineTable<const F extends Record<string, TableFieldDef>>(
   name: string,
-  namespace: string | null,
   config: TableConfig<F>
 ): TableDefinition<F> {
   const fieldKeys = Object.keys(config.fields) as (keyof F & string)[]
-  const entries = fieldKeys.map((key) => [key, config.fields[key]!] as const)
+  const entries = fieldKeys.map((key) => [key, config.fields[key]] as const)
+  const namespace = config.namespace ?? null
   const prefix = namespace ? `${namespace}:` : ""
 
-  const parsers = Object.freeze({
+  if (process.env.NODE_ENV !== "production") {
+    for (const key of fieldKeys) {
+      if (RESERVED_FIELD_KEYS.has(key)) {
+        throw new Error(
+          `[query-state] Field key "${key}" (table "${name}") is reserved for a core table param.`
+        )
+      }
+    }
+  }
+
+  // `Object.fromEntries` erases the key type; this is the one place the
+  // mapped type is asserted back on.
+  const fieldParsers = Object.fromEntries(
+    entries.map(([key, def]) => [
+      key,
+      parseAsFieldFilters(
+        key,
+        def.operators.map((op) => op.value)
+      ),
+    ])
+  ) as { [K in keyof F & string]: ReturnType<typeof parseAsFieldFilters> }
+
+  const parsers: Readonly<TableParsers<F>> = Object.freeze({
     q: searchParser,
     sort: parseAsSort(config.sortable),
     page: pageParser,
     size: sizeParser,
-    ...Object.fromEntries(
-      entries.map(([key, def]) => [
-        key,
-        parseAsFieldFilters(
-          key,
-          def.operators.map((op) => op.value)
-        ),
-      ])
-    ),
+    ...fieldParsers,
   })
 
   const urlKeys = Object.freeze(
     Object.fromEntries(
       Object.keys(parsers).map((key) => [key, `${prefix}${key}`])
     )
-  ) as Readonly<Record<string, string>>
+  ) as Readonly<Record<keyof TableParsers<F> & string, string>>
 
-  // Owner is `name`, NOT `namespace ?? "table"`. D-29's stated trigger is a
-  // second table on one page — which is a second UNPREFIXED table. Under a
-  // namespace-derived owner both would register `q`/`sort`/`page`/`size` under
-  // the literal owner "table", key-registry.ts would see same-owner
-  // re-registration, treat it as HMR, and return silently — the assert would be
-  // inert for the exact scenario it exists to catch. Keyed on `name`, the
-  // second definition registers a different owner against the same keys and
-  // throws.
+  // Scheme check only (no "." in table keys). Collision detection happens at
+  // mount time in useDataTableQueryState — tables on different routes may
+  // share unprefixed keys freely.
   registerQueryStateKeys(name, Object.values(urlKeys), "table")
 
   /**
-   * D-22 binder. The config is a frozen module-scope object whose entry order
-   * never changes, so this loop unrolls to a fixed hook sequence. Fields are
-   * NEVER conditionally skipped — a hidden field's `useOptions` still runs and
-   * receives `hidden: true` so it can gate its own tRPC query; only the RESULT
-   * is filtered. Skipping the iteration instead is Pitfall 2: "Rendered fewer
-   * hooks than during the previous render" when navigating between /units and a
-   * property Units tab.
+   * The config is a frozen module-scope object whose entry order never
+   * changes, so this loop unrolls to a FIXED hook sequence. Fields are never
+   * conditionally skipped — a hidden field's `useOptions` still runs and
+   * receives `hidden: true` so it can gate its own tRPC query; only the
+   * RESULT is filtered. Skipping the iteration instead changes the hook count
+   * between pages that hide different fields.
    */
   function useFilterFields(options?: {
     hide?: readonly string[]
@@ -125,7 +208,7 @@ export function defineTable<const F extends Record<string, TableFieldDef>>(
     for (const [key, def] of entries) {
       const hidden = hide?.includes(key) ?? false
       const { icon, useOptions, kind, ...ui } = def
-      // eslint-disable-next-line react-hooks/rules-of-hooks -- static, frozen, module-scope config; entry order never changes and no field is ever conditionally skipped, so the hook sequence is fixed. See D-22 / RESEARCH §6.
+      // eslint-disable-next-line react-hooks/rules-of-hooks -- static, frozen, module-scope config; entry order never changes and no field is ever conditionally skipped, so the hook sequence is fixed.
       const opts = useOptions?.(hidden) ?? EMPTY_OPTIONS
       if (hidden) continue
       resolved.push({
@@ -142,17 +225,16 @@ export function defineTable<const F extends Record<string, TableFieldDef>>(
     return resolved
   }
 
-  /** Inverse of the parse side: `DataTableQuery.filters` -> one param value per field. */
   function toFieldParams(
     filters: Filter[]
-  ): Record<string, FieldFilter[] | null> {
-    const out: Record<string, FieldFilter[] | null> = {}
+  ): Record<keyof F & string, FieldFilter[] | null> {
+    const out = {} as Record<keyof F & string, FieldFilter[] | null>
     for (const key of fieldKeys) {
       const predicates = filters
         .filter((f) => f.field === key)
         .map((f) => ({ operator: f.operator, values: f.values.map(String) }))
-      // `null` clears the param; clearOnDefault would also clear it against the
-      // frozen empty default, but null is explicit and one fewer comparison.
+      // `null` clears the param; clearOnDefault would also clear it against
+      // the frozen empty default, but null is explicit.
       out[key] = predicates.length > 0 ? predicates : null
     }
     return out

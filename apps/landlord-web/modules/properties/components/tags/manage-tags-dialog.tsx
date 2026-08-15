@@ -22,7 +22,7 @@ import {
   ScrollArea,
   TagBadge,
   toTagBadgeVariant,
-  type OverlayHandle,
+  type FlagOverlayHandle,
 } from "@villuh/ui"
 import { invalidateQueries, trpc } from "@villuh/api"
 import { useUser } from "@/modules/app/providers/me-provider"
@@ -35,17 +35,20 @@ import {
 } from "@villuh/server/schemas/tags"
 
 /**
- * Screen 7 org tag catalog (D-18–D-20). List/edit/delete requires `write`; viewers see a
- * read-only list. Delete cascades every `property_tag` referencing the catalog row (server-side)
- * — the confirm copy in the delete dropdown spells that out before the destructive call fires.
- *
- * Overlay-driven (D-06, D-09): open/closed lives in the URL (`?property.tags=1`),
- * mounted once app-wide by `<AppOverlays>`.
+ * Org tag catalog. List/edit/delete requires `write`; viewers see a read-only
+ * list. Delete cascades every `property_tag` referencing the catalog row
+ * (server-side) — the confirm copy in the delete dropdown spells that out
+ * before the destructive call fires. Open/closed lives in the URL
+ * (`?property.tags=open`), mounted once app-wide by `<AppOverlays>`.
  */
-export function ManageTagsDialog({ overlay }: { overlay: OverlayHandle }) {
-  // D-34: this useUser() call is the concrete reason <AppOverlays> must be
-  // mounted inside <UserProvider> — moving the mount above the provider breaks
-  // this dialog at runtime, not at compile time.
+export function ManageTagsDialog({
+  overlay,
+}: {
+  overlay: FlagOverlayHandle
+}) {
+  // This useUser() call is the concrete reason <AppOverlays> must be mounted
+  // inside <UserProvider> — moving the mount above the provider breaks this
+  // dialog at runtime, not at compile time.
   const { user } = useUser()
   const canWrite = user.org.permissions.write
   const utils = trpc.useUtils()

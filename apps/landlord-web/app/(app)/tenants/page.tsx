@@ -1,5 +1,5 @@
-import { TenantsList } from "@/modules/tenants/components/list"
+import { TenantsListTemplate } from "@/modules/tenants/template/tenants-list-template"
 
 export default function TenantsPage() {
-  return <TenantsList />
+  return <TenantsListTemplate />
 }

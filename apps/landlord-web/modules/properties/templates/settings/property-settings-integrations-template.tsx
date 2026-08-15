@@ -4,7 +4,7 @@ import { Page } from "@villuh/ui"
 import {
   IntegrationCard,
   type Integration,
-} from "@/modules/properties/components/settings/integration-card"
+} from "@/modules/properties/components/settings/integrations/integration-card"
 import { SettingsSection } from "@/modules/properties/components/settings/section"
 
 const INTEGRATIONS: Integration[] = [

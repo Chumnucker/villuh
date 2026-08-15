@@ -16,6 +16,7 @@ const buttonVariants = cva(
         default: "bg-primary text-primary-foreground hover:bg-primary/85",
         background: "bg-background text-foreground hover:bg-background/80",
         muted: "bg-muted text-muted-foreground hover:bg-muted/80",
+        accent: "bg-accent text-foreground hover:bg-accent/80",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         success:

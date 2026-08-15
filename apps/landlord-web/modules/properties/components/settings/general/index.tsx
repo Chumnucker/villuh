@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
 import { toast } from "sonner"
 import { Button, SubmitButton } from "@villuh/ui"
 import { invalidateQueries, trpc } from "@villuh/api"
 import { updatePropertyInputSchema } from "@villuh/server/schemas/properties"
 import { TagPicker } from "@/modules/properties/components/tags/tag-picker"
-import { AddressFields } from "@/modules/properties/components/form/address-fields"
+import { usePropertyDetail } from "@/modules/properties/providers/property-detail-provider"
+import { SettingsSection } from "../section"
+import { AddressFields } from "./address-fields"
 import {
   PropertyNameField,
   PropertyNotesField,
@@ -14,15 +15,12 @@ import {
   PropertyPhoneField,
   PropertyTypeField,
   PropertyYearBuiltField,
-} from "@/modules/properties/components/form/property-fields"
+} from "./property-fields"
 import {
-  submitStatus,
   toApiInput,
   toFormValues,
   usePropertyFormInstance,
-} from "@/modules/properties/components/form/property-form-shared"
-import { usePropertyDetail } from "@/modules/properties/providers/property-detail-provider"
-import { SettingsSection } from "./section"
+} from "./property-form-state"
 
 /**
  * General property settings — the fields that used to make up the single
@@ -34,14 +32,12 @@ import { SettingsSection } from "./section"
 export function PropertyGeneralForm() {
   const { property } = usePropertyDetail()
   const utils = trpc.useUtils()
-  const [submitError, setSubmitError] = useState(false)
 
   const updateProperty = trpc.properties.update.useMutation()
 
   const form = usePropertyFormInstance(
     toFormValues(property),
     async ({ value, formApi }) => {
-      setSubmitError(false)
       try {
         const parsed = updatePropertyInputSchema.parse({
           propertyId: property.id,
@@ -62,15 +58,12 @@ export function PropertyGeneralForm() {
         formApi.reset(value)
         toast.success("Property saved")
       } catch (err) {
-        setSubmitError(true)
         toast.error(
           err instanceof Error ? err.message : "Could not save property"
         )
       }
     }
   )
-
-  const isSubmitError = submitError || updateProperty.isError
 
   return (
     <form
@@ -111,44 +104,40 @@ export function PropertyGeneralForm() {
         <PropertyNotesField form={form} />
       </SettingsSection>
 
-      <form.Subscribe
-        selector={(state) =>
-          [state.canSubmit, state.isSubmitting, state.isDirty] as const
-        }
-      >
-        {([canSubmit, isSubmitting, isDirty]) => (
-          <div className="flex items-center justify-end gap-2">
-            {isDirty ? (
+      {/*
+        Each Subscribe selects a single boolean. TanStack Store compares selector
+        output with `===`, so returning a fresh array (e.g. `[canSubmit, isDirty]`)
+        re-renders on every keystroke; primitives only re-render when they flip.
+      */}
+      <div className="flex items-center justify-end gap-2">
+        <form.Subscribe selector={(state) => state.isDirty}>
+          {(isDirty) =>
+            isDirty ? (
               <Button
                 type="button"
                 variant="outline"
-                disabled={isSubmitting || updateProperty.isPending}
+                disabled={updateProperty.isPending}
                 onClick={() => {
                   form.reset()
-                  setSubmitError(false)
+                  updateProperty.reset()
                 }}
               >
                 Discard changes
               </Button>
-            ) : null}
+            ) : null
+          }
+        </form.Subscribe>
 
+        <form.Subscribe selector={(state) => state.canSubmit && state.isDirty}>
+          {(canSave) => (
             <SubmitButton
-              status={submitStatus(
-                isSubmitting,
-                updateProperty.isPending,
-                isSubmitError
-              )}
-              disabled={
-                !canSubmit ||
-                !isDirty ||
-                isSubmitting ||
-                updateProperty.isPending
-              }
+              status={updateProperty.status}
+              disabled={!canSave || updateProperty.isPending}
               steps={["Save changes", "Saving…", "Saved", "Error"]}
             />
-          </div>
-        )}
-      </form.Subscribe>
+          )}
+        </form.Subscribe>
+      </div>
     </form>
   )
 }

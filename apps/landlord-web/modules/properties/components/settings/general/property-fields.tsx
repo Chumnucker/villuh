@@ -19,12 +19,11 @@ import {
   PROPERTY_TYPE_LABELS,
 } from "@villuh/server/schemas/properties"
 import { NotesEditor } from "./notes-editor"
-import { UNSET, fieldError, type PropertyFormApi } from "./property-form-shared"
+import { UNSET, fieldError, type PropertyFormApi } from "./property-form-state"
 
 /**
- * The individual property fields, split so the create form (one flat grid) and
- * the settings General tab (grouped into sections) render the exact same
- * inputs. Every group expects a two-column grid parent.
+ * The individual property fields for the settings General tab, grouped into
+ * sections. Every group expects a two-column grid parent.
  */
 
 export function PropertyNameField({

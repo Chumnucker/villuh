@@ -34,13 +34,13 @@ function EmptyState({
       {icon ? (
         <PlatformIcon
           icon={icon}
-          size={28}
-          className="text-muted-foreground"
+          size={32}
+          className="text-muted-foreground mb-3"
         />
       ) : null}
-      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className="text-lg font-medium text-foreground">{title}</p>
       {description ? (
-        <p className="text-sm text-muted-foreground">{description}</p>
+        <p className="text-base text-muted-foreground">{description}</p>
       ) : null}
       {action ? (
         <div className="mt-3 flex items-center justify-center gap-2">

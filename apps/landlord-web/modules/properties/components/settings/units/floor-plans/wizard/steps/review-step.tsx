@@ -1,13 +1,13 @@
 "use client"
 
-import { useStore } from "@tanstack/react-form"
+import { useSelector } from "@tanstack/react-form"
 import { Button, PlatformIcon, useWizardDialog } from "@villuh/ui"
 import { formatFloorPlanSpecs } from "@/modules/properties/lib/floor-plan-display"
 import {
   stagedItemPreviewUrl,
   type StagedGalleryItem,
 } from "@/modules/properties/lib/staged-gallery"
-import type { FloorPlanFormApi } from "./floor-plan-form"
+import type { FloorPlanFormApi } from "../floor-plan-form"
 
 const MAX_THUMBNAILS = 6
 
@@ -35,15 +35,12 @@ export function ReviewStep({
   propertyName: string
 }) {
   const { goTo } = useWizardDialog()
-  const values = useStore(form.store, (state) => state.values)
+  const values = useSelector(form.store, (state) => state.values)
 
   const specLine = formatFloorPlanSpecs({
-    bedrooms: values.bedrooms === "" ? 0 : Number(values.bedrooms),
-    bathrooms: values.bathrooms === "" ? 0 : Number(values.bathrooms),
-    squareFootage:
-      values.defaultSquareFootage.trim() === ""
-        ? null
-        : Number(values.defaultSquareFootage),
+    bedrooms: values.bedrooms ?? 0,
+    bathrooms: values.bathrooms ?? 0,
+    squareFootage: values.defaultSquareFootage ?? null,
   })
 
   const cover = items[0]
@@ -61,7 +58,11 @@ export function ReviewStep({
             size="sm"
             onClick={() => goTo("details")}
           >
-            <PlatformIcon icon="IconPencil" size={14} data-icon="inline-start" />
+            <PlatformIcon
+              icon="IconPencil"
+              size={14}
+              data-icon="inline-start"
+            />
             Edit
           </Button>
         </div>
@@ -84,7 +85,11 @@ export function ReviewStep({
             size="sm"
             onClick={() => goTo("gallery")}
           >
-            <PlatformIcon icon="IconPencil" size={14} data-icon="inline-start" />
+            <PlatformIcon
+              icon="IconPencil"
+              size={14}
+              data-icon="inline-start"
+            />
             Edit
           </Button>
         </div>

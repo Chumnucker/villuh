@@ -76,6 +76,8 @@ export const listTenantsInputSchema = z
     search: listSearchSchema,
     unitIds: filterIdListSchema,
     excludeUnitIds: filterIdListSchema,
+    /** Scope to tenants whose current unit belongs to one of these properties. */
+    propertyIds: filterIdListSchema,
     /** `true` = unassigned only (no active/pending tenancy). */
     unitEmpty: filterEmptyFlagSchema,
     statusIn: z.array(z.enum(TENANCY_STATUSES)).optional(),

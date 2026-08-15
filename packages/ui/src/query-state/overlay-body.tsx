@@ -3,21 +3,27 @@
 import * as React from "react"
 
 import { EmptyState } from "../empty-state"
-import type { OverlayQuery } from "./types"
 
 /**
- * Deep-link boundary for an overlay (D-15). Handles loading, not-found, and
+ * Structural subset of a TanStack Query / tRPC result, with `data.code` so
+ * `<OverlayBody>` can discriminate NOT_FOUND from FORBIDDEN. Structural on
+ * purpose — it keeps `@villuh/ui` free of a data-layer dependency.
+ */
+export type OverlayQuery<TData> = {
+  data: TData | undefined
+  isLoading: boolean
+  isError?: boolean
+  error?: { message: string; data?: { code?: string } | null } | null
+}
+
+/**
+ * Deep-link boundary for an overlay: handles loading, not-found, and
  * forbidden once so no overlay reimplements them.
  *
- * Structural copy of `PageBoundary` (page.tsx:98-159), widened to discriminate
- * the tRPC error code. Keeping the query type structural is deliberate — it
- * keeps @villuh/ui free of a TanStack Query dependency.
- *
- * D-44: the FORBIDDEN branch exists for correctness and to future-proof a
- * role-gated read, but it is currently UNREACHABLE. RLS turns every
+ * Note: the FORBIDDEN branch is currently unreachable — RLS turns every
  * cross-organization read into NOT_FOUND before any authorization check runs
- * (which is also the right posture — no existence oracle). Do not write an
- * acceptance test for it; you cannot produce the state.
+ * (deliberately: no existence oracle). It exists to future-proof a role-gated
+ * read.
  */
 export function OverlayBody<TData>({
   query,

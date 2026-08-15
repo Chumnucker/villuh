@@ -136,17 +136,17 @@ export type StagedGalleryFieldProps = {
   onChange: (items: StagedGalleryItem[]) => void
   onRemoveExisting: (imageId: string) => void
   disabled?: boolean
-  /** Empty-state heading. Defaults to the property-form copy (Resolved #1). */
+  /** Empty-state heading. Defaults to generic gallery copy (Resolved #1). */
   emptyTitle?: string
-  /** Empty-state body. Defaults to the property-form copy (Resolved #1). */
+  /** Empty-state body. Defaults to generic gallery copy (Resolved #1). */
   emptyDescription?: string
 }
 
 /**
- * Local-only gallery editor for the property form and the floor-plan wizard.
- * Files stay in memory until save; existing removals are tracked by the parent
- * for hard-delete on persist. `emptyTitle`/`emptyDescription` let a consumer
- * override the empty-state copy without changing behaviour (Resolved #1).
+ * Local-only staged gallery editor (property-agnostic). Files stay in memory
+ * until save; existing removals are tracked by the parent for hard-delete on
+ * persist. `emptyTitle`/`emptyDescription` let a consumer override the
+ * empty-state copy without changing behaviour (Resolved #1).
  */
 export function StagedGalleryField({
   items,

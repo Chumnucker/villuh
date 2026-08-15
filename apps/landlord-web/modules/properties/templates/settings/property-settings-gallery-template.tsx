@@ -1,7 +1,7 @@
 "use client"
 
 import { Page } from "@villuh/ui"
-import { PropertyGalleryManager } from "@/modules/properties/components/settings/gallery-manager"
+import { PropertyGalleryManager } from "@/modules/properties/components/settings/gallery"
 
 export function PropertySettingsGalleryTemplate() {
   return (

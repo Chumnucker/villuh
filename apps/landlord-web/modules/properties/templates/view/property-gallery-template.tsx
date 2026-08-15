@@ -17,10 +17,11 @@ import { propertyOverlays } from "@/modules/properties/lib/properties.overlays"
 export function PropertyGalleryTemplate() {
   const { propertyId } = useParams<{ propertyId: string }>()
   const galleryQuery = trpc.properties.gallery.list.useQuery({ propertyId })
-  // D-31 second form / D-47: the key is registered in propertyOverlays but
-  // <AppOverlays> skips it, so this page pulls its own handle and renders the
-  // Lightbox below. D-32: `originRef` is a live handle to the clicked
-  // thumbnail — it cannot reach a component mounted in the app layout.
+  // `photo` is a page-mounted overlay: the key is registered in
+  // propertyOverlays but <AppOverlays> skips it, so this page pulls its own
+  // handle and renders the Lightbox below — `originRef` is a live handle to
+  // the clicked thumbnail, which cannot reach a component mounted in the app
+  // layout.
   const photo = propertyOverlays.use("photo")
   const originRef = useRef<HTMLElement | null>(null)
 
@@ -56,10 +57,11 @@ export function PropertyGalleryTemplate() {
         }
       >
         {({ images }) => {
-          // D-11: the param carries the IMAGE ID, never the array index — an
-          // index silently points a shared link at the wrong photo the moment
-          // the gallery is reordered or a photo is deleted.
-          const active = images.find((image) => image.id === photo.value) ?? null
+          // The param carries the IMAGE ID, never the array index — an index
+          // silently points a shared link at the wrong photo the moment the
+          // gallery is reordered or a photo is deleted.
+          const active =
+            images.find((image) => image.id === photo.entityId) ?? null
 
           return (
             <>
@@ -90,8 +92,7 @@ export function PropertyGalleryTemplate() {
                 // reordered-away photo id resolves to nothing, and opening an
                 // empty lightbox would be worse than not opening one.
                 open={active !== null}
-                // D-11: Lightbox is not Radix. `onClose` -> `close()` is the
-                // whole adapter; the primitive is not rewritten.
+                // Lightbox is not Radix; `onClose` -> `close()` is the whole adapter.
                 onClose={photo.close}
                 originRef={originRef}
                 src={active?.url ?? ""}

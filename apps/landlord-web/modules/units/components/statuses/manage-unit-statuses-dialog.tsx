@@ -43,7 +43,7 @@ import {
   TagBadge,
   cn,
   toTagBadgeVariant,
-  type OverlayHandle,
+  type FlagOverlayHandle,
 } from "@villuh/ui"
 import { invalidateQueries, trpc } from "@villuh/api"
 import { createUnitStatusInputSchema } from "@villuh/server/schemas/unit-statuses"
@@ -80,18 +80,21 @@ function makeNameValidator(statuses: UnitStatusRow[], excludeId?: string) {
 }
 
 /**
- * Screen 8 unit status catalog (UNIT-02, D-26/D-27) as an overlay rather than a settings
- * page — create, rename, recolor, reorder, and archive via `unitStatuses.*`. Server
- * `permissionProcedure('admin')` is the real backstop (T-03-12); non-admins get a
- * read-only list. Seeded `is_system` rows can be renamed and recolored but never archived.
- *
- * Overlay-driven (D-06, D-09): open/closed lives in the URL (`?unit.statuses=1`),
+ * Unit status catalog as an overlay rather than a settings page — create,
+ * rename, recolor, reorder, and archive via `unitStatuses.*`. Server-side
+ * `permissionProcedure('admin')` is the real backstop; non-admins get a
+ * read-only list. Seeded `is_system` rows can be renamed and recolored but
+ * never archived. Open/closed lives in the URL (`?unit.statuses=open`),
  * mounted once app-wide by `<AppOverlays>`.
  */
-export function ManageUnitStatusesDialog({ overlay }: { overlay: OverlayHandle }) {
-  // D-34: this useUser() call is the concrete reason <AppOverlays> must be
-  // mounted inside <UserProvider> — moving the mount above the provider breaks
-  // this dialog at runtime, not at compile time.
+export function ManageUnitStatusesDialog({
+  overlay,
+}: {
+  overlay: FlagOverlayHandle
+}) {
+  // This useUser() call is the concrete reason <AppOverlays> must be mounted
+  // inside <UserProvider> — moving the mount above the provider breaks this
+  // dialog at runtime, not at compile time.
   const { user } = useUser()
   const canManage = user.org.permissions.admin
   const utils = trpc.useUtils()

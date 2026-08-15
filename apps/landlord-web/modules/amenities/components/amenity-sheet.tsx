@@ -45,7 +45,7 @@ import {
   GalleryManager,
   type GalleryImage,
   type GalleryUploadFile,
-} from "./gallery-manager"
+} from "@/modules/app/components/shared/gallery-manager"
 
 type RouterOutput = inferRouterOutputs<AppRouter>
 export type PropertyAmenity =

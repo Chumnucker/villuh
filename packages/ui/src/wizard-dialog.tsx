@@ -3,6 +3,7 @@
 import * as React from "react"
 
 import { cn } from "../utils"
+import { Button } from "./button"
 import {
   Dialog,
   DialogContainer,
@@ -227,7 +228,7 @@ function WizardDialogSidebar({
     <div
       data-slot="wizard-dialog-sidebar"
       className={cn(
-        "flex shrink-0 flex-col gap-2.5 border-b bg-secondary px-4 py-4 pr-12 sm:w-64 sm:border-r sm:border-b-0 sm:pr-4",
+        "flex shrink-0 flex-col gap-2.5 border-b bg-secondary p-6 pr-12 sm:w-64 sm:border-r sm:border-b-0",
         className
       )}
       {...props}
@@ -241,7 +242,7 @@ function WizardDialogSidebar({
 }
 
 function WizardDialogTitle(props: React.ComponentProps<typeof DialogTitle>) {
-  return <DialogTitle {...props} />
+  return <DialogTitle {...props} className={cn("font-semibold", props.className)} />
 }
 
 /** `DialogDescription`, hidden below `sm` where the sidebar is a compact top bar (D-32). */
@@ -268,7 +269,7 @@ function WizardDialogBody({ className, ...props }: React.ComponentProps<"div">) 
     <div
       data-slot="wizard-dialog-body"
       className={cn(
-        "min-h-80 flex-1 overflow-y-auto px-6 pt-6 pb-6 sm:pt-12",
+        "min-h-80 flex-1 overflow-y-auto px-6 pt-6 pb-6 sm:pt-12 outline-none",
         className
       )}
       {...props}
@@ -277,18 +278,29 @@ function WizardDialogBody({ className, ...props }: React.ComponentProps<"div">) 
 }
 
 /**
- * One panel per step, always mounted, toggled via the `hidden` attribute so a
- * single form instance spans the wizard (D-35). The root carries no `display`
- * utility (it would override `hidden`); put layout classes on a child wrapper.
- * Focus moves here on step change, skipped on initial mount.
+ * One panel per step. A panel's children are lazily mounted on first visit and
+ * then kept mounted (toggled via the `hidden` attribute) for the rest of the
+ * open session, so a single form instance still spans the wizard (D-35) — a
+ * field, once mounted, never unmounts, and values live in the external form
+ * store regardless. Deferring the mount keeps opening the wizard cheap: heavy
+ * later steps (e.g. a dnd-kit gallery) don't spin up until the user navigates
+ * to them, instead of all landing on the single "open" frame. `visited` only
+ * grows within an open session (it resets on close), so this never re-hides a
+ * step the user has already reached.
+ *
+ * The root carries no `display` utility (it would override `hidden`); put layout
+ * classes on a child wrapper. Focus moves here on step change, skipped on
+ * initial mount.
  */
 function WizardDialogPanel({
   step: panelStep,
   className,
+  children,
   ...props
 }: React.ComponentProps<"div"> & { step: string }) {
-  const { step: activeId } = useWizardContext()
+  const { step: activeId, visited } = useWizardContext()
   const isActive = panelStep === activeId
+  const shouldRender = isActive || visited.has(panelStep)
   const ref = React.useRef<HTMLDivElement>(null)
   const isInitialMount = React.useRef(true)
 
@@ -306,15 +318,90 @@ function WizardDialogPanel({
       data-slot="wizard-dialog-panel"
       hidden={!isActive}
       tabIndex={-1}
-      className={cn(className)}
+      className={cn("outline-none focus-visible:outline-none", className)}
       {...props}
-    />
+    >
+      {shouldRender ? children : null}
+    </div>
   )
 }
 
 /** `DialogFooter`'s exact class string, scoped to the wizard's right column. */
 function WizardDialogFooter(props: React.ComponentProps<typeof DialogFooter>) {
-  return <DialogFooter {...props} />
+  return <DialogFooter {...props} className={cn("bg-transparent border-t-0 py-4", props.className)} />
+}
+
+/**
+ * The wizard's right column: a `<form>` that owns the consumer's submit. This is
+ * generic wizard plumbing (not feature-specific), so it lives with the primitive.
+ *
+ * `enterAdvances` implements the "Enter must not submit" contract for linear
+ * flows — pressing Enter advances to the next step instead of submitting, until
+ * the last step. Free flows (no `enterAdvances`) submit on Enter. `onSubmit` is
+ * only invoked when the wizard is actually meant to submit.
+ */
+function WizardDialogForm({
+  onSubmit,
+  enterAdvances = false,
+  className,
+  children,
+  ...props
+}: Omit<React.ComponentProps<"form">, "onSubmit"> & {
+  onSubmit: () => void
+  enterAdvances?: boolean
+}) {
+  const { isLast, next } = useWizardContext()
+  return (
+    <form
+      data-slot="wizard-dialog-form"
+      className={cn("flex min-w-0 flex-1 flex-col outline-none", className)}
+      onSubmit={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        if (enterAdvances && !isLast) {
+          next()
+          return
+        }
+        onSubmit()
+      }}
+      {...props}
+    >
+      {children}
+    </form>
+  )
+}
+
+/**
+ * Standard linear-wizard footer: a `Back` button (hidden on the first step) and,
+ * on the right, either `Next` (gated by `canAdvance`) or — on the last step — the
+ * consumer-supplied `submit` node. Consumers only own the terminal submit control
+ * (label + pending/error state); Back/Next navigation is handled here so every
+ * wizard doesn't re-derive `isFirst`/`isLast`/`canAdvance`.
+ */
+function WizardDialogFooterNav({
+  submit,
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogFooter> & { submit: React.ReactNode }) {
+  const { isFirst, isLast, canAdvance, back, next } = useWizardContext()
+  return (
+    <WizardDialogFooter className={className} {...props}>
+      {!isFirst ? (
+        <Button type="button" variant="outline" onClick={back}>
+          <PlatformIcon icon="IconChevronLeft" size={16} data-icon="inline-start" />
+          Back
+        </Button>
+      ) : null}
+      {isLast ? (
+        submit
+      ) : (
+        <Button type="button" onClick={next} disabled={!canAdvance}>
+          Next
+          <PlatformIcon icon="IconChevronRight" size={16} data-icon="inline-end" />
+        </Button>
+      )}
+    </WizardDialogFooter>
+  )
 }
 
 /**
@@ -419,6 +506,8 @@ export {
   WizardDialogContainer,
   WizardDialogDescription,
   WizardDialogFooter,
+  WizardDialogFooterNav,
+  WizardDialogForm,
   WizardDialogPanel,
   WizardDialogSidebar,
   WizardDialogSteps,

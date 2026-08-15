@@ -1,7 +1,6 @@
 "use client"
 
 import { useForm } from "@tanstack/react-form"
-import type { SubmitStatus } from "@villuh/ui"
 import type { CreatePropertyInput } from "@villuh/server/schemas/properties"
 import { type PropertyDetail } from "@/modules/properties/providers/property-detail-provider"
 
@@ -97,16 +96,6 @@ export function fieldError(meta: {
     return err.message
   }
   return undefined
-}
-
-export function submitStatus(
-  isSubmitting: boolean,
-  isPending: boolean,
-  isError: boolean
-): SubmitStatus {
-  if (isError) return "error"
-  if (isSubmitting || isPending) return "pending"
-  return "idle"
 }
 
 /**

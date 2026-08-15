@@ -12,10 +12,17 @@ import {
   DATA_TABLE_PAGE_SIZES,
 } from "../data-table"
 import type { DataTableSort } from "../data-table-query"
-import type { FieldFilter } from "./types"
 
 /**
- * URL operator alias <-> internal operator (D-19). Only these are accepted;
+ * One parsed predicate for one filter field. Deliberately has NO `id` — the
+ * deterministic chip id is minted by `useDataTableQueryState` from
+ * field + operator + index, so the parser's `eq` never has to compare an id
+ * it does not own.
+ */
+export type FieldFilter = { operator: string; values: string[] }
+
+/**
+ * URL operator alias <-> internal operator. Only these are accepted;
  * anything else in a hand-edited URL is dropped, never thrown.
  *
  * The internal names must match the vocabulary `data-table-query.ts` already
@@ -41,20 +48,20 @@ const INTERNAL_TO_URL_OP: Record<string, string> = Object.fromEntries(
 )
 
 /**
- * Operators that carry no values. D-45 note: a valueless operator cannot be
- * distinguished from a value when it trails a value-bearing predicate, so
+ * Operators that carry no values. Grammar note: a valueless operator cannot
+ * be distinguished from a value when it trails a value-bearing predicate, so
  * empty / not-empty is EXCLUSIVE per field in the URL — it must be the only
- * predicate on that field. This is already true semantically: `getEmptyFilterFlag`
- * (data-table-query.ts:145-155) collapses conflicting empty chips to newest-wins.
+ * predicate on that field. This is already true semantically:
+ * `getEmptyFilterFlag` collapses conflicting empty chips to newest-wins.
  */
 const VALUELESS = new Set<string>(["empty", "not_empty"])
 
-/** Frozen module-scope singleton — a fresh `[]` per render breaks setter stability (D-41). */
+/** Frozen module-scope singleton — a fresh `[]` per render breaks nuqs setter stability. */
 const EMPTY_PREDICATES = Object.freeze([]) as unknown as FieldFilter[]
 
-// `~` is not in nuqs's escape set (RESEARCH §11.1), so these survive the encoder
-// verbatim. Do NOT use encodeURIComponent — nuqs escapes `%` first, turning
-// `%3A` into `%253A` and destroying D-18's hand-editable URLs.
+// `~` is not in nuqs's escape set, so these survive the encoder verbatim.
+// Do NOT use encodeURIComponent — nuqs escapes `%` first, turning `%3A` into
+// `%253A` and destroying the hand-editable URLs.
 const encodeValue = (v: string) =>
   v.replace(/~/g, "~~").replace(/:/g, "~c").replace(/,/g, "~s")
 
@@ -83,10 +90,10 @@ export function fieldFiltersEq(a: FieldFilter[], b: FieldFilter[]): boolean {
 }
 
 /**
- * One filter field's predicates, e.g. `gte:1500,lte:3000` or `any:s1,s2` (D-18).
+ * One filter field's predicates, e.g. `gte:1500,lte:3000` or `any:s1,s2`.
  *
  * @param fieldKey          only used for the dev-time serializer warning
- * @param allowedOperators  the field's declared internal operator list (D-19);
+ * @param allowedOperators  the field's declared internal operator list;
  *                          anything outside it is dropped rather than thrown
  */
 export function parseAsFieldFilters(
@@ -97,9 +104,9 @@ export function parseAsFieldFilters(
 
   return createParser<FieldFilter[]>({
     parse(query) {
-      // A valueless predicate's canonical form is the bare alias, which under
-      // the D-45 grammar would otherwise read as a continuation value. It is
-      // only ever legal as the whole param (empty / not-empty is exclusive).
+      // A valueless predicate's canonical form is the bare alias, which the
+      // grammar would otherwise read as a continuation value. It is only ever
+      // legal as the whole param (empty / not-empty is exclusive).
       const bare =
         URL_OP_TO_INTERNAL[query as keyof typeof URL_OP_TO_INTERNAL]
       if (bare && VALUELESS.has(bare)) {
@@ -118,7 +125,7 @@ export function parseAsFieldFilters(
           URL_OP_TO_INTERNAL[
             token.slice(0, colon) as keyof typeof URL_OP_TO_INTERNAL
           ]
-        if (!internal || !allowed.has(internal)) continue // drop, never throw (D-19)
+        if (!internal || !allowed.has(internal)) continue // drop, never throw
         const raw = token.slice(colon + 1)
         out.push({
           operator: internal,
@@ -139,7 +146,7 @@ export function parseAsFieldFilters(
             if (v.includes(":") || v.includes(",") || v.includes("~")) {
               console.warn(
                 `[query-state] Filter value for "${fieldKey}" contains a grammar delimiter and will be escaped: ${JSON.stringify(v)}. ` +
-                  `All current filter values are UUIDs or numbers; if this is a new option source, confirm the escaped URL still reads well. See D-45.`
+                  `All current filter values are UUIDs or numbers; if this is a new option source, confirm the escaped URL still reads well.`
               )
             }
           }
@@ -154,16 +161,15 @@ export function parseAsFieldFilters(
         .join(",")
     },
 
-    // NOT optional. `clearOnDefault` compares against defaultValue with `eq`
-    // (nuqs dist/index.js:576), AND the keyMap-stability heuristic calls
-    // `parser.eq?.(previousDefault, currentDefault)` (dist/index.js:494).
-    // Omitting it costs both a clean URL (D-20) and a stable setter (D-41).
+    // NOT optional. nuqs uses `eq` both for `clearOnDefault` comparisons and
+    // for its keyMap-stability heuristic; omitting it on a non-primitive
+    // parser costs both a clean URL and a stable setter.
     eq: fieldFiltersEq,
   }).withDefault(EMPTY_PREDICATES)
 }
 
 /**
- * `sort=-baseRent` <-> `{ id: "baseRent", desc: true }` (D-20).
+ * `sort=-baseRent` <-> `{ id: "baseRent", desc: true }`.
  * Validated against the table's declared sortable column ids — an unknown id
  * yields null, which nuqs resolves to the default (no sort).
  */
@@ -176,24 +182,22 @@ export function parseAsSort(sortableIds: readonly string[]) {
       return allowed.has(id) ? { id, desc } : null
     },
     serialize: (s) => (s.desc ? `-${s.id}` : s.id),
-    // Non-primitive value -> `eq` is required for clearOnDefault and for
-    // keyMap stability (D-41). Note this parser has NO default, so its
-    // `defaultValue` is `undefined` and stable by identity; `eq` still matters
-    // for `clearOnDefault` comparisons at call sites that add one later.
+    // Non-primitive value -> `eq` is required for clearOnDefault and keyMap
+    // stability, even though this parser has no default today.
     eq: (a, b) => a.id === b.id && a.desc === b.desc,
   })
 }
 
 /**
- * 1-based in the URL, 0-based in state — exactly `parseAsIndex` (D-20, D-43).
- * Do not hand-roll the ±1; nuqs's version already handles null and non-numeric input.
+ * 1-based in the URL, 0-based in state — exactly `parseAsIndex`. Do not
+ * hand-roll the ±1; nuqs's version already handles null and non-numeric input.
  */
 export const pageParser = parseAsIndex.withDefault(0)
 
-/** Allow-listed page size; a hand-edited `?size=999` falls back to the default (D-20). */
+/** Allow-listed page size; a hand-edited `?size=999` falls back to the default. */
 export const sizeParser = parseAsNumberLiteral(DATA_TABLE_PAGE_SIZES).withDefault(
   DATA_TABLE_DEFAULT_PAGE_SIZE
 )
 
-/** Committed search text only — the 300 ms debounce stays in DataTableToolbar (D-27). */
+/** Committed search text only — the 300 ms debounce stays in DataTableToolbar. */
 export const searchParser = parseAsString.withDefault("")

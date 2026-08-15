@@ -14,9 +14,9 @@ function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="input-group"
       role="group"
       className={cn(
-        "group/input-group relative flex h-9 w-full min-w-0 items-center rounded-4xl border border-transparent bg-input bg-clip-padding transition-[color,box-shadow,background-color] outline-none",
+        "group/input-group relative flex h-9 w-full min-w-0 items-center rounded-2xl border border-transparent bg-input bg-clip-padding transition-[color,box-shadow,background-color] outline-none",
         // Match `Input` focus treatment (ring + offset on the group, not the inner control).
-        "focus-within:ring-1 focus-within:ring-offset-2 focus-within:ring-offset-background focus-within:ring-ring/35",
+        "focus-within:ring-1 focus-within:ring-offset-1 focus-within:ring-offset-background focus-within:ring-ring/35",
         "has-[[data-slot][aria-invalid=true]]:ring-1 has-[[data-slot][aria-invalid=true]]:ring-offset-2 has-[[data-slot][aria-invalid=true]]:ring-offset-background has-[[data-slot][aria-invalid=true]]:ring-destructive/45 dark:has-[[data-slot][aria-invalid=true]]:ring-destructive/40",
         // Nested search field inside combobox popup — don't double-ring.
         "in-data-[slot=combobox-content]:focus-within:ring-0 in-data-[slot=combobox-content]:focus-within:ring-offset-0",
@@ -34,7 +34,7 @@ const inputGroupAddonVariants = cva(
     variants: {
       align: {
         "inline-start": "order-first pl-3 has-[>button]:-ml-1 has-[>kbd]:-ml-1",
-        "inline-end": "order-last pr-3 has-[>button]:-mr-1 has-[>kbd]:-mr-1",
+        "inline-end": "order-last pr-1.5 has-[>button]:-mr-1 has-[>kbd]:-mr-1",
         "block-start":
           "order-first w-full justify-start px-3 pt-3 group-has-[>input]/input-group:pt-3.5 [.border-b]:pb-3.5",
         "block-end":

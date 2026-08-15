@@ -11,17 +11,17 @@ import {
   flag,
   pageEntity,
 } from "./overlays"
-import type { OverlayComponent } from "./types"
 
-// No JSX, so this file stays `.ts` and inside the node-only vitest project (D-46).
-const Noop = (() => null) as unknown as OverlayComponent
+// No JSX, so this file stays `.ts` and inside the node-only vitest project.
+// A no-prop function component is assignable to any overlay component type.
+const Noop = () => null
 
 beforeEach(() => {
   __resetQueryStateKeyRegistry()
 })
 
 describe("createOverlays", () => {
-  it("namespaces every url key as `{namespace}.{name}` (D-13)", () => {
+  it("namespaces every url key as `{namespace}.{name}`", () => {
     const group = createOverlays("unit", {
       form: entity(Noop),
       archive: entity(Noop),
@@ -33,13 +33,13 @@ describe("createOverlays", () => {
     })
   })
 
-  it("freezes the url key map so nuqs's setter identity cannot churn (D-41)", () => {
+  it("freezes the url key map so nuqs's setter identity cannot churn", () => {
     const group = createOverlays("unit", { form: entity(Noop) })
 
     expect(Object.isFrozen(group.urlKeys)).toBe(true)
   })
 
-  it("exposes the namespace and the raw defs it was declared with (D-07)", () => {
+  it("exposes the namespace and the raw defs it was declared with", () => {
     const defs = { form: entity(Noop) }
     const group = createOverlays("unit", defs)
 
@@ -47,7 +47,7 @@ describe("createOverlays", () => {
     expect(group.defs).toBe(defs)
   })
 
-  it("throws when a second group resolves to an already-claimed url key (D-29)", () => {
+  it("throws when a second group resolves to an already-claimed url key", () => {
     createOverlays("unit", { "form.edit": entity(Noop) })
 
     expect(() => createOverlays("unit.form", { edit: entity(Noop) })).toThrow(
@@ -60,43 +60,49 @@ describe("createOverlays", () => {
 
     expect(() => createOverlays("unit", { form: entity(Noop) })).not.toThrow()
   })
+
+  it("rejects the reserved overlay name `closeAll`", () => {
+    expect(() => createOverlays("unit", { closeAll: entity(Noop) })).toThrow(
+      /reserved overlay name/
+    )
+  })
 })
 
 describe("registry helpers", () => {
-  it("entity() registers an auto-mounted overlay carrying its component (D-31)", () => {
-    const def = entity(Noop)
-
-    expect(def).toEqual({
-      component: Noop,
+  it("entity() registers an auto-mounted overlay carrying its component", () => {
+    expect(entity(Noop)).toEqual({
+      kind: "entity",
       mount: "global",
-      defaultValue: undefined,
+      component: Noop,
+      createValue: "new",
     })
   })
 
-  it("entity() forwards an explicit defaultValue", () => {
-    expect(entity(Noop, { defaultValue: "new" }).defaultValue).toBe("new")
+  it("entity() forwards an explicit createValue", () => {
+    expect(entity(Noop, { createValue: "blank" }).createValue).toBe("blank")
   })
 
   it("flag() is a payload-free auto-mounted overlay", () => {
     expect(flag(Noop)).toEqual({
-      component: Noop,
+      kind: "flag",
       mount: "global",
-      defaultValue: "1",
+      component: Noop,
     })
   })
 
-  it("pageEntity() registers the key only — no component, mount 'page' (D-47)", () => {
+  it("pageEntity() registers the key only — no component, mount 'page'", () => {
     const def = pageEntity()
 
     expect(def.component).toBeUndefined()
     expect(def.mount).toBe("page")
+    expect(def.kind).toBe("entity")
   })
 
-  it("pageEntity() forwards an explicit defaultValue", () => {
-    expect(pageEntity({ defaultValue: "img_1" }).defaultValue).toBe("img_1")
+  it("pageEntity() forwards an explicit createValue", () => {
+    expect(pageEntity({ createValue: "img_1" }).createValue).toBe("img_1")
   })
 
-  it("global-mount and page-mount names partition the declared defs (D-08, D-47)", () => {
+  it("global-mount and page-mount names partition the declared defs", () => {
     const group = createOverlays("gallery", {
       form: entity(Noop),
       manage: flag(Noop),
@@ -113,15 +119,14 @@ describe("registry helpers", () => {
     expect([...global, ...page].sort()).toEqual([...names].sort())
   })
 
-  it("a concretely typed group is accepted as an <AppOverlays> module (D-08)", () => {
+  it("a concretely typed group is accepted as an <AppOverlays> module", () => {
     const group = createOverlays("unit", {
       form: entity(Noop),
       photo: pageEntity(),
     })
 
-    // Compile-time assertion. This is the only place the widening from
-    // `OverlayGroup<C>` to the erased group type `<AppOverlays modules>` takes
-    // is exercised until the app-side registries land in 03.1-06 / 03.1-07.
+    // Compile-time assertion: any concretely-typed group must satisfy the
+    // minimal mountable shape <AppOverlays> consumes.
     const modules: React.ComponentProps<typeof AppOverlays>["modules"] = [group]
 
     expect(modules).toHaveLength(1)
@@ -134,7 +139,7 @@ describe("buildOverlayHref", () => {
     { urlKeys: { form: "unit.form" } }
   ) as unknown as Parameters<typeof buildOverlayHref>[0]
 
-  it("merges into the current search params instead of replacing them (D-10, Pitfall 5)", () => {
+  it("merges into the current search params instead of replacing them", () => {
     const base = new URLSearchParams("q=main&status=any:s1")
 
     const href = buildOverlayHref(serialize, base, "form", "u1")
